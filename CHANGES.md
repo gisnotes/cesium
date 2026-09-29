@@ -7,23 +7,35 @@
 #### Additions :tada:
 
 - Added `vectorBlendOption` to `Cesium3DTileset`, for selecting opaque or translucent modes. `blendOption` can now also be changed after construction on `BufferPointCollection`, `BufferPolylineCollection`, and `BufferPolygonCollection`. [#13764](https://github.com/CesiumGS/cesium/issues/13764)
+  在 `Cesium3DTileset` 中新增了 `vectorBlendOption` 属性，用于选择不透明（opaque）或半透明（translucent）混合模式。此外，在 `BufferPointCollection`、`BufferPolylineCollection` 和 `BufferPolygonCollection` 实例化后，其 `blendOption` 属性现在也支持动态修改。 [#13764](https://github.com/CesiumGS/cesium/issues/13764)
 - Added `.pickObject` getter/setter to BufferPrimitive. [#13811](https://github.com/CesiumGS/cesium/pull/13811)
+  为 `BufferPrimitive` 新增了 `.pickObject` 的 getter/setter 属性。 [#13811](https://github.com/CesiumGS/cesium/pull/13811)
 
 #### Fixes :wrench:
 
 - Reduced load time and memory usage for implicitly-tiled tilesets. [#13808](https://github.com/CesiumGS/cesium/pull/13808)
+  减少了隐式切片（implicitly-tiled）瓦片集的加载时间与内存占用。 [#13808](https://github.com/CesiumGS/cesium/pull/13808)
 - Reduced load time, memory usage, and rendering overhead for models and 3D Tiles using `EXT_mesh_primitive_edge_visibility` in `EdgeDisplayMode.SURFACES_ONLY` by deferring edge geometry construction until edges are displayed or needed for snapping.
+  优化了在 `EdgeDisplayMode.SURFACES_ONLY` 模式下使用 `EXT_mesh_primitive_edge_visibility` 扩展的模型与 3D Tiles：通过延迟边缘几何体的构建（直到边缘真正需要显示或用于吸附捕捉 snapping 时才构建），降低了加载时间、内存消耗及渲染开销。
 - Fixed a GPU memory leak where the edge vertex array created for `EXT_mesh_primitive_edge_visibility` rendering was never destroyed when draw commands were rebuilt or the model was destroyed. [#13721](https://github.com/CesiumGS/cesium/pull/13721)
+  修复了一个 GPU 内存泄漏问题：当重建绘制命令（draw commands）或模型被销毁时，为 `EXT_mesh_primitive_edge_visibility` 渲染所创建的边缘顶点数组（edge vertex array）此前未被释放销毁。 [#13721](https://github.com/CesiumGS/cesium/pull/13721)
 - Fixed `Cesium3DTileset` never enabling the scene edge framebuffer in `EdgeDisplayMode.SURFACES_AND_EDGES`, which rendered interior edges as fainter than intended. [#13765](https://github.com/CesiumGS/cesium/issues/13765)
+  修复了 `Cesium3DTileset` 在 `EdgeDisplayMode.SURFACES_AND_EDGES` 模式下从未启用场景边缘帧缓冲区（edge framebuffer），导致内部边缘渲染得比预期更淡的问题。 [#13765](https://github.com/CesiumGS/cesium/issues/13765)
 - Changed the typing of `PrimitiveCollection.add` to return the added primitive as the same type instead of `any`. [#13742](https://github.com/CesiumGS/cesium/issues/13742)
+  修改了 `PrimitiveCollection.add` 的 TypeScript 类型定义，现在会返回所添加图元的具体类型，而非 `any`。 [#13742](https://github.com/CesiumGS/cesium/issues/13742)
 - Fixed typescript error when importing `knockout` from `cesium`. [#12423](https://github.com/CesiumGS/cesium/issues/12423)
+  修复了从 `cesium` 中导入 `knockout` 时的 TypeScript 报错问题。 [#12423](https://github.com/CesiumGS/cesium/issues/12423)
 - Fixed draped polylines rendering at the wrong width at large widths, in both `"pixels"` and `"meters"` width units. [#13737](https://github.com/CesiumGS/cesium/pull/13737)
+  修复了贴地/贴模型折线（draped polylines）在线宽较大时，以像素（`"pixels"`）和米（`"meters"`）为单位均会出现宽度渲染错误的问题。 [#13737](https://github.com/CesiumGS/cesium/pull/13737)
 - Fixed geometry clipped by a `ClippingPolygonCollection` still casting shadows. The clipping uv origin is now read from the eye of the pass being rendered, so it matches the delta computed in the vertex shader during shadow casts. [#13768](https://github.com/CesiumGS/cesium/issues/13768)
+  修复了被 `ClippingPolygonCollection` 裁剪掉的几何体仍会投射阴影的问题。现在裁剪 UV 的原点改从当前渲染通道的视点（eye）读取，以确保与阴影投射通道中顶点着色器计算的增量保持一致。 [#13768](https://github.com/CesiumGS/cesium/issues/13768)
 - Fixed terrain-clamped billboards and labels being mispositioned and not properly rendering in 2D/Columbus view. [#5042](https://github.com/CesiumGS/cesium/issues/5042) [#12531](https://github.com/CesiumGS/cesium/issues/12531)
+  修复了贴地（terrain-clamped）广告牌（billboard）和文本标签（label）在二维（2D）与哥伦布视图（Columbus view）下位置偏移且无法正常渲染的问题。 [#5042](https://github.com/CesiumGS/cesium/issues/5042) [#12531](https://github.com/CesiumGS/cesium/issues/12531)
 
 #### Deprecated :hourglass_flowing_sand:
 
 - `Matrix4.fromCamera` has been deprecated and will be removed in 1.151. Use `Camera.prototype.viewMatrix` or `Matrix4.computeView` instead.
+  `Matrix4.fromCamera` 已被废弃，并将在 1.151 版本中移除。请改用 `Camera.prototype.viewMatrix` 或 `Matrix4.computeView`。
 
 ## 1.145 - 2026-09-02
 
@@ -32,37 +44,55 @@
 #### Breaking Changes :mega:
 
 - The positions of `ClippingPolygons` in a `ClippingPolygonCollection` are now considered immutable (via `Object.freeze`) and will throw if changed. Instead of changing positions directly, remove and re-add a new polygon. This breaking change allows us to remove per-frame, per-polygon-vertex checks that ultimately offer vast performance improvements. [#13665](https://github.com/CesiumGS/cesium/pull/13665)
+  `ClippingPolygonCollection` 中的 `ClippingPolygons`（裁剪多边形）坐标位置现在被视为不可变（通过 `Object.freeze` 实现），若进行修改将抛出异常。如果需要修改位置，应先移除原有多边形再重新添加新多边形。此破坏性变更消除了逐帧、逐多边形顶点的检查，从而带来了显著的性能提升。[#13665](https://github.com/CesiumGS/cesium/pull/13665)
 
 #### Additions :tada:
 
 - Added support for draping clamped vector tile polygons and polylines onto 3D Tiles, with a new `heightReference` option and matching read-only property on `BufferPrimitiveCollection`, inherited by `BufferPolygonCollection` and `BufferPolylineCollection`. [#13653](https://github.com/CesiumGS/cesium/pull/13653)
+  新增对将贴地矢量瓦片多边形和贴地折线贴附到 3D Tiles 上的支持；在 `BufferPrimitiveCollection` 上新增了 `heightReference` 选项以及对应的只读属性，并由 `BufferPolygonCollection` 和 `BufferPolylineCollection` 继承。[#13653](https://github.com/CesiumGS/cesium/pull/13653)
 - `ClippingPolygons` now use an algorithm, based on the techniques used for vector tiles, that vastly improves quality across distance scales. Warm-up cost is also modestly decreased. [#13654](https://github.com/CesiumGS/cesium/pull/13654)
+  `ClippingPolygons`（裁剪多边形）现采用基于矢量瓦片技术的算法，大幅提升了在不同视距尺度下的质量，同时适度降低了预热开销。[#13654](https://github.com/CesiumGS/cesium/pull/13654)
 - `ClippingPolygons` now have support for specifying holes (aka islands) within each polygon. This works in inverse clipping workflows as well. [#13660](https://github.com/CesiumGS/cesium/pull/13660)
+  `ClippingPolygons`（裁剪多边形）现已支持在多边形内部指定孔洞（亦称岛洞）。该特性同样适用于反向裁剪工作流。[#13660](https://github.com/CesiumGS/cesium/pull/13660)
 - Added a `heightReference` option to `MVTDataProvider.fromUrl`, draping Mapbox Vector Tiles content onto terrain, 3D Tiles, or both. [#13727](https://github.com/CesiumGS/cesium/pull/13727)
+  在 `MVTDataProvider.fromUrl` 中新增 `heightReference` 选项，可将 Mapbox 矢量瓦片（MVT）内容贴附到地形、3D Tiles 或两者之上。[#13727](https://github.com/CesiumGS/cesium/pull/13727)
 - Added a `heightReference` option to GeoJsonPrimitive constructor, draping GeoJSON content onto terrain, 3D Tiles, or both. [#13711](https://github.com/CesiumGS/cesium/pull/13711)
+  在 `GeoJsonPrimitive` 构造函数中新增 `heightReference` 选项，可将 GeoJSON 内容贴附到地形、3D Tiles 或两者之上。[#13711](https://github.com/CesiumGS/cesium/pull/13711)
 - Added `surfacePosition` to the result of the experimental `Scene.snap` API: the nearest on-surface point of the snapped object, useful as a seed for server-side snap refinement of edge snaps. [#13699](https://github.com/CesiumGS/cesium/pull/13699)
+  在实验性 `Scene.snap` API 的返回结果中新增 `surfacePosition`：即吸附对象上最近的表面点，可用作边缘吸附在服务端进行吸附精细化计算的种子点。[#13699](https://github.com/CesiumGS/cesium/pull/13699)
 - Added experimental `IonSnapService` for server-side snap-to-geometry against Cesium ion assets backed by a BIM/CAD Database model, and the `SnapService` interface it implements. [#13682](https://github.com/CesiumGS/cesium/pull/13682)
+  新增实验性 `IonSnapService` 及其实现的 `SnapService` 接口，支持对由 BIM/CAD 数据库模型支持的 Cesium ion 资产进行服务端几何吸附（snap-to-geometry）。[#13682](https://github.com/CesiumGS/cesium/pull/13682)
 - Added `BufferPolylineCollection` option `widthUnits`, so a draped polyline's width can be measured in meters on the ground instead of screen pixels. [#13703](https://github.com/CesiumGS/cesium/pull/13703)
+  在 `BufferPolylineCollection` 中新增 `widthUnits` 选项，使贴地折线的宽度可以用地面上的米为单位计量，而非仅使用屏幕像素。[#13703](https://github.com/CesiumGS/cesium/pull/13703)
 - Added two sandcastles: a 3D native vector data showcase and a large river dataset with semantic-based LODs.
+  新增两个 Sandcastle 示例：3D 原生矢量数据展示，以及带有基于语义 LOD 的大型河流数据集。
 
 #### Fixes :wrench:
 
 - Fixed vertical exaggeration for models and tilesets with existing scale factors, so they now exaggerate proportionally to the rest of the scene. [#13518](https://github.com/CesiumGS/cesium/pull/13518)
+  修复了包含已有缩放因子的模型与瓦片集的高程夸大（vertical exaggeration）问题，使其现在能与场景其他部分按比例夸大。[#13518](https://github.com/CesiumGS/cesium/pull/13518)
 - Changed 3D tileset traversal to have more robust replacement refinement behavior for vector data tilesets. [#13686](https://github.com/CesiumGS/cesium/issues/13686)
+  改进了 3D 瓦片集遍历机制，使矢量数据瓦片集的替换精细化（replacement refinement）行为更加稳健。[#13686](https://github.com/CesiumGS/cesium/issues/13686)
 - Fixed draped vector polylines rendering at twice their specified width, and antialiased their edges. Antialiasing can be turned off with `scene.vectorProvider.antialias` if you prefer the extra performance. [#13675](https://github.com/CesiumGS/cesium/pull/13675)
+  修复了贴地矢量折线渲染宽度为其指定值两倍的问题，并对其边缘进行了抗锯齿处理。如果更注重性能，可以通过 `scene.vectorProvider.antialias` 关闭抗锯齿。[#13675](https://github.com/CesiumGS/cesium/pull/13675)
 - Updated the minimum version of `dompurify` dependency to `3.4.5`, addressing security vulnerability tracked in [CVE-2026-49458](https://github.com/advisories/GHSA-hpcv-96wg-7vj8). [#13646](https://github.com/CesiumGS/cesium/issues/13646)
+  将 `dompurify` 依赖项的最低版本升级至 `3.4.5`，修复了 [CVE-2026-49458](https://github.com/advisories/GHSA-hpcv-96wg-7vj8) 中跟踪的安全漏洞。[#13646](https://github.com/CesiumGS/cesium/issues/13646)
 - Fixed the "Data attribution" credit link and the credit lightbox not being usable with a keyboard. Both the link and the lightbox close button are now focusable and can be activated with `Enter` or `Space`, the lightbox is exposed as a modal dialog and can be dismissed with `Escape`, and focus is moved into the lightbox when it opens and restored when it closes. [#13670](https://github.com/CesiumGS/cesium/issues/13670)
+  修复了“数据版权”（Data attribution）信用链接及信用浮层灯箱无法使用键盘操作的问题。现在链接和灯箱关闭按钮均可获取焦点并通过 `Enter` 或 `Space` 键激活；灯箱作为模态对话框公开且可按 `Escape` 键关闭；并在灯箱打开时将焦点移入、关闭时恢复原有焦点。[#13670](https://github.com/CesiumGS/cesium/issues/13670)
 - Fixed feature ID textures ignoring the wrap mode declared by the glTF sampler. Forcing nearest filtering no longer replaces `wrapS` and `wrapT` with `CLAMP_TO_EDGE`. [#11574](https://github.com/CesiumGS/cesium/issues/11574)
+  修复了要素 ID 纹理（feature ID textures）忽略 glTF 采样器所声明环绕模式（wrap mode）的问题。强制使用最近邻滤波不再将 `wrapS` 和 `wrapT` 替换为 `CLAMP_TO_EDGE`。[#11574](https://github.com/CesiumGS/cesium/issues/11574)
 
 #### Deprecated :hourglass_flowing_sand:
 
 - Deprecates the recently added `quality` field on `ClippingPolygonCollection`. The new implementation of `ClippingPolygons` offers the highest possibly quality by default. The `debugShowDistanceTexture` field is also deprecated, as the new implementation no longer uses a distance texture. The `destroy` and `isDestroyed` methods have been deprecated, since the class no longer owns its own resources which require release or destruction. `ClippingPolygon.computeRectangle` has been deprecated in favor of a class-level `rectangle` property.
+  废弃 `ClippingPolygonCollection` 上最近添加的 `quality` 字段。`ClippingPolygons` 的新实现默认提供最高质量。同时废弃 `debugShowDistanceTexture` 字段，因为新实现不再使用距离纹理。废弃 `destroy` 和 `isDestroyed` 方法，因为该类不再持有需要释放或销毁的自身资源。废弃 `ClippingPolygon.computeRectangle`，推荐使用类级别的 `rectangle` 属性。
 
 ### @cesium/sandcastle
 
 #### Fixes :wrench:
 
 - Updated the minimum version of `dompurify` dependency to `3.4.5`, addressing security vulnerability tracked in [CVE-2026-49458](https://github.com/advisories/GHSA-hpcv-96wg-7vj8). [#13646](https://github.com/CesiumGS/cesium/issues/13646)
+  将 `dompurify` 依赖项的最低版本升级至 `3.4.5`，修复了 [CVE-2026-49458](https://github.com/advisories/GHSA-hpcv-96wg-7vj8) 中跟踪的安全漏洞。[#13646](https://github.com/CesiumGS/cesium/issues/13646)
 
 ## 1.144 - 2026-08-01
 
@@ -71,29 +101,50 @@
 #### Additions :tada:
 
 - Added support for draping clamped vector tile polygons and polylines onto terrain, with screen-space-constant line width and per-feature styling via `Cesium3DTileStyle`. [#13577](https://github.com/CesiumGS/cesium/pull/13577) [#13627](https://github.com/CesiumGS/cesium/pull/13627)
+  新增对将贴地矢量瓦片多边形和贴地折线贴附到地形上的支持，具有屏幕空间恒定的线宽，并支持通过 `Cesium3DTileStyle` 进行逐要素样式设置。[#13577](https://github.com/CesiumGS/cesium/pull/13577) [#13627](https://github.com/CesiumGS/cesium/pull/13627)
 - Added support for the [`BENTLEY_materials_planar_fill`](https://github.com/CesiumGS/glTF/tree/vendor-extensions/extensions/2.0/Vendor/BENTLEY_materials_planar_fill) glTF extension, enabling CAD-style planar polygon fill rendering with proper depth sorting and configurable fill behavior including background color masking and coplanar geometry ordering. Note: The `wireframeFill` property is currently a no-op. [#13178](https://github.com/CesiumGS/cesium/pull/13178)
+  新增对 glTF 扩展 [`BENTLEY_materials_planar_fill`](https://github.com/CesiumGS/glTF/tree/vendor-extensions/extensions/2.0/Vendor/BENTLEY_materials_planar_fill) 的支持，实现了具有正确深度排序的 CAD 风格平面多边形填充渲染，以及可配置的填充行为（包括背景色遮罩和共面几何排序）。注意：`wireframeFill` 属性当前暂无实际效果。[#13178](https://github.com/CesiumGS/cesium/pull/13178)
 - Added a minimal set of alternative camera controllers scoped for an asset inspection use case: `HybridScreenSpacePanCameraController`, `ScreenSpaceElevatorCameraController`, `ScreenSpaceMapCameraController` and `ScreenSpaceTiltOrbitCameraController`. [Try the controllers in Sandcastle](https://sandcastle.cesium.com/?id=camera-controllers). [#13604](https://github.com/CesiumGS/cesium/pull/13604).
+  新增了一组专用于资产审查场景的备选相机控制器：`HybridScreenSpacePanCameraController`、`ScreenSpaceElevatorCameraController`、`ScreenSpaceMapCameraController` 和 `ScreenSpaceTiltOrbitCameraController`。[在 Sandcastle 中体验这些控制器](https://sandcastle.cesium.com/?id=camera-controllers)。[#13604](https://github.com/CesiumGS/cesium/pull/13604)。
 - Added a composable `Controller` framework, which can be added to a scene with either `Viewer.addController` or `Scene.controllerHost`. [#13604](https://github.com/CesiumGS/cesium/pull/13604).
+  新增可组合的 `Controller` 框架，可通过 `Viewer.addController` 或 `Scene.controllerHost` 添加到场景中。[#13604](https://github.com/CesiumGS/cesium/pull/13604)。
 - Enabled picking of metadata from a `WebMapTileServiceImageryProvider` when draped on 3D Tiles [#13575](https://github.com/CesiumGS/cesium/pull/13575)
+  支持在贴附于 3D Tiles 之上时拾取来自 `WebMapTileServiceImageryProvider` 的元数据。[#13575](https://github.com/CesiumGS/cesium/pull/13575)
 - Added `Scene.snap`, an experimental snap-to-geometry picking API. It returns the best hit in a screen-space region around a window position (preferring edges (see [`EXT_mesh_primitive_edge_visibility`](https://github.com/KhronosGroup/glTF/pull/2479)) over surfaces) along with its world-space position. [#13531](https://github.com/CesiumGS/cesium/pull/13531)
+  新增实验性几何吸附拾取 API `Scene.snap`。该 API 会返回视口窗口位置周围屏幕空间区域中的最佳命中结果（优先选择边缘（参见 [`EXT_mesh_primitive_edge_visibility`](https://github.com/KhronosGroup/glTF/pull/2479)）而非表面）及其世界空间坐标位置。[#13531](https://github.com/CesiumGS/cesium/pull/13531)
 - Added support for the [`KHR_mesh_primitive_restart`](https://github.com/KhronosGroup/glTF/pull/2569) glTF extension. [#13634](https://github.com/CesiumGS/cesium/pull/13634)
+  新增对 glTF 扩展 [`KHR_mesh_primitive_restart`](https://github.com/KhronosGroup/glTF/pull/2569) 的支持。[#13634](https://github.com/CesiumGS/cesium/pull/13634)
 - Added `Texture.defaultColor` static property to allow customizing the default placeholder texture color, to avoid white flashes when a new Material is constructed. [#13597](https://github.com/CesiumGS/cesium/pull/13597)
+  在 `Texture` 上新增 `defaultColor` 静态属性，用于自定义默认占位纹理颜色，从而避免构建新材质（Material）时出现白闪。[#13597](https://github.com/CesiumGS/cesium/pull/13597)
 
 #### Fixes :wrench:
 
 - Significantly reduced JavaScript heap usage when loading models and tilesets using the `EXT_mesh_primitive_edge_visibility` glTF extension. Edge visibility accessor data is now loaded as typed arrays instead of plain JavaScript arrays. [#13643](https://github.com/CesiumGS/cesium/pull/13643)
+  大幅降低了加载使用 `EXT_mesh_primitive_edge_visibility` glTF 扩展的模型和瓦片集时的 JavaScript 堆内存占用。边缘可见性访问器（accessor）数据现在作为类型化数组（typed arrays）加载，而非普通 JavaScript 数组。[#13643](https://github.com/CesiumGS/cesium/pull/13643)
 - Fixed geometry clipped by `ClippingPlaneCollection` or `ClippingPolygonCollection` still casting shadows. [#6261](https://github.com/CesiumGS/cesium/issues/6261)
+  修复了被 `ClippingPlaneCollection`（裁剪面集合）或 `ClippingPolygonCollection`（裁剪多边形集合）裁剪掉的几何体仍然会投射阴影的问题。[#6261](https://github.com/CesiumGS/cesium/issues/6261)
 - Fixed a one-frame black flash caused by `Framebuffer` construction leaving the context's framebuffer binding cache stale, making subsequent draws render to the wrong framebuffer for the remainder of the frame. [#13662](https://github.com/CesiumGS/cesium/pull/13662)
+  修复了因 `Framebuffer`（帧缓冲区）构建导致上下文的帧缓冲区绑定缓存过时，使得该帧后续绘制渲染到错误帧缓冲区而引起的单帧黑闪问题。[#13662](https://github.com/CesiumGS/cesium/pull/13662)
 - Fixed a shader bug causing a `PolylineGlowMaterial` rendering issue on Ubuntu. [#13632](https://github.com/CesiumGS/cesium/issues/13632)
+  修复了导致 `PolylineGlowMaterial`（发光折线材质）在 Ubuntu 系统上出现渲染异常的着色器缺陷。[#13632](https://github.com/CesiumGS/cesium/issues/13632)
 - Fixed a bug in clipping polygons on terrain causing a crash when all polygons are removed from a collection. [#12414](https://github.com/CesiumGS/cesium/issues/12414)
+  修复了地形裁剪多边形在从集合中移除所有多边形时引发崩溃的缺陷。[#12414](https://github.com/CesiumGS/cesium/issues/12414)
 - Fixed SPZ-compressed Gaussian splat loading to read the compressed payload from the buffer view declared by `KHR_gaussian_splatting_compression_spz_2`, preventing incorrect cache reuse for assets with SPZ payloads in different buffer views. [#12847](https://github.com/CesiumGS/cesium/issues/12847)
+  修复了 SPZ 压缩的高斯泼溅（Gaussian splat）加载问题，使其从 `KHR_gaussian_splatting_compression_spz_2` 声明的缓冲区视图（buffer view）中读取压缩负载，防止对具有不同缓冲区视图 SPZ 负载的资产进行错误的缓存复用。[#12847](https://github.com/CesiumGS/cesium/issues/12847)
 - Fixed a fatal error when a post-process stage selects more features than the maximum texture size supports. The selected-feature texture is now clamped to the maximum supported width and a one-time warning is logged. [#13656](https://github.com/CesiumGS/cesium/pull/13656)
+  修复了当后处理阶段（post-process stage）选取的要素数量超出最大纹理尺寸支持时导致的致命错误。所选要素纹理现在会被限制在最大支持宽度以内，并记录一次性警告日志。[#13656](https://github.com/CesiumGS/cesium/pull/13656)
 - Fixed `CzmlDataSource` not inferring the `PathMode` type for custom properties defined with a `pathMode` value. [#13607](https://github.com/CesiumGS/cesium/pull/13607)
+  修复了 `CzmlDataSource` 无法为定义了 `pathMode` 值的自定义属性推断 `PathMode` 类型的问题。[#13607](https://github.com/CesiumGS/cesium/pull/13607)
 - Auto-normalize non-unit `alignedAxis` in `BillboardCollection` instead of silently ignoring it. [#6596](https://github.com/CesiumGS/cesium/issues/6596)
+  在 `BillboardCollection` 中自动归一化非单位向量的 `alignedAxis`（对齐轴），而不再静默忽略。[#6596](https://github.com/CesiumGS/cesium/issues/6596)
 - Fixed a bug in `Transforms.computeMoonFixedToIcrfMatrix` which caused the `result` parameter to not be used. [#13463](https://github.com/CesiumGS/cesium/pull/13463)
+  修复了 `Transforms.computeMoonFixedToIcrfMatrix` 中导致未正确使用 `result` 参数的缺陷。[#13463](https://github.com/CesiumGS/cesium/pull/13463)
 - Fixed a bug in `GeocoderViewModel` where a duplicate `destroy` method silently overwrote the first, preventing `_suggestionSubscription` from being disposed on destroy. [#13580](https://github.com/CesiumGS/cesium/pull/13580)
+  修复了 `GeocoderViewModel` 中重复的 `destroy` 方法静默覆盖原有方法，导致 `_suggestionSubscription` 在销毁时未被释放的问题。[#13580](https://github.com/CesiumGS/cesium/pull/13580)
 - Fixed incorrect JSDoc description for `offCenterFrustum` in `OrthographicFrustum` and `PerspectiveFrustum`, which was copied from `projectionMatrix` and incorrectly described the property as returning a projection matrix. [#13570](https://github.com/CesiumGS/cesium/pull/13570)
+  修复了 `OrthographicFrustum`（正交视锥体）和 `PerspectiveFrustum`（透视视锥体）中 `offCenterFrustum` 错误的 JSDoc 说明，该描述先前复制自 `projectionMatrix` 并错误地将该属性描述为返回投影矩阵。[#13570](https://github.com/CesiumGS/cesium/pull/13570)
 - Fixed inconsistent typescript types between `InterpolationAlgorithm` and its implementations. [#13644](https://github.com/CesiumGS/cesium/issues/13644)
+  修复了 `InterpolationAlgorithm` 及其各实现类之间 TypeScript 类型定义不一致的问题。[#13644](https://github.com/CesiumGS/cesium/issues/13644)
 
 ## 1.143 - 2026-07-01
 
@@ -102,15 +153,22 @@
 #### Additions :tada:
 
 - Added support for the [`KHR_meshopt_compression`](https://github.com/KhronosGroup/glTF/tree/main/extensions/2.0/Khronos/KHR_meshopt_compression) glTF extension, including the v1 attribute codec and the `COLOR` filter. [#13553](https://github.com/CesiumGS/cesium/pull/13553)
+  新增对 glTF 扩展 [`KHR_meshopt_compression`](https://github.com/KhronosGroup/glTF/tree/main/extensions/2.0/Khronos/KHR_meshopt_compression) 的支持，包括 v1 属性编解码器和 `COLOR` 过滤器。[#13553](https://github.com/CesiumGS/cesium/pull/13553)
 - Added `PathGraphics.materialMode`. A value of `"PORTIONS"` allows visualizing the path in segments with different materials specified by intervals or sampling. Each segment material is determined by the `material` property value at the corresponding simulation time. The default value of `"WHOLE"` preserves existing material behavior. [#13530](https://github.com/CesiumGS/cesium/pull/13530)
+  新增 `PathGraphics.materialMode`。设置为 `"PORTIONS"` 允许按时间间隔或采样指定的不同材质分段可视化路径，每个分段的材质由对应仿真时刻的 `material` 属性值决定；默认值 `"WHOLE"` 保持原有的统一材质行为。[#13530](https://github.com/CesiumGS/cesium/pull/13530)
 
 #### Fixes :wrench:
 
 - Fixed invalid glTF sampler wrap modes causing a `DeveloperError` to be thrown instead of falling back to `TextureWrap.REPEAT`. [#13562](https://github.com/CesiumGS/cesium/pull/13562)
+  修复了无效的 glTF 采样器环绕模式会导致抛出 `DeveloperError` 而未回退到 `TextureWrap.REPEAT` 的问题。[#13562](https://github.com/CesiumGS/cesium/pull/13562)
 - Fixed missing `InterpolationAlgorithm` documentation page that was returning a 404. [#13550](https://github.com/CesiumGS/cesium/issues/13550)
+  修复了缺失的 `InterpolationAlgorithm` 文档页面返回 404 错误的问题。[#13550](https://github.com/CesiumGS/cesium/issues/13550)
 - Fixed `EdgeVisibilityRendering` release test failures. [#13545](https://github.com/CesiumGS/cesium/pull/13545)
+  修复了 `EdgeVisibilityRendering` 发布测试失败的问题。[#13545](https://github.com/CesiumGS/cesium/pull/13545)
 - Fix for `BufferPointCollection` preventing outlineColor from bleeding slightly into the visible area when outlineWidth=0px. [#13543](https://github.com/CesiumGS/cesium/pull/13543)
+  修复了 `BufferPointCollection` 在 `outlineWidth=0px` 时 `outlineColor`（轮廓颜色）轻微渗入可见区域的问题。[#13543](https://github.com/CesiumGS/cesium/pull/13543)
 - Fixed a bug where callbacks registered with `Scene.updateHeight` could receive positions computed for other tiles, causing clamped entities to show incorrect heights. [#12602](https://github.com/CesiumGS/cesium/issues/12602)
+  修复了注册到 `Scene.updateHeight` 的回调函数可能会接收到为其他瓦片计算的位置，导致贴地实体显示错误高程的缺陷。[#12602](https://github.com/CesiumGS/cesium/issues/12602)
 
 ## 1.142 - 2026-06-01
 
@@ -119,21 +177,31 @@
 #### Breaking Changes :mega:
 
 - The `boundingVolume` property on `BufferPointCollection`, `BufferPolylineCollection`, and `BufferPolygonCollection` is now defined in world space, not local/model space. [#13477](https://github.com/CesiumGS/cesium/pull/13477)
+  `BufferPointCollection`、`BufferPolylineCollection` 和 `BufferPolygonCollection` 上的 `boundingVolume`（包围体）属性现在定义在世界空间中，而非局部/模型空间。[#13477](https://github.com/CesiumGS/cesium/pull/13477)
 
 #### Additions :tada:
 
 - Added `GeoJsonPrimitive` for loading GeoJSON directly into `BufferPrimitiveCollection`s, bypassing the entity/DataSource layer for significantly improved performance with large datasets. [#13505](https://github.com/CesiumGS/cesium/pull/13505)
+  新增 `GeoJsonPrimitive` 用于将 GeoJSON 直接加载到 `BufferPrimitiveCollection` 中，绕过了 Entity/DataSource 层，大幅提升了处理大规模数据集时的性能。[#13505](https://github.com/CesiumGS/cesium/pull/13505)
 - Added `MVTDataProvider` for loading Mapbox Vector Tiles (MVT) directly into CesiumJS as 3D Tiles. Supports per-feature styling via `Cesium3DTileStyle`, feature picking with metadata (`getProperty`), and automatic property table encoding via `EXT_structural_metadata`. [#13404](https://github.com/CesiumGS/cesium/pull/13404)
+  新增 `MVTDataProvider` 用于将 Mapbox 矢量瓦片（MVT）作为 3D Tiles 直接加载到 CesiumJS 中。支持通过 `Cesium3DTileStyle` 进行逐要素样式设置、带元数据的要素拾取（`getProperty`），以及通过 `EXT_structural_metadata` 自动进行属性表编码。[#13404](https://github.com/CesiumGS/cesium/pull/13404)
 - Added `blendOption` constructor parameter to `BufferPointCollection`, `BufferPolylineCollection`, and `BufferPolygonCollection`, supporting `BufferPrimitiveMaterial#color.alpha`. Added support for `BufferPrimitiveMaterial#outlineColor.alpha` to `BufferPointCollection`. [#13384](https://github.com/CesiumGS/cesium/pull/13384)
+  在 `BufferPointCollection`、`BufferPolylineCollection` 和 `BufferPolygonCollection` 构造函数中新增 `blendOption` 参数，支持 `BufferPrimitiveMaterial#color.alpha`。在 `BufferPointCollection` 中新增对 `BufferPrimitiveMaterial#outlineColor.alpha` 的支持。[#13384](https://github.com/CesiumGS/cesium/pull/13384)
 - Added experimental support for `EXT_mesh_polygon` draft glTF extension and `3DTILES_content_gltf_vector` draft 3D Tiles extension. [#13478](https://github.com/CesiumGS/cesium/pull/13478)
+  新增对草案版 glTF 扩展 `EXT_mesh_polygon` 和草案版 3D Tiles 扩展 `3DTILES_content_gltf_vector` 的实验性支持。[#13478](https://github.com/CesiumGS/cesium/pull/13478)
 - Added `boundingVolume` constructor parameter to `BufferPointCollection`, `BufferPolylineCollection`, and `BufferPolygonCollection`. For larger animated collections, providing a precomputed bounding volume can eliminate the performance cost of automatically updating the bounding volume frequently. [#13477](https://github.com/CesiumGS/cesium/pull/13477)
+  在 `BufferPointCollection`、`BufferPolylineCollection` 和 `BufferPolygonCollection` 构造函数中新增 `boundingVolume` 参数。对于较大规模的动画集合，传入预先计算的包围体可以避免频繁自动更新包围体所带来的性能开销。[#13477](https://github.com/CesiumGS/cesium/pull/13477)
 - Added `EdgeDisplayMode` enum and `edgeDisplayMode` property to `Model` and `Cesium3DTileset` for controlling how edges from the [`EXT_mesh_primitive_edge_visibility`](https://github.com/KhronosGroup/glTF/pull/2479) glTF extension are rendered. Supports three modes: `SURFACES_ONLY`, `SURFACES_AND_EDGES`, and `EDGES_ONLY` (CAD-style wireframe rendering). [#13192](https://github.com/CesiumGS/cesium/pull/13192)
+  在 `Model` 和 `Cesium3DTileset` 中新增 `EdgeDisplayMode` 枚举及 `edgeDisplayMode` 属性，用于控制如何渲染来自 glTF 扩展 [`EXT_mesh_primitive_edge_visibility`](https://github.com/KhronosGroup/glTF/pull/2479) 的边缘。支持三种模式：`SURFACES_ONLY`（仅表面）、`SURFACES_AND_EDGES`（表面与边缘）和 `EDGES_ONLY`（仅边缘，CAD 风格线框渲染）。[#13192](https://github.com/CesiumGS/cesium/pull/13192)
 - Added support for multiple key modifiers in `ScreenSpaceEventHandler.setInputAction`. [#13307](https://github.com/CesiumGS/cesium/pull/13307)
+  在 `ScreenSpaceEventHandler.setInputAction` 中新增对多个按键修饰符组合的支持。[#13307](https://github.com/CesiumGS/cesium/pull/13307)
 
 #### Fixes :wrench:
 
 - Fixed a bug causing `BufferPointCollection` to not update after changes to point positions. [#13465](https://github.com/CesiumGS/cesium/pull/13465)
+  修复了点坐标位置变更后 `BufferPointCollection` 未能正确更新的缺陷。[#13465](https://github.com/CesiumGS/cesium/pull/13465)
 - Improved the default voxel shader for common metadata types. [#13517](https://github.com/CesiumGS/cesium/pull/13517)
+  针对常见元数据类型改进了默认体素（voxel）着色器。[#13517](https://github.com/CesiumGS/cesium/pull/13517)
 
 ## 1.141 - 2026-05-01
 
@@ -142,27 +210,38 @@
 #### Breaking Changes :mega:
 
 - Bumped minimum required Node version to `22.0.0`
+  将 Node 最低要求版本提升至 `22.0.0`
 
 ### @cesium/engine
 
 #### Breaking Changes :mega:
 
 - `BufferPrimitiveCollection` properties `modelMatrix`, `boundingVolume`, and `boundingVolumeWC` are now readonly. They may be modified, but not reassigned. [#13448](https://github.com/CesiumGS/cesium/pull/13448)
+  `BufferPrimitiveCollection` 的 `modelMatrix`、`boundingVolume` 和 `boundingVolumeWC` 属性现在为只读。可以修改其内部属性，但不能重新赋值引用。[#13448](https://github.com/CesiumGS/cesium/pull/13448)
 
 #### Additions :tada:
 
 - Added support for properties (EXT_structural_metadata) in vector tilesets. [#13426](https://github.com/CesiumGS/cesium/pull/13426)
+  新增在矢量瓦片集中对属性（EXT_structural_metadata）的支持。[#13426](https://github.com/CesiumGS/cesium/pull/13426)
 - Added a new lint step, `npm run sg-scan`, to detect regressions related to JSDoc syntax and type definitions. [#13377](https://github.com/CesiumGS/cesium/pull/13377)
+  新增 lint 检查步骤 `npm run sg-scan`，用于检测与 JSDoc 语法和类型定义相关的回归问题。[#13377](https://github.com/CesiumGS/cesium/pull/13377)
 
 #### Fixes :wrench:
 
 - Fixed a `DeveloperError` thrown when loading 3D tiles containing degenerate (zero-area) triangles with edge visibility data. [#13421](https://github.com/CesiumGS/cesium/pull/13421)
+  修复了加载包含带有边缘可见性数据的退化（零面积）三角形 3D 瓦片时抛出 `DeveloperError` 的问题。[#13421](https://github.com/CesiumGS/cesium/pull/13421)
 - Refactored `pickModel` to use shared util `ModelReader`, reducing duplicated scene-graph walking and vertex-reading logic. [#13433](https://github.com/CesiumGS/cesium/pull/13433)
+  重构 `pickModel` 以使用共享工具 `ModelReader`，减少了重复的场景图遍历和顶点读取逻辑。[#13433](https://github.com/CesiumGS/cesium/pull/13433)
 - Fixed lighting affecting `EquirectangularPanorama`. [#13369](https://github.com/CesiumGS/cesium/pull/13369)
+  修复了光照影响 `EquirectangularPanorama`（等距柱状全景图）的问题。[#13369](https://github.com/CesiumGS/cesium/pull/13369)
 - Fixed stale `showsUpdated` state persisting when entities are removed from ground primitive batches. [#13366](https://github.com/CesiumGS/cesium/pull/13366)
+  修复了当实体从贴地图元批次（ground primitive batches）中移除时残留过时 `showsUpdated` 状态的问题。[#13366](https://github.com/CesiumGS/cesium/pull/13366)
 - Fixed incorrect matrix multiplication for non worldspace instance transforms in `pickModel`. [#13433](https://github.com/CesiumGS/cesium/pull/13433)
+  修复了 `pickModel` 中非世界空间实例化变换（instance transforms）矩阵乘法计算错误的问题。[#13433](https://github.com/CesiumGS/cesium/pull/13433)
 - Fixed incorrect argument order in `ModelReader.octDecode` for `AttributeCompression.octDecodeInRange` and `Cartesian3.pack` calls. [#13433](https://github.com/CesiumGS/cesium/pull/13433)
+  修复了 `ModelReader.octDecode` 中调用 `AttributeCompression.octDecodeInRange` 和 `Cartesian3.pack` 时参数顺序错误的问题。[#13433](https://github.com/CesiumGS/cesium/pull/13433)
 - Fix JSDoc for `SkyBox.show` to correctly declare it as a prototype property for TypeScript compatibility. [#13357](https://github.com/CesiumGS/cesium/pull/13357)
+  修复 `SkyBox.show` 的 JSDoc，将其正确声明为原型属性以保证 TypeScript 兼容性。[#13357](https://github.com/CesiumGS/cesium/pull/13357)
 
 ## 1.140 - 2026-04-01
 
@@ -171,40 +250,64 @@
 #### Breaking Changes :mega:
 
 - Billboards and labels now require device support for WebGL 2, or WebGL 1 with ANGLE_instanced_arrays and MAX_VERTEX_TEXTURE_IMAGE_UNITS > 0. [#13053](https://github.com/CesiumGS/cesium/issues/13053) [#13253](https://github.com/CesiumGS/cesium/pull/13253)
+  Billboard（广告牌）和 Label（文本标签）现在要求设备支持 WebGL 2，或带有 ANGLE_instanced_arrays 且 MAX_VERTEX_TEXTURE_IMAGE_UNITS > 0 的 WebGL 1。[#13053](https://github.com/CesiumGS/cesium/issues/13053) [#13253](https://github.com/CesiumGS/cesium/pull/13253)
 
 #### Additions :tada:
 
 - Added experimental, performance-focused vector primitive APIs: `BufferPointCollection`, `BufferPolylineCollection`, and `BufferPolygonCollection`. [#13212](https://github.com/CesiumGS/cesium/pull/13212)
+  新增面向高性能场景的实验性矢量图元 API：`BufferPointCollection`、`BufferPolylineCollection` 和 `BufferPolygonCollection`。[#13212](https://github.com/CesiumGS/cesium/pull/13212)
 - Added support for Reality Data of type `ITwinPlatform.RealityDataType.GaussianSplat3DTiles` to `ITwinData.createTilesetForRealityDataId`. [#13208](https://github.com/CesiumGS/cesium/pull/13208)
+  在 `ITwinData.createTilesetForRealityDataId` 中新增对 `ITwinPlatform.RealityDataType.GaussianSplat3DTiles` 类型实景数据（Reality Data）的支持。[#13208](https://github.com/CesiumGS/cesium/pull/13208)
 - Added the ability to pass `OffscreenCanvas` as `ImageryTypes`. [#13297](https://github.com/CesiumGS/cesium/pull/13297)
+  新增支持将 `OffscreenCanvas` 作为 `ImageryTypes` 传入。[#13297](https://github.com/CesiumGS/cesium/pull/13297)
 - Added GetFeatureInfo support to `WebMapTileServiceImageryProvider`, enabling `WebMapTileServiceImageryProvider.pickFeatures` for both KVP and RESTful WMTS services. New class parameters include `enablePickFeatures`, `getFeatureInfoFormats`, `getFeatureInfoUrl`, and `getFeatureInfoParameters`. [#13196](https://github.com/CesiumGS/cesium/pull/13196)
+  为 `WebMapTileServiceImageryProvider` 新增 GetFeatureInfo 支持，使 KVP 和 RESTful 风格的 WMTS 服务均可使用 `WebMapTileServiceImageryProvider.pickFeatures`。新增的类参数包括 `enablePickFeatures`、`getFeatureInfoFormats`、`getFeatureInfoUrl` 和 `getFeatureInfoParameters`。[#13196](https://github.com/CesiumGS/cesium/pull/13196)
 - Added limited support (via downcasting) for double-precision metadata types in custom shaders. [#13323](https://github.com/CesiumGS/cesium/pull/13323)
+  在自定义着色器中新增对双精度元数据类型的有限支持（通过向下类型转换 downcasting 实现）。[#13323](https://github.com/CesiumGS/cesium/pull/13323)
 - Added a new experimental property `PathGraphics.relativeTo` which allows entity `PathGraphics` to be displayed in a reference frame relative to another entity, or a different reference frame than the entity's `Position.ReferenceFrame`. [#13223](https://github.com/CesiumGS/cesium/pull/13223)
+  新增实验性属性 `PathGraphics.relativeTo`，允许将实体的 `PathGraphics`（路径图形）显示在相对于另一实体的参考系中，或与该实体 `Position.ReferenceFrame` 不同的参考系中。[#13223](https://github.com/CesiumGS/cesium/pull/13223)
 
 #### Fixes :wrench:
 
 - Fixed intermittent label text/background misalignment when using `heightReference` (CLAMP_TO_GROUND, CLAMP_TO_TERRAIN, or CLAMP_TO_TILE). [#13335](https://github.com/CesiumGS/cesium/pull/13335)
+  修复了使用 `heightReference`（CLAMP_TO_GROUND、CLAMP_TO_TERRAIN 或 CLAMP_TO_TILE）时标签文本与背景间歇性错位的问题。[#13335](https://github.com/CesiumGS/cesium/pull/13335)
 - Fixed a crash when decoding large Gaussian splat SPZ files with high spherical harmonics degree. [#13287](https://github.com/CesiumGS/cesium/pull/13287)
+  修复了在解码具有高阶球谐系数（high spherical harmonics degree）的大型高斯泼溅 SPZ 文件时引发崩溃的问题。[#13287](https://github.com/CesiumGS/cesium/pull/13287)
 - Fixed Gaussian splat `modelMatrix` not being correctly applied to splat positions, rotations, and scales when the tileset transform changes. Fix spherical harmonic view direction being evaluated in the wrong coordinate frame in Gaussian splat rendering, causing subtle color errors for datasets without an embedded axis-compensation matrix. [#13305](https://github.com/CesiumGS/cesium/pull/13305)
+  修复了瓦片集变换改变时高斯泼溅 `modelMatrix` 未能正确应用到泼溅点位置、旋转和缩放上的问题。修复了高斯泼溅渲染中球谐视角方向在错误坐标系下计算的问题（该问题导致未嵌入轴补偿矩阵的数据集出现微小颜色偏差）。[#13305](https://github.com/CesiumGS/cesium/pull/13305)
 - Fixed a WebGL crash when rendering Gaussian splat tilesets with more than ~16 million splats. [#13235](https://github.com/CesiumGS/cesium/pull/13235)
+  修复了渲染超过约 1600 万个高斯泼溅点的瓦片集时发生的 WebGL 崩溃问题。[#13235](https://github.com/CesiumGS/cesium/pull/13235)
 - Fixed memory leak when rendering Gaussian splat 3D tilesets. [#13229](https://github.com/CesiumGS/cesium/pull/13229/)
+  修复了渲染高斯泼溅 3D Tiles 瓦片集时的内存泄漏问题。[#13229](https://github.com/CesiumGS/cesium/pull/13229/)
 - No longer disables custom shaders for primitives with missing metadata, as long as the metadata exists on the overall class definition. [#13258](https://github.com/CesiumGS/cesium/pull/13258)
+  只要元数据存在于整体类定义中，就不再对缺失元数据的图元禁用自定义着色器。[#13258](https://github.com/CesiumGS/cesium/pull/13258)
 - Fixed `SkyBox.show` being ignored when set to `false`. [#13315](https://github.com/CesiumGS/cesium/pull/13315)
+  修复了将 `SkyBox.show` 设置为 `false` 时被忽略的问题。[#13315](https://github.com/CesiumGS/cesium/pull/13315)
 - Fix performance issue with multiple ClippingPolygon on Cesium3DTileset. [#13255](https://github.com/CesiumGS/cesium/pull/13255)
+  修复了在 `Cesium3DTileset` 上使用多个 `ClippingPolygon`（裁剪多边形）时的性能问题。[#13255](https://github.com/CesiumGS/cesium/pull/13255)
 - Improved Gaussian splat loading and update performance by reducing transform work, reusing aggregate buffers, and lowering repeated sort churn during camera movement. [#13322](https://github.com/CesiumGS/cesium/pull/13322)
+  通过减少变换计算、复用聚合缓冲区（aggregate buffers）以及降低相机移动过程中的重复排序抖动（sort churn），显著提升了高斯泼溅的加载与更新性能。[#13322](https://github.com/CesiumGS/cesium/pull/13322)
 - Improved Gaussian splat SPZ decode performance by updating `@spz-loader/core` to `0.3.1`. [#13329](https://github.com/CesiumGS/cesium/pull/13329)
+  通过将 `@spz-loader/core` 升级到 `0.3.1`，提升了高斯泼溅 SPZ 格式的解码性能。[#13329](https://github.com/CesiumGS/cesium/pull/13329)
 - ClippingPolygonCollection performance and quality improvements. [#13308](https://github.com/CesiumGS/cesium/pull/13308)
+  `ClippingPolygonCollection` 性能提升与质量改进。[#13308](https://github.com/CesiumGS/cesium/pull/13308)
 - Fixed incorrect min and max values for accessors in decodeI3S.js.[#13280](https://github.com/CesiumGS/cesium/pull/13280)
+  修复了 `decodeI3S.js` 中访问器（accessors）最小与最大值不正确的问题。[#13280](https://github.com/CesiumGS/cesium/pull/13280)
 - Fixed camera zoom behavior when the camera transform is set (for example, when tracking entities or using `lookAt`). [#12999](https://github.com/CesiumGS/cesium/pull/12999)
+  修复了设置相机变换矩阵时（例如跟踪实体或使用 `lookAt` 时）的相机缩放（zoom）行为异常。[#12999](https://github.com/CesiumGS/cesium/pull/12999)
 - Fixed voxel raymarcher skipping zero step size when shape is infinitely thin. [#13257](https://github.com/CesiumGS/cesium/pull/13257)
+  修复了体素光线步进器（voxel raymarcher）在几何形状无限薄时跳过零步长的问题。[#13257](https://github.com/CesiumGS/cesium/pull/13257)
 - Fixed regression with point cloud custom styling when using `evaluate`. [#13346](https://github.com/CesiumGS/cesium/issues/13346)
+  修复了在使用 `evaluate` 时点云自定义样式的回归缺陷。[#13346](https://github.com/CesiumGS/cesium/issues/13346)
 
 ### @cesium/sandcastle
 
 #### Fixes :wrench:
 
 - Performance and UX improvements for semantic search. Adjusted debounce time for semantic search to reduce results slightly less frequently (after 300ms instead of 100ms). Pagefind search now waits for semantic search to complete to reduce the number of visual updates to the gallery. [#13317](https://github.com/CesiumGS/cesium/pull/13317)
+  提升了语义搜索的性能和用户体验。调整了语义搜索的防抖时间，从 100ms 调整为 300ms，以降低频繁刷新结果的频率。Pagefind 搜索现在会等待语义搜索完成，从而减少画廊列表的视觉刷新次数。[#13317](https://github.com/CesiumGS/cesium/pull/13317)
 - Fixed an issue with globby not reading Windows paths correctly [#13317](https://github.com/CesiumGS/cesium/pull/13317)
+  修复了 globby 无法正确读取 Windows 文件路径的问题 [#13317](https://github.com/CesiumGS/cesium/pull/13317)
 
 ## 1.139.1 - 2026-03-05
 
@@ -213,13 +316,16 @@
 #### Fixes :wrench:
 
 - Fixes a regression with the NGA-GPM local extension and custom shaders. [#13247](https://github.com/CesiumGS/cesium/pull/13247)
+  修复了 NGA-GPM 本地扩展与自定义着色器之间的回归缺陷。[#13247](https://github.com/CesiumGS/cesium/pull/13247)
 - Fixes a non-invertible matrix crash when zooming into globe without collision detection enabled [#13078](https://github.com/CesiumGS/cesium/issues/13078)
+  修复了未启用碰撞检测时向地球缩放导致不可逆矩阵崩溃的问题 [#13078](https://github.com/CesiumGS/cesium/issues/13078)
 
 ### @cesium/sandcastle
 
 #### Fixes :wrench:
 
 - Fixed split screen labels and Cartesian3 factory function calls, and edited descriptions for various gallery examples. [#13250](https://github.com/CesiumGS/cesium/pull/13250)
+  修复了分屏文本标签和 `Cartesian3` 工厂函数调用，并编辑完善了多个示例画廊的描述文本。[#13250](https://github.com/CesiumGS/cesium/pull/13250)
 
 ## 1.139 - 2026-03-02
 
@@ -228,36 +334,56 @@
 #### Breaking Changes :mega:
 
 - Fixed precision of point cloud attributes when accessed in a custom fragment shader. [#13170](https://github.com/CesiumGS/cesium/pull/13170)
+  修复了在自定义片元着色器（custom fragment shader）中访问点云属性时的精度问题。[#13170](https://github.com/CesiumGS/cesium/pull/13170)
 - Cartesian2, Cartesian3, and Cartesian4 are now [ES6 Classes](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes). This change should have no impact on most users, but note that using `new` on a static factory method, like `new Cartesian3.fromArray(...)`, will now throw an error. Omit `new` unless you are invoking a constructor directly, for these and all other factory methods, as more classes will be migrated to ES6 Classes soon. [#8359](https://github.com/CesiumGS/cesium/issues/8359)
+  Cartesian2、Cartesian3 与 Cartesian4 现已转换为 [ES6 类（Classes）](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes)。该改动对大多数用户没有影响，但请注意，在静态工厂方法上使用 `new`（例如 `new Cartesian3.fromArray(...)`）现在将抛出错误。除非直接调用构造函数，否则对于这些方法以及所有其他工厂方法均应省略 `new`，因为后续将有更多类迁移到 ES6 类。[#8359](https://github.com/CesiumGS/cesium/issues/8359)
 - [Custom Shaders](https://cesium.com/learn/cesiumjs/ref-doc/CustomShader.html?classFilter=customsh) that rely on metadata derived from the [EXT_structural_metadata extension](https://github.com/CesiumGS/glTF/tree/proposal-EXT_structural_metadata/extensions/2.0/Vendor/EXT_structural_metadata) no longer cast
   unsigned integer metadata types to signed integers. Any existing custom shaders that assign UINT-type metadata to local integers (e.g. `int myMetadata = vsInput.metadata.myUintMetadata`) will no longer compile. Variable assignments must be changed to reflect the underlying signedness of the metadata type.
   [#13135](https://github.com/CesiumGS/cesium/pull/13135)
+  依赖于源自 [EXT_structural_metadata 扩展](https://github.com/CesiumGS/glTF/tree/proposal-EXT_structural_metadata/extensions/2.0/Vendor/EXT_structural_metadata) 的元数据的[自定义着色器（Custom Shaders）](https://cesium.com/learn/cesiumjs/ref-doc/CustomShader.html?classFilter=customsh)不再将无符号整型元数据类型强转为有符号整型。任何将 UINT 类型元数据赋值给局部有符号整型（如 `int myMetadata = vsInput.metadata.myUintMetadata`）的现有自定义着色器将无法再编译。必须修改变量赋值以反映元数据类型的底层符号性（signedness）。[#13135](https://github.com/CesiumGS/cesium/pull/13135)
 
 #### Additions :tada:
 
 - Added panorama support via new `EquirectangularPanorama` and `CubeMapPanorama` classes, along with `GoogleStreetViewCubeMapPanoramaProvider` for loading cube map faces from the Google Street View Static API and rendering them in a cube map panorama. [#13153](https://github.com/CesiumGS/cesium/pull/13153/)
+  新增全景图支持：提供了全新的 `EquirectangularPanorama`（等距柱状全景）和 `CubeMapPanorama`（立方体贴图全景）类，以及用于从 Google 街景静态 API（Google Street View Static API）加载立方体贴图面并将其渲染为立方体贴图全景的 `GoogleStreetViewCubeMapPanoramaProvider`。[#13153](https://github.com/CesiumGS/cesium/pull/13153/)
 - Added more depth testing options for billboards and labels with `BillboardCollection.coarseDepthTestDistance`, `BillboardCollection.threePointDepthTestDistance`, `LabelCollection.coarseDepthTestDistance`, and `LabelCollection.threePointDepthTestDistance`. [#12994](https://github.com/CesiumGS/cesium/pull/12994)
+  为广告牌（Billboard）和标签（Label）添加了更多深度测试选项，包括 `BillboardCollection.coarseDepthTestDistance`、`BillboardCollection.threePointDepthTestDistance`、`LabelCollection.coarseDepthTestDistance` 以及 `LabelCollection.threePointDepthTestDistance`。[#12994](https://github.com/CesiumGS/cesium/pull/12994)
 - Added support for more metadata types via property textures in custom shaders. See this [issue](https://github.com/CesiumGS/cesium/issues/10248) for the current state of supported types. [#13135](https://github.com/CesiumGS/cesium/pull/13135)
+  在自定义着色器中添加了通过属性纹理（property textures）支持更多元数据类型的特性。有关当前支持类型的状态，请参见此 [Issue](https://github.com/CesiumGS/cesium/issues/10248)。[#13135](https://github.com/CesiumGS/cesium/pull/13135)
 - Added support for accessing metadata from property tables (from the [EXT_structural_metadata extension](https://github.com/CesiumGS/glTF/tree/proposal-EXT_structural_metadata/extensions/2.0/Vendor/EXT_structural_metadata)) in [custom shaders](https://cesium.com/learn/cesiumjs/ref-doc/CustomShader.html?classFilter=customsh). [#13124](https://github.com/CesiumGS/cesium/issues/13124)
+  添加了在[自定义着色器](https://cesium.com/learn/cesiumjs/ref-doc/CustomShader.html?classFilter=customsh)中从属性表（property tables，源自 [EXT_structural_metadata 扩展](https://github.com/CesiumGS/glTF/tree/proposal-EXT_structural_metadata/extensions/2.0/Vendor/EXT_structural_metadata)）访问元数据的支持。[#13124](https://github.com/CesiumGS/cesium/issues/13124)
 - Added `AttributeCompression.encodeRGB8` and `decodeRGB8` for packing colors. [#13174](https://github.com/CesiumGS/cesium/pull/13174)
+  添加了用于颜色打包与压缩的 `AttributeCompression.encodeRGB8` 和 `decodeRGB8`。[#13174](https://github.com/CesiumGS/cesium/pull/13174)
 
 #### Fixes :wrench:
 
 - Fixed Gaussian splat race conditions in snapshot/sort updates by enforcing explicit snapshot states, preventing stale async results from causing flickering, WebGL draw errors, and unstable LOD transition performance. [#13016](https://github.com/CesiumGS/cesium/pull/13016) [#12965](https://github.com/CesiumGS/cesium/pull/12965)
+  通过强制显式快照状态，修复了高斯泼溅（Gaussian splat）在快照/排序更新中的竞态条件，防止陈旧的异步计算结果导致闪烁、WebGL 绘制错误以及不稳定的 LOD 过渡性能。[#13016](https://github.com/CesiumGS/cesium/pull/13016) [#12965](https://github.com/CesiumGS/cesium/pull/12965)
 - Fixed flashing when rendering multiple Gaussian splat primitives by storing draw-command model matrices per primitive (`_drawCommandModelMatrix`). [#12967]
+  通过按图元存储绘制命令模型矩阵（`_drawCommandModelMatrix`），修复了渲染多个高斯泼溅（Gaussian splat）图元时的闪烁问题。[#12967]
 - Fixed depth-testing when `Billboard.disableDepthTestDistance` is `0`. [#13150]
+  修复了当 `Billboard.disableDepthTestDistance` 为 `0` 时的深度测试问题。[#13150]
 - Fixed billboard depth testing near horizon. [#13159]
+  修复了地平线附近广告牌的深度测试问题。[#13159]
 - Fixed shader cache lookup for day/night alpha in Columbus View. [#13216]
+  修复了哥伦布视图（Columbus View）中昼夜 Alpha 的着色器缓存查找问题。[#13216]
 - Fixed precision of point cloud attributes when accessed in a custom fragment shader. [#13170]
+  修复了在自定义片元着色器中访问点云属性时的精度问题。[#13170]
 - Fixed a point-rendering regression which caused points to render as circles rather than squares. Such points now will only render as circles when their width is specified via the [BENTLEY_materials_point_style](https://github.com/CesiumGS/glTF/pull/91) glTF extension. [#13217]
+  修复了一个点渲染回归问题，该问题曾导致点被渲染为圆形而非正方形。现在只有当通过 [BENTLEY_materials_point_style](https://github.com/CesiumGS/glTF/pull/91) glTF 扩展指定点宽时，此类点才会渲染为圆形。[#13217]
 - Fixed a coordinate switching bug in `OpenCageGeocoderService`. [#13138]
+  修复了 `OpenCageGeocoderService` 中坐标经纬度颠倒的错误。[#13138]
 - Fixed a regex expression used to find metadata variables in `CustomShader`s, and extended it to work with `metadataClass` and `metadataStatistics`. [#13231]
+  修复了用于在 `CustomShader` 中查找元数据变量的正则表达式，并扩展其以支持 `metadataClass` 和 `metadataStatistics`。[#13231]
 
 ### @cesium/sandcastle
 
 - Modified Sandcastle application to use a hybrid text and semantic, embedding based search. [#13090](https://github.com/CesiumGS/cesium/pull/13090)
+  修改了 Sandcastle 应用程序，使其使用文本与基于语义嵌入（embedding）的混合搜索。[#13090](https://github.com/CesiumGS/cesium/pull/13090)
 - Updated Sandcastle Gallery creation process to leverage MIT licensed Huggingface model to vectorize each sandcastle for embedding search. [#13090](https://github.com/CesiumGS/cesium/pull/13090)
+  更新了 Sandcastle Gallery 构建流程，利用 MIT 许可的 Hugging Face 模型对每个 Sandcastle 示例进行向量化，以用于语义嵌入搜索。[#13090](https://github.com/CesiumGS/cesium/pull/13090)
 - Further separated the viewer from the rest of the app to enable running them on separate origins. [#13154](https://github.com/CesiumGS/cesium/pull/13154)
+  进一步将 Viewer（查看器）与应用程序的其他部分解耦分离，以支持它们在不同源（separate origins）下运行。[#13154](https://github.com/CesiumGS/cesium/pull/13154)
 
 ## 1.138 - 2026-02-02
 
@@ -266,16 +392,24 @@
 #### Fixes :wrench:
 
 - Fixed jitter artifacts on Intel Arc GPUs. [#12879](https://github.com/CesiumGS/cesium/issues/12879)
+  修复了 Intel Arc 显卡上的抖动瑕疵（jitter artifacts）。[#12879](https://github.com/CesiumGS/cesium/issues/12879)
 - Improved voxel memory usage by reworking `Megatexture` to use `Texture3D`. [#12570](https://github.com/CesiumGS/cesium/issues/12570)
+  通过重构 `Megatexture` 改用 `Texture3D`（三维纹理），改善了体素（voxel）的内存占用。[#12570](https://github.com/CesiumGS/cesium/issues/12570)
 - Fixed multiple issues causing undefined pick results in 2D/CV scene modes. [#13083](https://github.com/CesiumGS/cesium/issues/13083)
+  修复了导致 2D/CV（二维/哥伦布视图）场景模式下拾取结果为 undefined 的多个问题。[#13083](https://github.com/CesiumGS/cesium/issues/13083)
 - Fixed label sizing for some fonts and characters. [#9767](https://github.com/CesiumGS/cesium/issues/9767)
+  修复了某些字体和字符的标签尺寸测量问题。[#9767](https://github.com/CesiumGS/cesium/issues/9767)
 - Fixed a type error when accessing the ellipsoid of a viewer. [#13123](https://github.com/CesiumGS/cesium/pull/13123)
+  修复了访问 Viewer 的椭球体（ellipsoid）时出现的类型错误（TypeError）。[#13123](https://github.com/CesiumGS/cesium/pull/13123)
 - Fixed a bug where entities have not been clustered correctly. [#13064](https://github.com/CesiumGS/cesium/pull/13064)
+  修复了实体（Entity）未能正确聚合（cluster）的问题。[#13064](https://github.com/CesiumGS/cesium/pull/13064)
 - Fixed error with `DynamicEnvironmentMapManager` when `ContextLimits.maximumCubeMapSize` is zero. [#12606](https://github.com/CesiumGS/cesium/pull/12606)
+  修复了当 `ContextLimits.maximumCubeMapSize` 为零时 `DynamicEnvironmentMapManager` 抛出错误的问题。[#12606](https://github.com/CesiumGS/cesium/pull/12606)
 
 #### Additions :tada:
 
 - Added support for [EXT_textureInfo_constant_lod](https://github.com/CesiumGS/glTF/pull/92) glTF extension. [#13121](https://github.com/CesiumGS/cesium/pull/13121)
+  添加了对 [EXT_textureInfo_constant_lod](https://github.com/CesiumGS/glTF/pull/92) glTF 扩展的支持。[#13121](https://github.com/CesiumGS/cesium/pull/13121)
 
 ## 1.137 - 2026-01-05
 
@@ -284,17 +418,23 @@
 #### Fixes :wrench:
 
 - Fixes label positioning in workflows that delete and recreate clamped labels [#12949](https://github.com/CesiumGS/cesium/issues/12949)
+  修复了在删除并重新创建贴地/贴模型标签（clamped labels）的工作流中标签定位异常的问题。[#12949](https://github.com/CesiumGS/cesium/issues/12949)
 - Fixes texture coordinates in large billboard collections [#13042](https://github.com/CesiumGS/cesium/pull/13042)
+  修复了大型广告牌集合（billboard collections）中的纹理坐标问题。[#13042](https://github.com/CesiumGS/cesium/pull/13042)
 
 #### Deprecated :hourglass_flowing_sand:
 
 - Beginning in CesiumJS 1.140, billboards and labels will require device support for WebGL 2, or WebGL 1 with ANGLE_instanced_arrays and MAX_VERTEX_TEXTURE_IMAGE_UNITS > 0. For more information or to share feedback, please see [#13053](https://github.com/CesiumGS/cesium/issues/13053). [#13067](https://github.com/CesiumGS/cesium/issues/13067)
+  自 CesiumJS 1.140 起，广告牌（billboard）和标签（label）将要求设备支持 WebGL 2，或支持带有 ANGLE_instanced_arrays 扩展且 MAX_VERTEX_TEXTURE_IMAGE_UNITS > 0 的 WebGL 1。欲了解更多信息或反馈意见，请参见 [#13053](https://github.com/CesiumGS/cesium/issues/13053)。[#13067](https://github.com/CesiumGS/cesium/issues/13067)
 
 #### Additions :tada:
 
 - Added support for the proposed [BENTLEY_materials_point_style](https://github.com/CesiumGS/glTF/pull/91) glTF extension. This allows point primitives to have a diameter property specified and respected when loaded via glTF.
+  添加了对草案 [BENTLEY_materials_point_style](https://github.com/CesiumGS/glTF/pull/91) glTF 扩展的支持。这使得点图元在通过 glTF 加载时能够指定并在渲染中遵循直径（diameter）属性。
 - Added support for the proposed [BENTLEY_materials_line_style](https://github.com/CesiumGS/glTF/pull/89) glTF extension. This enables CAD-style line visualization with variable width and dash patterns. Lines and edges can now have customizable `width` (in screen pixels) and `pattern` (16-bit repeating on/off pattern) properties when loaded via glTF.
+  添加了对草案 [BENTLEY_materials_line_style](https://github.com/CesiumGS/glTF/pull/89) glTF 扩展的支持。这实现了具有可变宽度和虚线样式的 CAD 风格线段可视化。通过 glTF 加载时，线条和边现在可以具有可自定义的 `width`（屏幕像素宽度）和 `pattern`（16 位循环虚线开关样式）属性。
 - Refactored `EXT_mesh_primitive_edge_visibility` implementation to use quad-based rendering instead of `gl_line` primitives. This enables variable line width support, as WebGL does not support line widths greater than 1. Each edge is now tessellated into a quad (4 vertices, 2 triangles) that expands perpendicular to the edge direction based on the material's width property.
+  重构了 `EXT_mesh_primitive_edge_visibility` 的实现，采用基于四边形（quad-based）的渲染替代 `gl_line` 图元。鉴于 WebGL 不支持大于 1 的线宽，此举实现了对可变线宽的支持。每条边现在都被细分为一个四边形（4 个顶点，2 个三角形），并根据材质的宽度属性沿垂直于边方向展开。
 
 ## 1.136 - 2025-12-01
 
@@ -303,14 +443,20 @@
 #### Fixes :wrench:
 
 - Improved scaling of SVGs in billboards [#13020](https://github.com/CesiumGS/cesium/pull/13020)
+  改进了广告牌中 SVG 的缩放效果。[#13020](https://github.com/CesiumGS/cesium/pull/13020)
 - Billboards using `imageSubRegion` now render as expected. [#12585](https://github.com/CesiumGS/cesium/issues/12585)
+  使用 `imageSubRegion` 的广告牌现在能按预期正确渲染。[#12585](https://github.com/CesiumGS/cesium/issues/12585)
 - Fixed depth testing bug with billboards and labels clipping through models [#13012](https://github.com/CesiumGS/cesium/issues/13012)
+  修复了广告牌和标签穿透模型裁剪的深度测试错误。[#13012](https://github.com/CesiumGS/cesium/issues/13012)
 - Fixed unexpected outline artifacts around billboards [#4525](https://github.com/CesiumGS/cesium/issues/4525)
+  修复了广告牌周围异常轮廓瑕疵的问题。[#4525](https://github.com/CesiumGS/cesium/issues/4525)
 
 #### Additions :tada:
 
 - Added `scene.pickAsync` for non GPU blocking picking using WebGL2 [#12983](https://github.com/CesiumGS/cesium/pull/12983)
+  添加了基于 WebGL2 的 `scene.pickAsync`，用于实现非 GPU 阻塞的异步拾取。[#12983](https://github.com/CesiumGS/cesium/pull/12983)
 - Improves performance of terrain picks via new terrain picking quadtrees [#8481](https://github.com/CesiumGS/cesium/issues/8481)
+  通过全新的地形拾取四叉树提升了地形拾取性能。[#8481](https://github.com/CesiumGS/cesium/issues/8481)
 
 ## 1.135 - 2025-11-03
 
@@ -319,27 +465,43 @@
 #### Breaking Changes :mega:
 
 - Removed support for the `KHR_spz_gaussian_splats_compression` extension in favor of the latest 3D Gaussian splatting extensions for glTF, `KHR_gaussian_splatting` and `KHR_gaussian_splatting_compression_spz_2`. Please re-tile existing Gaussian splatting 3D Tiles [#12837](https://github.com/CesiumGS/cesium/issues/12837)
+  移除了对 `KHR_spz_gaussian_splats_compression` 扩展的支持，转而采用最新的 glTF 3D 高斯泼溅扩展：`KHR_gaussian_splatting` 与 `KHR_gaussian_splatting_compression_spz_2`。请重新切片现有的高斯泼溅 3D Tiles 数据。[#12837](https://github.com/CesiumGS/cesium/issues/12837)
 - `scene.drillPick` now uses a breadth-first search strategy instead of depth-first. This may change which entities are picked when using large values of `width` and `height` when providing a `limit`, prioritizing entities closer to the camera. [#12916](https://github.com/CesiumGS/cesium/pull/12916)
+  `scene.drillPick`（穿透拾取）现在改用广度优先搜索策略而非深度优先。当提供了 `limit` 且使用的 `width` 与 `height` 较大时，这可能会改变拾取到的实体结果，优先选取更靠近相机的实体。[#12916](https://github.com/CesiumGS/cesium/pull/12916)
 
 #### Additions :tada:
 
 - Added experimental support for loading 3D Tiles as terrain, via `Cesium3DTilesTerrainProvider`. See [the PR](https://github.com/CesiumGS/cesium/pull/12963) for limitations on the types of 3D Tiles that can be used. [#12296](https://github.com/CesiumGS/cesium/issues/12296)
+  添加了通过 `Cesium3DTilesTerrainProvider` 将 3D Tiles 作为地形加载的实验性支持。有关可使用的 3D Tiles 类型限制，请参见 [PR 说明](https://github.com/CesiumGS/cesium/pull/12963)。[#12296](https://github.com/CesiumGS/cesium/issues/12296)
 - Added support for [EXT_mesh_primitive_edge_visibility](https://github.com/KhronosGroup/glTF/pull/2479) glTF extension. [#12765](https://github.com/CesiumGS/cesium/issues/12765)
+  添加了对 [EXT_mesh_primitive_edge_visibility](https://github.com/KhronosGroup/glTF/pull/2479) glTF 扩展的支持。[#12765](https://github.com/CesiumGS/cesium/issues/12765)
 - Extended edge visibility loading to honor material colors and line-string overrides from EXT_mesh_primitive_edge_visibility.
+  扩展了边缘可见性加载逻辑，以支持来自 EXT_mesh_primitive_edge_visibility 的材质颜色和折线重写（line-string overrides）。
 
 #### Fixes :wrench:
 
 - Improved performance of `scene.drillPick`. [#12916](https://github.com/CesiumGS/cesium/pull/12916)
+  提升了 `scene.drillPick` 的性能。[#12916](https://github.com/CesiumGS/cesium/pull/12916)
 - Improved performance when removing primitives. [#3018](https://github.com/CesiumGS/cesium/pull/3018)
+  提升了移除图元（primitives）时的性能。[#3018](https://github.com/CesiumGS/cesium/pull/3018)
 - Improved performance of terrain Quadtree handling of custom data [#12907](https://github.com/CesiumGS/cesium/pull/12907)
+  提升了地形四叉树处理自定义数据时的性能。[#12907](https://github.com/CesiumGS/cesium/pull/12907)
 - Fixed vertical exaggeration of ellipsoid-shaped voxels. [#12811](https://github.com/CesiumGS/cesium/issues/12811)
+  修复了椭球形体素的高程夸大（vertical exaggeration）效果。[#12811](https://github.com/CesiumGS/cesium/issues/12811)
 - Fixed parsing content bounding volumes contained in 3D Tiles 1.1 subtree files. [#12972](https://github.com/CesiumGS/cesium/pull/12972)
+  修复了对 3D Tiles 1.1 subtree（子树）文件中包含的内容包围盒（content bounding volumes）的解析问题。[#12972](https://github.com/CesiumGS/cesium/pull/12972)
 - Fixes an event bug following recent changes, where adding a new listener during an event callback caused an infinite loop. [#12955](https://github.com/CesiumGS/cesium/pull/12955)
+  修复了近期改动引入的事件缺陷：在事件回调中添加新的监听器会导致死循环。[#12955](https://github.com/CesiumGS/cesium/pull/12955)
 - Fix issues with label background when updating properties while `label.show` is `false`. [#12138](https://github.com/CesiumGS/cesium/issues/12138)
+  修复了当 `label.show` 为 `false` 时更新属性导致的标签背景问题。[#12138](https://github.com/CesiumGS/cesium/issues/12138)
 - Fixed picking of `GroundPrimitive` with multiple `PolygonGeometry` instances selecting the wrong instance. [#12978](https://github.com/CesiumGS/cesium/pull/12978)
+  修复了包含多个 `PolygonGeometry` 实例的贴地图元（`GroundPrimitive`）在拾取时选中错误实例的问题。[#12978](https://github.com/CesiumGS/cesium/pull/12978)
 - Fixed a bug where the removal of draped imagery layers did not update the rendered state [#12923](https://github.com/CesiumGS/cesium/issues/12923)
+  修复了移除贴地/覆盖影像图层（draped imagery layers）时未更新渲染状态的缺陷。[#12923](https://github.com/CesiumGS/cesium/issues/12923)
 - Fixed precision issues with Gaussian splat tilesets where the root tile does not have a world transform. [#12925](https://github.com/CesiumGS/cesium/issues/12925)
+  修复了根瓦片不含世界变换矩阵时高斯泼溅瓦片集（Gaussian splat tilesets）的精度问题。[#12925](https://github.com/CesiumGS/cesium/issues/12925)
 - Fixed infinite recursion that would happen if user append post-render callbacks within existing callbacks [#12983](https://github.com/CesiumGS/cesium/pull/12983)
+  修复了用户在已有渲染后回调中追加 post-render 回调时可能发生的无限递归问题。[#12983](https://github.com/CesiumGS/cesium/pull/12983)
 
 ## 1.134.1 - 2025-10-10
 
@@ -348,68 +510,98 @@
 #### Fixes :wrench:
 
 - Fixed an event bug following recent changes, where adding a new listener during an event callback caused an infinite loop. [#12955](https://github.com/CesiumGS/cesium/pull/12955)
+  修复了近期改动引入的事件缺陷：在事件回调中添加新的监听器会导致死循环。[#12955](https://github.com/CesiumGS/cesium/pull/12955)
 
 ## 1.134 - 2025-10-01
 
 - [Sandcastle](https://sandcastle.cesium.com/) has been updated at `https://sandcastle.cesium.com`! The [legacy Sandcastle app](https://cesium.com/downloads/cesiumjs/releases/1.134/Apps/Sandcastle/index.html) will remain available through November 3, 2025.
+  [Sandcastle](https://sandcastle.cesium.com/) 现已更新至 `https://sandcastle.cesium.com`！[旧版 Sandcastle 应用](https://cesium.com/downloads/cesiumjs/releases/1.134/Apps/Sandcastle/index.html)将保留至 2025 年 11 月 3 日。
 
 ### @cesium/engine
 
 #### Breaking Changes :mega:
 
 - Voxel rendering now requires a WebGL2 context, which is [enabled by default since 1.101](https://github.com/CesiumGS/cesium/pull/10894). Make sure the `requestWebGl1` flag in `contextOptions` is NOT set to true.
+  体素（Voxel）渲染现在需要 WebGL2 上下文环境，该环境[自 1.101 起已默认启用](https://github.com/CesiumGS/cesium/pull/10894)。请确保 `contextOptions` 中的 `requestWebGl1` 标志未设置为 true。
 - The `defaultValue` function has been removed. Instead, use the [nullish coalescing (`??`)](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Nullish_coalescing) operator. See the [Coding Guide](https://github.com/CesiumGS/cesium/tree/main/Documentation/Contributors/CodingGuide#default-parameter-values) for usage information and examples.
+  移除了 `defaultValue` 函数。请改用[空值合并运算符（`??`）](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Nullish_coalescing)。用法与示例请参见[编码指南（Coding Guide）](https://github.com/CesiumGS/cesium/tree/main/Documentation/Contributors/CodingGuide#default-parameter-values)。
 - `defaultValue.EMPTY_OBJECT` has been removed. Instead, use `Frozen.EMPTY_OBJECT`. See the [Coding Guide](https://github.com/CesiumGS/cesium/tree/main/Documentation/Contributors/CodingGuide#default-parameter-values) for usage information and examples.
+  移除了 `defaultValue.EMPTY_OBJECT`。请改用 `Frozen.EMPTY_OBJECT`。用法与示例请参见[编码指南（Coding Guide）](https://github.com/CesiumGS/cesium/tree/main/Documentation/Contributors/CodingGuide#default-parameter-values)。
 
 #### Additions :tada:
 
 - Added Google2DImageryProvider to load imagery from [Google Maps](https://developers.google.com/maps/documentation/tile/2d-tiles-overview) [#12913](https://github.com/CesiumGS/cesium/pull/12913)
+  新增了 Google2DImageryProvider，用于从 [Google Maps](https://developers.google.com/maps/documentation/tile/2d-tiles-overview) 加载影像。[#12913](https://github.com/CesiumGS/cesium/pull/12913)
 - Added an async factory method for the Material class that allows callers to wait on resource loading. [#10566](https://github.com/CesiumGS/cesium/issues/10566)
+  为 Material 类添加了一个异步工厂方法，允许调用者等待资源加载完成。[#10566](https://github.com/CesiumGS/cesium/issues/10566)
 
 #### Fixes :wrench:
 
 - Fixed vertical misalignment of glyphs in labels with small fonts [#8474](https://github.com/CesiumGS/cesium/issues/8474)
+  修复了小字号标签中字形（glyphs）垂直未对齐的问题。[#8474](https://github.com/CesiumGS/cesium/issues/8474)
 - Converted voxel raymarching to eye coordinates to fix precision issues in large datasets. [#12061](https://github.com/CesiumGS/cesium/issues/12061)
+  将体素光线投射/光线步进（raymarching）转换至相机/视点坐标系（eye coordinates），以解决大型数据集中的精度问题。[#12061](https://github.com/CesiumGS/cesium/issues/12061)
 - Fixed flickering artifact in Gaussian splat models caused by incorrect sorting results. [#12662](https://github.com/CesiumGS/cesium/issues/12662)
+  修复了因深度排序结果错误导致的高斯泼溅（Gaussian splat）模型闪烁瑕疵。[#12662](https://github.com/CesiumGS/cesium/issues/12662)
 - Fixed issue where multiple instances of a Gaussian splat tileset would transform tile positions incorrectly and render out of position. [#12795](https://github.com/CesiumGS/cesium/issues/12795)
+  修复了高斯泼溅瓦片集（Gaussian splat tileset）的多实例出现瓦片位置变换错误并渲染位置偏移的问题。[#12795](https://github.com/CesiumGS/cesium/issues/12795)
 - Fixed rendering for geometry entities when `requestRenderMode` is enabled. [#12841](https://github.com/CesiumGS/cesium/pull/12841)
+  修复了启用按需渲染模式（`requestRenderMode`）时几何图形实体的渲染问题。[#12841](https://github.com/CesiumGS/cesium/pull/12841)
 - Improved performance and reduced memory usage of `Event` class. [#12896](https://github.com/CesiumGS/cesium/pull/12896)
+  提升了 `Event` 类的性能并降低了其内存占用。[#12896](https://github.com/CesiumGS/cesium/pull/12896)
 - Improved performance of clamped labels. [#12905](https://github.com/CesiumGS/cesium/pull/12905)
+  提升了贴地/贴模型标签（clamped labels）的性能。[#12905](https://github.com/CesiumGS/cesium/pull/12905)
 - Materials loaded from type now respect submaterials present in the referenced material type. [#10566](https://github.com/CesiumGS/cesium/issues/10566)
+  从类型加载的材质现在会正确遵循引用材质类型中存在的子材质（submaterials）。[#10566](https://github.com/CesiumGS/cesium/issues/10566)
 - Prevent runtime errors for certain forms of invalid PNTS files [#12872](https://github.com/CesiumGS/cesium/issues/12872)
+  防止某些特定格式的无效 PNTS（点云）文件导致运行时错误。[#12872](https://github.com/CesiumGS/cesium/issues/12872)
 - Revert `createImageBitmap` options update to continue support for older browsers [#12846](https://github.com/CesiumGS/cesium/issues/12846)
+  回退了 `createImageBitmap` 选项更新，以继续支持旧版浏览器。[#12846](https://github.com/CesiumGS/cesium/issues/12846)
 
 ## 1.133.1 - 2025-09-08
 
 This is an npm-only release to fix a dependency issue published in 1.133.0
 
+这是一个仅限 npm 的补丁发布，用于修复 1.133.0 中发布的依赖问题。
+
 ## 1.133 - 2025-09-02
 
 - Give the [new version of Sandcastle](https://dev-sandcastle.cesium.com/) a try today!
+  快来体验[新版 Sandcastle](https://dev-sandcastle.cesium.com/)吧！
 
 ### @cesium/engine
 
 #### Breaking Changes :mega:
 
 - Removed the argument fallback in `ITwinData.*` functions. Instead, use the new options argument signature. [#12778](https://github.com/CesiumGS/cesium/issues/12778)
+  移除了 `ITwinData.*` 系列函数中的参数后备回退（argument fallback）。请改用新的 options 参数签名。[#12778](https://github.com/CesiumGS/cesium/issues/12778)
 
 #### Additions :tada:
 
 - Added support for the [EXT_mesh_primitive_restart](https://github.com/KhronosGroup/glTF/pull/2478) glTF extension. [#12764](https://github.com/CesiumGS/cesium/issues/12764)
+  添加了对 [EXT_mesh_primitive_restart](https://github.com/KhronosGroup/glTF/pull/2478) glTF 扩展（图元重启）的支持。[#12764](https://github.com/CesiumGS/cesium/issues/12764)
 - Added spherical harmonics support for Gaussian splats, supported with the SPZ compression format. [#12790](https://github.com/CesiumGS/cesium/pull/12790)
+  为高斯泼溅（Gaussian splats）添加了球谐函数（spherical harmonics）支持，支持 SPZ 压缩格式。[#12790](https://github.com/CesiumGS/cesium/pull/12790)
 - Added `Ellipsoid.MARS` for use with Mars terrain and imagery. [#12828](https://github.com/CesiumGS/cesium/pull/12828)
+  添加了用于火星地形和影像的 `Ellipsoid.MARS`（火星参考椭球体）。[#12828](https://github.com/CesiumGS/cesium/pull/12828)
 - Allow passing `Cesium3DTileset` constructor options to the tileset that is created with `ITwinData.createTilesetForRealityDataId`. [#12709](https://github.com/CesiumGS/cesium/issues/12709)
+  允许将 `Cesium3DTileset` 构造函数选项传递给通过 `ITwinData.createTilesetForRealityDataId` 创建的瓦片集。[#12709](https://github.com/CesiumGS/cesium/issues/12709)
 
 #### Fixes :wrench:
 
 - Fixed issue where a Gaussian splat tileset would be rendered even if out of current camera view. [#12840](https://github.com/CesiumGS/cesium/pull/12840)
+  修复了高斯泼溅瓦片集即使超出当前相机视界范围仍会被渲染的问题。[#12840](https://github.com/CesiumGS/cesium/pull/12840)
 - Removes the minimum tile threshold of four for WMTS. [#4372](https://github.com/CesiumGS/cesium/issues/4372)
+  移除了 WMTS 最小 4 个瓦片的阈值限制。[#4372](https://github.com/CesiumGS/cesium/issues/4372)
 - Fixed a crash when loading PNTS (point cloud) data that contained a batch table without a binary part. [#11166](https://github.com/CesiumGS/cesium/issues/11166)
+  修复了加载包含不含二进制部分批次表（batch table）的 PNTS（点云）数据时程序崩溃的问题。[#11166](https://github.com/CesiumGS/cesium/issues/11166)
 - Fixed an error picking an area hidden by a `ClippingPolygon`. [#12725](https://github.com/CesiumGS/cesium/issues/12725)
+  修复了拾取被裁剪多边形（`ClippingPolygon`）隐藏的区域时报错的问题。[#12725](https://github.com/CesiumGS/cesium/issues/12725)
 
 #### Deprecated :hourglass_flowing_sand:
 
 - Deprecated support for the `KHR_spz_gaussian_splats_compression` extension in favor of the latest 3D Gaussian splatting extensions for glTF, `KHR_gaussian_splatting` and `KHR_gaussian_splatting_compression_spz_2`. The deprecated extension will be removed in version 1.135. To ensure support in CesiumJS 1.135 and beyond, Please re-tile existing Gaussian splatting 3D Tiles before November 1, 2025. [#12837](https://github.com/CesiumGS/cesium/issues/12837)
+  废弃了对 `KHR_spz_gaussian_splats_compression` 扩展的支持，转而采用最新的 glTF 3D 高斯泼溅扩展：`KHR_gaussian_splatting` 与 `KHR_gaussian_splatting_compression_spz_2`。已废弃的扩展将在 1.135 版本中移除。为确保在 CesiumJS 1.135 及后续版本中的支持，请在 2025 年 11 月 1 日之前重新切片现有的高斯泼溅 3D Tiles 数据。[#12837](https://github.com/CesiumGS/cesium/issues/12837)
 
 ## 1.132 - 2025-08-01
 
@@ -418,26 +610,41 @@ This is an npm-only release to fix a dependency issue published in 1.133.0
 #### Fixes :wrench:
 
 - Fixes incorrect polygon culling in 2D scene mode. [#1552](https://github.com/CesiumGS/cesium/issues/1552)
+  修复二维场景模式下多边形剔除错误的问题。[#1552](https://github.com/CesiumGS/cesium/issues/1552)
 - Fixes material flashing when changing properties. [#1640](https://github.com/CesiumGS/cesium/issues/1640), [#12716](https://github.com/CesiumGS/cesium/issues/12716)
+  修复修改属性时材质闪烁的问题。[#1640](https://github.com/CesiumGS/cesium/issues/1640), [#12716](https://github.com/CesiumGS/cesium/issues/12716)
 - Fixed an issue where draped imagery on tilesets was not updated based on the visibility of the imagery layer. [#12742](https://github.com/CesiumGS/cesium/issues/12742)
+  修复瓦片集上的贴地影像未根据影像图层的可见性进行更新的问题。[#12742](https://github.com/CesiumGS/cesium/issues/12742)
 - Fixes an exception when removing a Gaussian splat tileset from the scene primitives when it has more than one tile. [#12726](https://github.com/CesiumGS/cesium/pull/12726)
+  修复当高斯泼溅（Gaussian splat）瓦片集包含多个瓦片时，从场景图元列表中移除该瓦片集会抛出异常的问题。[#12726](https://github.com/CesiumGS/cesium/pull/12726)
 - Fixes rendering of Gaussian splats when they are scaled by the glTF transform, tileset transform, or model matrix. [#12721](https://github.com/CesiumGS/cesium/issues/12721), [#12718](https://github.com/CesiumGS/cesium/issues/12718)
+  修复当高斯泼溅通过 glTF 变换、瓦片集变换或模型矩阵进行缩放时的渲染问题。[#12721](https://github.com/CesiumGS/cesium/issues/12721), [#12718](https://github.com/CesiumGS/cesium/issues/12718)
 - Fixes label background translucency issue. [#12673](https://github.com/CesiumGS/cesium/issues/12673)
+  修复文本标签（label）背景半透明度问题。[#12673](https://github.com/CesiumGS/cesium/issues/12673)
 - Updated the type of many properties and functions of `Scene` to clarify that they may be `undefined`. For the full list check PR: [#12736](https://github.com/CesiumGS/cesium/pull/12736)
+  更新了 `Scene` 的多个属性和函数的类型定义，明确它们可能为 `undefined`。完整列表请参见 PR: [#12736](https://github.com/CesiumGS/cesium/pull/12736)
 - Fixes Gaussian splats incorrectly rendering when `Cesium3DTileset.show` is `false`. [#12748](https://github.com/CesiumGS/cesium/pull/12748)
+  修复当 `Cesium3DTileset.show` 为 `false` 时高斯泼溅仍错误渲染的问题。[#12748](https://github.com/CesiumGS/cesium/pull/12748)
 - Fixed the PointCloudShading.normalShading parameter, to disable normal shading when set to false, even if the point cloud contains normals. [#11196](https://github.com/CesiumGS/cesium/issues/11196)
+  修复了 `PointCloudShading.normalShading` 参数，在设置为 `false` 时能够禁用法线着色，即使点云本身包含法线。[#11196](https://github.com/CesiumGS/cesium/issues/11196)
 - Updated GPU vertex transformations to reduce precision errors. [#4250](https://github.com/CesiumGS/cesium/issues/4250)
+  更新了 GPU 顶点变换计算以减少精度误差。[#4250](https://github.com/CesiumGS/cesium/issues/4250)
 - Fixes Gaussian splats orientation with respect to glTF up-axis by updating `spz-loader` to version `0.3.0`. [#12737](https://github.com/CesiumGS/cesium/issues/12737), [#12749](https://github.com/CesiumGS/cesium/issues/12749)
+  通过将 `spz-loader` 更新至版本 `0.3.0`，修复了高斯泼溅相对于 glTF 上轴（up-axis）的朝向问题。[#12737](https://github.com/CesiumGS/cesium/issues/12737), [#12749](https://github.com/CesiumGS/cesium/issues/12749)
 
 #### Additions :tada:
 
 - Expand the CustomShader Sample to support real-time modification of CustomShader. [#12702](https://github.com/CesiumGS/cesium/pull/12702)
+  扩展了 CustomShader 示例，以支持实时修改 CustomShader。[#12702](https://github.com/CesiumGS/cesium/pull/12702)
 - Add wrapR property to Sampler and Texture3D, to support the newly added third dimension wrap.[#12701](https://github.com/CesiumGS/cesium/pull/12701)
+  为 Sampler 和 Texture3D 添加了 `wrapR` 属性，以支持新增的第三维度寻址/环绕模式（wrap）。[#12701](https://github.com/CesiumGS/cesium/pull/12701)
 - Added the ability to load a specific changeset for iTwin Mesh Exports using `ITwinData.createTilesetFromIModelId` [#12778](https://github.com/CesiumGS/cesium/issues/12778)
+  增加了使用 `ITwinData.createTilesetFromIModelId` 为 iTwin 网格导出加载特定变更集（changeset）的功能。[#12778](https://github.com/CesiumGS/cesium/issues/12778)
 
 #### Deprecated :hourglass_flowing_sand:
 
 - Updated all of the `ITwinData.*` functions to accept an `options` parameter instead of individual arguments to avoid confusion with multiple optional arguments. There is a fallback to the old signature that will be removed in 1.133 [#12778](https://github.com/CesiumGS/cesium/issues/12778)
+  更新了所有 `ITwinData.*` 函数，使其接受 `options` 参数对象而不是单独的位置参数，以避免多重可选参数带来的混淆。保留了对旧函数签名的向后兼容回退，并将在 1.133 中移除。[#12778](https://github.com/CesiumGS/cesium/issues/12778)
 
 ## 1.131 - 2025-07-01
 
@@ -446,13 +653,18 @@ This is an npm-only release to fix a dependency issue published in 1.133.0
 #### Fixes :wrench:
 
 - Updates use of deprecated options on createImageBitmap. [#12664](https://github.com/CesiumGS/cesium/pull/12664)
+  更新了在 `createImageBitmap` 中对已废弃选项的使用方式。[#12664](https://github.com/CesiumGS/cesium/pull/12664)
 - Fixed raymarching step size for cylindrical voxels. [#12681](https://github.com/CesiumGS/cesium/pull/12681)
+  修复了圆柱体形状体素（cylindrical voxels）的光线步进（raymarching）步长问题。[#12681](https://github.com/CesiumGS/cesium/pull/12681)
 - Fixes handling of tileset `modelMatrix` changes for translations and rotations in `GaussianSplatPrimitive`. [#12706](https://github.com/CesiumGS/cesium/pull/12706)
+  修复了 `GaussianSplatPrimitive` 中对瓦片集 `modelMatrix` 平移和旋转变更的处理。[#12706](https://github.com/CesiumGS/cesium/pull/12706)
 
 #### Additions :tada:
 
 - Added `HeightReference` to `Cesium3DTileset.ConstructorOptions` to allow clamping point features in 3D Tile vector data to terrain or 3D Tiles [#11710](https://github.com/CesiumGS/cesium/pull/11710)
+  在 `Cesium3DTileset.ConstructorOptions` 中添加了 `HeightReference`，以支持将 3D Tiles 矢量数据中的点要素贴合/贴地（clamping）到地形或 3D Tiles 瓦片集上。[#11710](https://github.com/CesiumGS/cesium/pull/11710)
 - Added the ability to pass `OffscreenCanvas` & `ImageBitmap` directly to `Material` uniforms. [#12558](https://github.com/CesiumGS/cesium/pull/12558)
+  增加了直接将 `OffscreenCanvas` 和 `ImageBitmap` 传递给 `Material` uniform 变量的功能。[#12558](https://github.com/CesiumGS/cesium/pull/12558)
 
 ## 1.130.1 - 2025-06-16
 
@@ -461,7 +673,9 @@ This is an npm-only release to fix a dependency issue published in 1.133.0
 #### Additions :tada:
 
 - Added experimental support for loading 3D Tiles with Gaussian splats encoded with SPZ compression using the draft glTF extension [`KHR_spz_gaussian_splats_compression`](https://github.com/KhronosGroup/glTF/pull/2490). [#12582](https://github.com/CesiumGS/cesium/pull/12582)
+  新增对使用草案版 glTF 扩展 [`KHR_spz_gaussian_splats_compression`](https://github.com/KhronosGroup/glTF/pull/2490) 编码为 SPZ 压缩的高斯泼溅（Gaussian splats）3D Tiles 进行加载的实验性支持。[#12582](https://github.com/CesiumGS/cesium/pull/12582)
 - Added support for integral texture formats: R32I, RG32I, RGB32I, RGBA32I, R32UI, RG32UI, RGB32UI, RGBA32UI [#12582](https://github.com/CesiumGS/cesium/pull/12582)
+  新增对整型纹理格式的支持：R32I、RG32I、RGB32I、RGBA32I、R32UI、RG32UI、RGB32UI、RGBA32UI。[#12582](https://github.com/CesiumGS/cesium/pull/12582)
 
 ## 1.130 - 2025-06-02
 
@@ -470,8 +684,11 @@ This is an npm-only release to fix a dependency issue published in 1.133.0
 #### Breaking Changes :mega:
 
 - The `FragmentInput` struct for voxel shaders has been updated to be more consistent with the `CustomShader` documentation. Remaining differences in `CustomShader` usage between `VoxelPrimitive` and `Cesium3DTileset` or `Model` are now documented in the Custom Shader Guide. [#12636](https://github.com/CesiumGS/cesium/pull/12636). Key changes include:
+  体素着色器的 `FragmentInput` 结构体已更新，以便与 `CustomShader` 文档更加一致。`VoxelPrimitive` 与 `Cesium3DTileset` 或 `Model` 之间在 `CustomShader` 用法上的剩余差异现已记录在自定义着色器指南（Custom Shader Guide）中。[#12636](https://github.com/CesiumGS/cesium/pull/12636)。主要变更包括：
   - The non-standard position attributes `fsInput.voxel.positionUv`, `fsInput.voxel.positionShapeUv`, and `fsInput.voxel.positionLocal` have been removed, and replaced by a single eye coordinate position `fsInput.attributes.positionEC`.
+    移除了非标准位置属性 `fsInput.voxel.positionUv`、`fsInput.voxel.positionShapeUv` 和 `fsInput.voxel.positionLocal`，并替换为单个视坐标（eye coordinates）位置 `fsInput.attributes.positionEC`。
   - The normal in model coordinates `fsInput.voxel.surfaceNormal` has been replaced by a normal in eye coordinates `fsInput.attributes.normalEC`. Example:
+    模型坐标系下的法线 `fsInput.voxel.surfaceNormal` 已被替换为视坐标（eye coordinates）下的法线 `fsInput.attributes.normalEC`。示例：
 
 ```glsl
 // Replace this:
@@ -483,11 +700,14 @@ vec3 voxelNormal = fsInput.attributes.normalEC;
 #### Additions :tada:
 
 - Add basic support for draping imagery on 3D Tiles. [#12567](https://github.com/CesiumGS/cesium/pull/12567)
+  增加对在 3D Tiles 上贴附/贴地影像（draping imagery）的基础支持。[#12567](https://github.com/CesiumGS/cesium/pull/12567)
 - Add support for 3D Textures and add Volume Cloud sandcastle example. [#12661](https://github.com/CesiumGS/cesium/pull/12611)
+  新增对 3D 纹理（3D Textures）的支持，并添加了体积云（Volume Cloud）Sandcastle 示例。[#12661](https://github.com/CesiumGS/cesium/pull/12611)
 
 #### Fixes :wrench:
 
 - Fixed voxel rendering with orthographic cameras. [#12629](https://github.com/CesiumGS/cesium/pull/12629)
+  修复了正交相机下的体素渲染问题。[#12629](https://github.com/CesiumGS/cesium/pull/12629)
 
 ## 1.129 - 2025-05-01
 
@@ -496,16 +716,21 @@ vec3 voxelNormal = fsInput.attributes.normalEC;
 #### Breaking Changes :mega:
 
 - `VoxelProvider.minimumBounds` and `.maximumBounds` are now specified as physical values, rather than shape space values. [#12592](https://github.com/CesiumGS/cesium/pull/12592)
+  `VoxelProvider.minimumBounds` 和 `.maximumBounds` 现在以物理空间值指定，而非形状空间值。[#12592](https://github.com/CesiumGS/cesium/pull/12592)
 
 #### Additions :tada:
 
 - Added `Material with Custom GLSL` Sandbox Demo. [#12549](https://github.com/CesiumGS/cesium/issues/12549)
+  新增了“包含自定义 GLSL 的材质”（Material with Custom GLSL）Sandcastle 沙箱示例。[#12549](https://github.com/CesiumGS/cesium/issues/12549)
 
 #### Fixes :wrench:
 
 - `QuadtreePrimitive.updateHeights` now converts position to Cartographic before invoking the callback, ensuring compatibility with change introduced by [commit 53889cb](https://github.com/CesiumGS/cesium/commit/53889cb) and preventing unnecessary computation. [#12555](https://github.com/CesiumGS/cesium/pull/12555)
+  `QuadtreePrimitive.updateHeights` 现在在调用回调前将位置转换为 Cartographic（地理制图坐标），确保与 [commit 53889cb](https://github.com/CesiumGS/cesium/commit/53889cb) 引入的更改兼容，并避免不必要的计算。[#12555](https://github.com/CesiumGS/cesium/pull/12555)
 - Fixed `Polyline*MaterialProperty` width artifacts (reverted [#12434](https://github.com/CesiumGS/cesium/pull/12434)). [#12506](https://github.com/CesiumGS/cesium/issues/12506)
+  修复了 `Polyline*MaterialProperty` 线宽渲染伪影（回滚了 [#12434](https://github.com/CesiumGS/cesium/pull/12434)）。[#12506](https://github.com/CesiumGS/cesium/issues/12506)
 - `Check.typeOf.object` now asserts `Record<string|number|symbol, any>` instead of `object` to allow property checks after assertion. [#12572](https://github.com/CesiumGS/cesium/issues/12572)
+  `Check.typeOf.object` 现在断言为 `Record<string|number|symbol, any>` 而非 `object`，以便断言后进行属性检查。[#12572](https://github.com/CesiumGS/cesium/issues/12572)
 
 ## 1.128 - 2025-04-01
 
@@ -514,27 +739,40 @@ vec3 voxelNormal = fsInput.attributes.normalEC;
 #### Breaking Changes :mega:
 
 - `Camera.getPickRay` was erroneously returning a result in camera coordinates. It is now returned in world coordinates as stated in the documentation. The result can be transformed using `Camera.inverseViewMatrix` to achieve the previous behavior.
+  `Camera.getPickRay` 此前错误地返回相机坐标系下的结果。现已按照文档说明改为返回世界坐标系下的结果。可以使用 `Camera.inverseViewMatrix` 变换该结果以获得先前的行为。
 - `VoxelMetadataOrder` has been made private, and the `metadataOrder` property has been removed from the `VoxelProvider` interface.
+  `VoxelMetadataOrder` 已设为私有，且 `metadataOrder` 属性已从 `VoxelProvider` 接口中移除。
 
 #### Additions :tada:
 
 - Added support for loading iTwin data using share keys as an alternative to user-based OAuth. When using a share key, set `ITwinPlatform.defaultShareKey`. [#12530](https://github.com/CesiumGS/cesium/pull/12530)
+  增加了使用共享密钥（share keys）加载 iTwin 数据的支持，作为基于用户的 OAuth 的替代方案。使用共享密钥时，需设置 `ITwinPlatform.defaultShareKey`。[#12530](https://github.com/CesiumGS/cesium/pull/12530)
 - Added `Frozen.EMPTY_OBJECT` and `Frozen.EMPTY_ARRAY` for use as default parameter values that avoid unnecessary memory allocations. [#12507](https://github.com/CesiumGS/cesium/pull/12507)
+  新增了 `Frozen.EMPTY_OBJECT` 和 `Frozen.EMPTY_ARRAY` 用作默认参数值，以避免不必要的内存分配。[#12507](https://github.com/CesiumGS/cesium/pull/12507)
 
 #### Fixes :wrench:
 
 - Fixed entity tracking for delayed datasource bounding spheres. [#12465](https://github.com/CesiumGS/cesium/issues/12465)
+  修复了数据源包围球延迟计算时的实体追踪问题。[#12465](https://github.com/CesiumGS/cesium/issues/12465)
 - `Camera.getPickRay` now correctly returns a ray with origin in world coordinates in orthographic mode. [#12500](https://github.com/CesiumGS/cesium/pull/12500)
+  `Camera.getPickRay` 现在在正交模式下正确返回原点位于世界坐标系中的射线。[#12500](https://github.com/CesiumGS/cesium/pull/12500)
 - Fixed camera zooming in 3D orthographic mode when pixelRatio is not 1. [#12487](https://github.com/CesiumGS/cesium/pull/12487)
+  修复了当 `pixelRatio` 不为 1 时三维正交模式下的相机缩放问题。[#12487](https://github.com/CesiumGS/cesium/pull/12487)
 - Fixed shape bounds and transforms for cylinder-shaped voxels. [#12522](https://github.com/CesiumGS/cesium/pull/12522)
+  修复了圆柱形状体素的形状边界和变换矩阵问题。[#12522](https://github.com/CesiumGS/cesium/pull/12522)
 - Fixed metadata ordering for ellipsoid voxel tilesets. [#12544](https://github.com/CesiumGS/cesium/pull/12544)
+  修复了椭球体形状体素瓦片集的元数据排序问题。[#12544](https://github.com/CesiumGS/cesium/pull/12544)
 - Fixed an issue where clamped entities' height updates could stall when using high-resolution terrain due to a growing queue of tiles in `updateHeights` in `QuadtreePrimitive`. [#12476](https://github.com/CesiumGS/cesium/issues/12476)
+  修复了使用高分辨率地形时，由于 `QuadtreePrimitive` 的 `updateHeights` 中瓦片队列不断堆积，导致贴地/贴模型实体（clamped entities）的高程更新停滞的问题。[#12476](https://github.com/CesiumGS/cesium/issues/12476)
 - Fixed `VaryingType.MAT3` definition. [#12524](https://github.com/CesiumGS/cesium/issues/12524)
+  修复了 `VaryingType.MAT3` 的定义问题。[#12524](https://github.com/CesiumGS/cesium/issues/12524)
 
 #### Deprecated :hourglass_flowing_sand:
 
 - The `defaultValue` function has been deprecated, and will be removed in 1.134. Instead, use the logical OR (`||`) the [nullish coalescing (`??`)](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Nullish_coalescing) operator. See the [Coding Guide](https://github.com/CesiumGS/cesium/tree/main/Documentation/Contributors/CodingGuide#default-parameter-values) for usage information and examples.
+  `defaultValue` 函数已被弃用，并将于 1.134 版本中移除。请改用逻辑或（`||`）或[空值合并运算符（`??`）](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Nullish_coalescing)。有关使用信息和示例，请参阅[编码指南](https://github.com/CesiumGS/cesium/tree/main/Documentation/Contributors/CodingGuide#default-parameter-values)。
 - `defaultValue.EMPTY_OBJECT` has been deprecated, and will be removed in 1.134. Instead, use `Frozen.EMPTY_OBJECT`. See the [Coding Guide](https://github.com/CesiumGS/cesium/tree/main/Documentation/Contributors/CodingGuide#default-parameter-values) for usage information and examples.
+  `defaultValue.EMPTY_OBJECT` 已被弃用，并将于 1.134 版本中移除。请改用 `Frozen.EMPTY_OBJECT`。有关使用信息和示例，请参阅[编码指南](https://github.com/CesiumGS/cesium/tree/main/Documentation/Contributors/CodingGuide#default-parameter-values)。
 
 ## 1.127 - 2025-03-03
 
@@ -543,7 +781,9 @@ vec3 voxelNormal = fsInput.attributes.normalEC;
 #### Breaking Changes :mega:
 
 - Updated `Cesium3DTilesVoxelProvider` to load glTF tiles using the new [`EXT_primitive_voxels` extension](https://github.com/CesiumGS/glTF/pull/69) to more closely align with the rest of the 3D Tiles ecosystem. Tilesets using the previous custom JSON format are no longer supported. [#12432](https://github.com/CesiumGS/cesium/pull/12432)
+  更新了 `Cesium3DTilesVoxelProvider`，使用新的 [`EXT_primitive_voxels` 扩展](https://github.com/CesiumGS/glTF/pull/69) 加载 glTF 瓦片，以便更紧密地与 3D Tiles 生态系统对齐。不再支持使用原先自定义 JSON 格式的瓦片集。[#12432](https://github.com/CesiumGS/cesium/pull/12432)
 - Updated the `requestData` method of the `VoxelProvider` interface to return a `Promise` to a `VoxelContent`. Custom providers should now use the `VoxelContent.fromMetadataArray` method to construct the returned data object. For example:
+  更新了 `VoxelProvider` 接口的 `requestData` 方法，改为返回解析为 `VoxelContent` 的 `Promise`。自定义 Provider 现在应使用 `VoxelContent.fromMetadataArray` 方法来构建返回的数据对象。例如：
 
 ```js
 CustomVoxelProvider.prototype.requestData = function (options) {
@@ -555,22 +795,33 @@ CustomVoxelProvider.prototype.requestData = function (options) {
 ```
 
 - Changed `VoxelCylinderShape` to assume coordinates in the order (radius, angle, height). See [CesiumGS/3d-tiles#780](https://github.com/CesiumGS/3d-tiles/pull/780)
+  更改了 `VoxelCylinderShape`，使其坐标假定按（半径、角度、高度）的顺序排列。参见 [CesiumGS/3d-tiles#780](https://github.com/CesiumGS/3d-tiles/pull/780)
 
 #### Additions :tada:
 
 - Implemented `texturesByteLength`, `visited`, and `numberOfTilesWithContentReady` in `VoxelPrimitive.statistics`. To use statistics, set `options.calculateStatistics` to `true` in the constructor. Note `VoxelPrimitive` is experimental.
+  在 `VoxelPrimitive.statistics` 中实现了 `texturesByteLength`、`visited` 和 `numberOfTilesWithContentReady` 统计指标。如需使用统计功能，请在构造函数中将 `options.calculateStatistics` 设置为 `true`。注意 `VoxelPrimitive` 目前为实验性功能。
 
 #### Fixes :wrench:
 
 - Exposed `CustomShader.prototype.destroy` as a public method. [#12444](https://github.com/CesiumGS/cesium/issues/12444)
+  将 `CustomShader.prototype.destroy` 公开为公共方法。[#12444](https://github.com/CesiumGS/cesium/issues/12444)
 - Fixed error when there are duplicated points in polygon/polyline geometries with `ArcType.RHUMB` [#12460](https://github.com/CesiumGS/cesium/pull/12460)
+  修复了当使用 `ArcType.RHUMB`（恒向线/等角航线）的多边形/折线几何体中存在重复点时报错的问题。[#12460](https://github.com/CesiumGS/cesium/pull/12460)
 - Fixed ground atmosphere shaders in 3D orthographic mode [#12484](https://github.com/CesiumGS/cesium/pull/12484)
+  修复了三维正交模式下的地面大气着色器问题。[#12484](https://github.com/CesiumGS/cesium/pull/12484)
 - Fixed zoom in 3D orthographic mode [#12483](https://github.com/CesiumGS/cesium/pull/12483)
+  修复了三维正交模式下的缩放问题。[#12483](https://github.com/CesiumGS/cesium/pull/12483)
 - Fixed issue with billboards not clamping properly when nested inside a PrimitiveCollection [#12482](https://github.com/CesiumGS/cesium/pull/12482)
+  修复了广告牌嵌套在 `PrimitiveCollection` 内部时无法正确贴地/贴模型（clamping）的问题。[#12482](https://github.com/CesiumGS/cesium/pull/12482)
 - Fixed error with black flashes on label and billboard updates. [#12231](https://github.com/CesiumGS/cesium/issues/12231)
+  修复了更新标签和广告牌时出现黑屏闪烁的错误。[#12231](https://github.com/CesiumGS/cesium/issues/12231)
 - `TextureAtlas` has been refactored and internal APIs have been updated. If relying on the private texture atlas API, see [#12495](https://github.com/CesiumGS/cesium/pull/12495) for details.
+  `TextureAtlas` 已被重构，内部 API 也已更新。如果依赖私有纹理图集 API，请参见 [#12495](https://github.com/CesiumGS/cesium/pull/12495) 了解详情。
   - Texture atlas now resizes more conservatively. This should help with texture memory overhead with may labels and billboards. [#172](https://github.com/CesiumGS/cesium/issues/172)
+    纹理图集现在的尺寸调整策略更加保守。这将有助于降低拥有大量标签和广告牌时的纹理内存开销。[#172](https://github.com/CesiumGS/cesium/issues/172)
   - Texture atlas now reuses coordinates for existing subregions. [#2094](https://github.com/CesiumGS/cesium/issues/2094)
+    纹理图集现在会复用现有子区域的坐标。[#2094](https://github.com/CesiumGS/cesium/issues/2094)
 
 ## 1.126 - 2025-02-03
 
@@ -579,22 +830,33 @@ CustomVoxelProvider.prototype.requestData = function (options) {
 #### Breaking Changes :mega:
 
 - `createGooglePhotorealistic3DTileset(key)` has been removed. Use `createGooglePhotorealistic3DTileset({key})` instead.
+  `createGooglePhotorealistic3DTileset(key)` 已被移除。请改用 `createGooglePhotorealistic3DTileset({key})`。
 - Changed behavior of `DataSourceDisplay.ready` to always stay `true` once it is initially set to `true`. [#12429](https://github.com/CesiumGS/cesium/pull/12429)
+  更改了 `DataSourceDisplay.ready` 的行为，一旦初始设为 `true` 后将始终保持为 `true`。[#12429](https://github.com/CesiumGS/cesium/pull/12429)
 
 #### Additions :tada:
 
 - Add `ITwinData.loadGeospatialFeatures(iTwinId, collectionId)` function to load data from the [Geospatial Features API](https://developer.bentley.com/apis/geospatial-features/operations/get-features/) [#12449](https://github.com/CesiumGS/cesium/pull/12449)
+  添加了 `ITwinData.loadGeospatialFeatures(iTwinId, collectionId)` 函数，用于从 [Geospatial Features API](https://developer.bentley.com/apis/geospatial-features/operations/get-features/) 加载数据。[#12449](https://github.com/CesiumGS/cesium/pull/12449)
 
 #### Fixes :wrench:
 
 - Fixed error when resetting `Cesium3DTileset.modelMatrix` to its initial value. [#12409](https://github.com/CesiumGS/cesium/pull/12409)
+  修复了将 `Cesium3DTileset.modelMatrix` 重置为其初始值时的错误。[#12409](https://github.com/CesiumGS/cesium/pull/12409)
 - Fixed the parameter types of the `ClippingPolygon.equals` function, and fixed cases where parameters to `equals` functions had erroneously not been marked as 'optional'. [#12394](https://github.com/CesiumGS/cesium/pull/12394)
+  修复了 `ClippingPolygon.equals`（裁剪多边形相等判断）函数的参数类型，并修复了各 `equals` 函数的参数之前错误地未标记为“可选（optional）”的情况。[#12394](https://github.com/CesiumGS/cesium/pull/12394)
 - Fixed Draco decoding for vertex colors that are normalized `UNSIGNED_BYTE` or `UNSIGNED_SHORT`. [#12417](https://github.com/CesiumGS/cesium/pull/12417)
+  修复了归一化 `UNSIGNED_BYTE` 或 `UNSIGNED_SHORT` 类型的顶点颜色的 Draco 解码问题。[#12417](https://github.com/CesiumGS/cesium/pull/12417)
 - Fixed urls with https in the documentation `basemap.nationalmap.gov` [#12375](https://github.com/CesiumGS/cesium/issues/12375)
+  修复了文档中包含 https 的 `basemap.nationalmap.gov` URL。[#12375](https://github.com/CesiumGS/cesium/issues/12375)
 - Fixed error in polyline when sinAngle is < 1. the value of expandWidth was too much. [#12434](https://github.com/CesiumGS/cesium/pull/12434)
+  修复了折线中当 sinAngle < 1 时 expandWidth 计算值过大的错误。[#12434](https://github.com/CesiumGS/cesium/pull/12434)
 - Allow external tilesets in multiple contents. [#12440](https://github.com/CesiumGS/cesium/pull/12440)
+  允许在多重内容（multiple contents）中包含外部瓦片集（external tilesets）。[#12440](https://github.com/CesiumGS/cesium/pull/12440)
 - Fixed type of `ImageryLayer.fromProviderAsync`, to correctly show that the param `options` is optional. [#12400](https://github.com/CesiumGS/cesium/pull/12400)
+  修复了 `ImageryLayer.fromProviderAsync` 的类型定义，正确表明参数 `options` 是可选的。[#12400](https://github.com/CesiumGS/cesium/pull/12400)
 - Fixed type error when setting `Viewer.selectedEntity` [#12303](https://github.com/CesiumGS/cesium/issues/12303)
+  修复了设置 `Viewer.selectedEntity` 时的类型错误。[#12303](https://github.com/CesiumGS/cesium/issues/12303)
 
 ## 1.125 - 2025-01-02
 
@@ -603,14 +865,20 @@ CustomVoxelProvider.prototype.requestData = function (options) {
 #### Additions :tada:
 
 - Expanded integration with the [iTwin Platform](https://developer.bentley.com/) to load GeoJSON and KML data from the Reality Management API. Use `ITwinData.createDataSourceForRealityDataId` to load data as either GeoJSON or KML`. [#12344](https://github.com/CesiumGS/cesium/pull/12344)
+  扩展了与 [iTwin Platform](https://developer.bentley.com/) 的集成，支持从 Reality Management API 加载 GeoJSON 和 KML 数据。使用 `ITwinData.createDataSourceForRealityDataId` 可将数据加载为 GeoJSON 或 KML。 [#12344](https://github.com/CesiumGS/cesium/pull/12344)
 - Added `environmentMapOptions` to `ModelGraphics`. For performance reasons by default, the environment map will not update if the entity position change. If environment map updates based on entity position are desired, provide an appropriate `environmentMapOptions.maximumPositionEpsilon` value. [#12358](https://github.com/CesiumGS/cesium/pull/12358)
+  在 `ModelGraphics` 中添加了 `environmentMapOptions`。出于性能考虑，默认情况下当实体位置改变时环境贴图不会更新。如果需要根据实体位置更新环境贴图，可提供合适的 `environmentMapOptions.maximumPositionEpsilon` 值。 [#12358](https://github.com/CesiumGS/cesium/pull/12358)
 - Added events to `VoxelPrimitive` to match `Cesium3DTileset`, including `allTilesLoaded`, `initialTilesLoaded`, `loadProgress`, `tileFailed`, `tileLoad`, `tileVisible`, `tileUnload`.
+  在 `VoxelPrimitive` 中添加了与 `Cesium3DTileset` 一致的事件，包括 `allTilesLoaded`、`initialTilesLoaded`、`loadProgress`、`tileFailed`、`tileLoad`、`tileVisible`、`tileUnload`。
 
 #### Fixes :wrench:
 
 - Reduced memory usage and performance bottlenecks when using environment maps with models. [#12356](https://github.com/CesiumGS/cesium/issues/12356)
+  降低了模型使用环境贴图时的内存占用并解决了性能瓶颈。 [#12356](https://github.com/CesiumGS/cesium/issues/12356)
 - Fixed `JulianDate` to always generate valid ISO strings for fractional milliseconds. [#12345](https://github.com/CesiumGS/cesium/pull/12345)
+  修复了 `JulianDate` 处理毫秒小数时无法始终生成有效 ISO 字符串的问题。 [#12345](https://github.com/CesiumGS/cesium/pull/12345)
 - Fixed intermittent z-fighting issue. [#12337](https://github.com/CesiumGS/cesium/issues/12337)
+  修复了偶发的深度冲突（Z-fighting）问题。 [#12337](https://github.com/CesiumGS/cesium/issues/12337)
 
 ## 1.124 - 2024-12-02
 
@@ -619,41 +887,60 @@ CustomVoxelProvider.prototype.requestData = function (options) {
 #### Additions :tada:
 
 - Added an integration with the [iTwin Platform](https://developer.bentley.com/) to load iModels as 3D Tiles. Use `ITwinPlatform.defaultAccessToken` to set the access token. Use `ITwinData.createTilesetFromIModelId(iModelId)` to load the iModel as a `Cesium3DTileset`. [#12289](https://github.com/CesiumGS/cesium/pull/12289)
+  新增与 [iTwin Platform](https://developer.bentley.com/) 的集成，支持将 iModel 加载为 3D Tiles。使用 `ITwinPlatform.defaultAccessToken` 设置访问令牌，使用 `ITwinData.createTilesetFromIModelId(iModelId)` 可将 iModel 加载为 `Cesium3DTileset`。 [#12289](https://github.com/CesiumGS/cesium/pull/12289)
 - Added an integration with the [iTwin Platform](https://developer.bentley.com/) to load Reality Data terrain meshes. Use `ITwinPlatform.defaultAccessToken` to set the access token. Then use `ITwinData.createTilesetForRealityDataId(iTwinId, dataId)` to load terrain meshes as a `Cesium3DTileset` [#12334](https://github.com/CesiumGS/cesium/pull/12334)
+  新增与 [iTwin Platform](https://developer.bentley.com/) 的集成，支持加载实景数据（Reality Data）地形网格。使用 `ITwinPlatform.defaultAccessToken` 设置访问令牌，然后使用 `ITwinData.createTilesetForRealityDataId(iTwinId, dataId)` 将地形网格加载为 `Cesium3DTileset`。 [#12334](https://github.com/CesiumGS/cesium/pull/12334)
 - Added `getSample` to `SampledProperty` to get the time of samples. [#12253](https://github.com/CesiumGS/cesium/pull/12253)
+  在 `SampledProperty` 中添加了 `getSample` 方法以获取采样点的时间。 [#12253](https://github.com/CesiumGS/cesium/pull/12253)
 - Added `Entity.trackingReferenceFrame` property to allow tracking entities in various reference frames. [#12194](https://github.com/CesiumGS/cesium/pull/12194), [#12314](https://github.com/CesiumGS/cesium/pull/12314)
+  新增 `Entity.trackingReferenceFrame` 属性，支持在多种参考系下追踪实体。 [#12194](https://github.com/CesiumGS/cesium/pull/12194), [#12314](https://github.com/CesiumGS/cesium/pull/12314)
   - `TrackingReferenceFrame.AUTODETECT` (default): uses either VVLH or ENU depending on entity's dynamic. Use `TrackingReferenceFrame.ENU` if your camera orientation flips abruptly from time to time.
+    `TrackingReferenceFrame.AUTODETECT`（默认）：根据实体的动力学特性自动选择使用 VVLH 或 ENU。如果相机朝向偶尔出现突变翻转，请使用 `TrackingReferenceFrame.ENU`。
   - `TrackingReferenceFrame.ENU`: uses the entity's local East-North-Up reference frame.
+    `TrackingReferenceFrame.ENU`：使用实体局部的东-北-天（ENU）参考系。
   - `TrackingReferenceFrame.INERTIAL`: uses the entity's inertial reference frame.
+    `TrackingReferenceFrame.INERTIAL`：使用实体的惯性参考系。
   - `TrackingReferenceFrame.VELOCITY`: uses entity's `VelocityOrientationProperty` as orientation.
+    `TrackingReferenceFrame.VELOCITY`：使用实体的 `VelocityOrientationProperty` 作为朝向。
 - Added `GoogleGeocoderService` for standalone usage of Google geocoder. [#12299](https://github.com/CesiumGS/cesium/pull/12299)
+  新增 `GoogleGeocoderService`，用于独立使用 Google 地理编码服务。 [#12299](https://github.com/CesiumGS/cesium/pull/12299)
 
 #### Breaking Changes :mega:
 
 - `PostProcessStageCollection.ambientOcclusion` has been updated with a new algorithm to provide better results at all scales, with tunable performance cost. To approximate the appearance and performance of the old algorithm, set the following values for `scene.postProcessStages.ambientOcclusion.uniforms`: `{ lengthCap: 0.02, directionCount: 6, stepCount: 8 }`. For best results at long distances, consider setting `Viewer.camera.frustum.near` to `1.0` or more, to improve precision in the depth buffer. [#12316](https://github.com/CesiumGS/cesium/pull/12316)
+  `PostProcessStageCollection.ambientOcclusion` 已更新为全新算法，在各个尺度下均能提供更佳效果，并可调节性能开销。若要近似恢复旧算法的外观与性能，可在 `scene.postProcessStages.ambientOcclusion.uniforms` 中设置以下参数值：`{ lengthCap: 0.02, directionCount: 6, stepCount: 8 }`。为在远距离获得最佳效果，建议将 `Viewer.camera.frustum.near`（视锥体近截面）设置为 `1.0` 或更大，以提高深度缓冲区（depth buffer）的精度。 [#12316](https://github.com/CesiumGS/cesium/pull/12316)
 - `Rectangle.validate` has been removed.
+  `Rectangle.validate` 已被移除。
 
 #### Fixes :wrench:
 
 - Fixed bug where shared external textures from glTF files were not accounted for in resource statistics. [#12331](https://github.com/CesiumGS/cesium/pull/12331)
+  修复了 glTF 文件共享的外部纹理未计入资源统计的问题。 [#12331](https://github.com/CesiumGS/cesium/pull/12331)
 - Fixed lag or crashes when loading many models in the same frame. [#12320](https://github.com/CesiumGS/cesium/pull/12320)
+  修复了在同一帧内加载大量模型时导致卡顿或崩溃的问题。 [#12320](https://github.com/CesiumGS/cesium/pull/12320)
 - Fix point cloud filtering performance on certain hardware [#12317](https://github.com/CesiumGS/cesium/pull/12317)
+  修复了在特定硬件上点云过滤的性能问题。 [#12317](https://github.com/CesiumGS/cesium/pull/12317)
 - Fix label rendering bug in WebGL1 contexts. [#12301](https://github.com/CesiumGS/cesium/pull/12301)
+  修复了 WebGL1 上下文中文字标签（Label）渲染的错误。 [#12301](https://github.com/CesiumGS/cesium/pull/12301)
 - Updated WMS example URL in UrlTemplateImageryProvider documentation to use an active service. [#12323](https://github.com/CesiumGS/cesium/pull/12323)
+  更新了 UrlTemplateImageryProvider 文档中的 WMS 示例 URL，以使用当前有效的在线服务。 [#12323](https://github.com/CesiumGS/cesium/pull/12323)
 
 #### Deprecated :hourglass_flowing_sand:
 
 - `createGooglePhotorealistic3DTileset(key)` has been deprecated. Use `createGooglePhotorealistic3DTileset({key})` instead. It will be removed in 1.126.
+  `createGooglePhotorealistic3DTileset(key)` 已废弃。请改用 `createGooglePhotorealistic3DTileset({key})`。该接口将在 1.126 版本中移除。
 
 ### @cesium/widgets
 
 #### Additions :tada:
 
 - Added the ability to choose between Bing and Google geocoders. Updated `Viewer` constructor to also accept `IonGeocoderProvider` [#12299](https://github.com/CesiumGS/cesium/pull/12299)
+  新增在 Bing 与 Google 地理编码器之间选择的功能。更新了 `Viewer` 构造函数以支持传入 `IonGeocoderProvider`。 [#12299](https://github.com/CesiumGS/cesium/pull/12299)
 
 #### Fixes :wrench:
 
 - Added a `DeveloperError` when `globe` is set to `false` and a `baseLayer` is provided in `Viewer` options. This prevents errors caused by attempting to use a `baseLayer` without a globe. [#12274](https://github.com/CesiumGS/cesium/pull/12274)
+  当 `Viewer` 选项中 `globe` 设置为 `false` 但同时提供了 `baseLayer` 时添加了 `DeveloperError`。这可以防止在没有地球时尝试使用 `baseLayer` 所引发的错误。 [#12274](https://github.com/CesiumGS/cesium/pull/12274)
 
 ## 1.123.1 - 2024-11-07
 
@@ -662,7 +949,9 @@ CustomVoxelProvider.prototype.requestData = function (options) {
 #### Additions :tada:
 
 - Added fallback diffuse lighting, `DynamicEnvironmentMapManager.DEFAULT_SPHERICAL_HARMONIC_COEFFICIENTS`, that is used when `DynamicEnvironmentMapManager` is disabled or unsupported. [#12292](https://github.com/CesiumGS/cesium/pull/12292)
+  添加了回退漫反射光照参数 `DynamicEnvironmentMapManager.DEFAULT_SPHERICAL_HARMONIC_COEFFICIENTS`，当 `DynamicEnvironmentMapManager` 被禁用或不受支持时使用。 [#12292](https://github.com/CesiumGS/cesium/pull/12292)
 - Added `DynamicEnvironmentMapManager.isDynamicUpdateSupported` to check if dynamic environment map updates are supported. [#12292](https://github.com/CesiumGS/cesium/pull/12292)
+  添加了 `DynamicEnvironmentMapManager.isDynamicUpdateSupported`，用于检测是否支持动态环境贴图更新。 [#12292](https://github.com/CesiumGS/cesium/pull/12292)
 
 ## 1.123 - 2024-11-01
 
@@ -671,6 +960,7 @@ CustomVoxelProvider.prototype.requestData = function (options) {
 #### Breaking Changes :mega:
 
 - Updated default 3D Tiles and Model lighting when using PBR in order to create a more realistic appearance. To approximate previous default lighting, use the following settings:
+  更新了使用 PBR（基于物理渲染）时 3D Tiles 与 Model 的默认光照，以呈现更加真实的外观。若要近似恢复先前的默认光照，请使用以下设置：
 
   ```js
   const environmentMapManager = model.environmentMapManager; // or tileset.environmentMapManager;
@@ -683,26 +973,41 @@ CustomVoxelProvider.prototype.requestData = function (options) {
   ```
 
 - `ImageBasedLighting.luminanceAtZenith` has been removed. Use `DynamicEnvironmentMapManager.atmosphereScatteringIntensity` instead. [#12129](https://github.com/CesiumGS/cesium/pull/12129)
+  `ImageBasedLighting.luminanceAtZenith` 已被移除。请改用 `DynamicEnvironmentMapManager.atmosphereScatteringIntensity`。 [#12129](https://github.com/CesiumGS/cesium/pull/12129)
 - Changed the default `Fog.density` from `0.0002` to `0.0006`. Set `viewer.scene.fog.density = 0.002` to return to the previous behavior. [#12248](https://github.com/CesiumGS/cesium/pull/12248)
+  将默认的 `Fog.density` 从 `0.0002` 修改为 `0.0006`。设置 `viewer.scene.fog.density = 0.002` 可恢复之前的表现。 [#12248](https://github.com/CesiumGS/cesium/pull/12248)
 
 #### Additions :tada:
 
 - Updated default 3D Tiles and Model lighting when using PBR in order to create a more realistic appearance. Added `DynamicEnvironmentMapManager` to control lighting parameters. These can be accessed via `Cesium3DTileset.environmentMapManager` and `Model.environmentMapManager`. [#12129](https://github.com/CesiumGS/cesium/pull/12129)
+  更新了使用 PBR 时 3D Tiles 与 Model 的默认光照以呈现更加真实的外观。新增 `DynamicEnvironmentMapManager` 用于控制光照参数，可通过 `Cesium3DTileset.environmentMapManager` 和 `Model.environmentMapManager` 访问。 [#12129](https://github.com/CesiumGS/cesium/pull/12129)
 - Added `ScreenSpaceCameraController.maximumTiltAngle` to limit how much the camera can tilt. [#12169](https://github.com/CesiumGS/cesium/pull/12169)
+  添加了 `ScreenSpaceCameraController.maximumTiltAngle`，用于限制相机的最大俯仰角。 [#12169](https://github.com/CesiumGS/cesium/pull/12169)
 - Exposed `Fog.visualDensityScalar` to allow modifying the visual density of fog without affecting the culling aspects. Alongside this, the density calculation was adjusted to make it more smooth across heights. [#12248](https://github.com/CesiumGS/cesium/pull/12248)
+  公开了 `Fog.visualDensityScalar`，允许在不影响视锥裁剪（culling）的前提下修改雾的视觉浓度。与此同时调整了浓度计算逻辑，使其在不同高度间过渡更加平滑。 [#12248](https://github.com/CesiumGS/cesium/pull/12248)
 - Update Japan Buildings sandcastle to use Japan Regional Terrain [#12259](https://github.com/CesiumGS/cesium/pull/12259)
+  更新了 Japan Buildings Sandcastle 示例以使用日本区域地形。 [#12259](https://github.com/CesiumGS/cesium/pull/12259)
 - Moved `Viewer` functionality to `CesiumWidget` to increase usability, see the full list added to the `CesiumWidget` below. No functionality was removed from the `Viewer` but convenience helpers like the `entities` collection were added to the `CesiumWidget`. The `CesiumWidget` should be closer to a drop in replacement for the `Viewer` when not utilizing the extra Viewer widgets. [#11967](https://github.com/CesiumGS/cesium/issues/11967).
+  将部分 `Viewer` 功能下沉至 `CesiumWidget` 以提高易用性，具体新增内容见下方完整列表。`Viewer` 未移除任何功能，但在 `CesiumWidget` 中新增了 `entities` 集合等便捷辅助属性/方法。当不使用额外的 Viewer 挂件组件时，`CesiumWidget` 更接近于 `Viewer` 的直接替代品。 [#11967](https://github.com/CesiumGS/cesium/issues/11967)。
   - New constructor options: `options.shouldAnimate`, `options.automaticallyTrackDataSourceClocks`, `options.dataSources`
+    新增构造函数选项：`options.shouldAnimate`、`options.automaticallyTrackDataSourceClocks`、`options.dataSources`
   - New properties: `dataSourceDisplay`, `entities`, `dataSources`, `allowDataSourcesToSuspendAnimation`, `trackedEntity`, `trackedEntityChanged`, `clockTrackedDataSource`
+    新增属性：`dataSourceDisplay`、`entities`、`dataSources`、`allowDataSourcesToSuspendAnimation`、`trackedEntity`、`trackedEntityChanged`、`clockTrackedDataSource`
   - New functions: `zoomTo()`, `flyTo()`
+    新增方法：`zoomTo()`、`flyTo()`
 - Update Bing Maps attribution link [#12265](https://github.com/CesiumGS/cesium/pull/12265)
+  更新了 Bing Maps 署名链接。 [#12265](https://github.com/CesiumGS/cesium/pull/12265)
 
 #### Fixes :wrench:
 
 - Fix flickering issue caused by bounding sphere retrieval being blocked by the bounding sphere of another entity. [#12230](https://github.com/CesiumGS/cesium/pull/12230)
+  修复了因包围球获取被另一实体的包围球阻塞而导致的闪烁问题。 [#12230](https://github.com/CesiumGS/cesium/pull/12230)
 - Fixed `ImageBasedLighting.imageBasedLightingFactor` not affecting lighting. [#12129](https://github.com/CesiumGS/cesium/pull/12129)
+  修复了 `ImageBasedLighting.imageBasedLightingFactor` 未对光照产生影响的问题。 [#12129](https://github.com/CesiumGS/cesium/pull/12129)
 - Fix error with normalization of corner points for lines and corridors with collinear points. [#12255](https://github.com/CesiumGS/cesium/pull/12255)
+  修复了线和走廊（corridor）存在共线点时拐角点归一化出错的问题。 [#12255](https://github.com/CesiumGS/cesium/pull/12255)
 - Properly handle `offset` and `scale` properties when picking metadata from property textures. [#12237](https://github.com/CesiumGS/cesium/pull/12237)
+  修复了从属性纹理（property textures）中拾取元数据时正确处理 `offset` 与 `scale` 属性的问题。 [#12237](https://github.com/CesiumGS/cesium/pull/12237)
 
 ## 1.122 - 2024-10-01
 
@@ -711,25 +1016,37 @@ CustomVoxelProvider.prototype.requestData = function (options) {
 #### Additions :tada:
 
 - Added `CallbackPositionProperty` to allow lazy entity position evaluation. [#12170](https://github.com/CesiumGS/cesium/pull/12170)
+  新增 `CallbackPositionProperty`，支持实体位置的惰性求值。 [#12170](https://github.com/CesiumGS/cesium/pull/12170)
 - Added `enableVerticalExaggeration` option to models. Set this value to `false` to prevent model exaggeration when `Scene.verticalExaggeration` is set to a value other than `1.0`. [#12141](https://github.com/CesiumGS/cesium/pull/12141)
+  为模型新增 `enableVerticalExaggeration` 选项。将该值设为 `false` 可防止在 `Scene.verticalExaggeration` 设置为非 `1.0` 的值时模型被垂直夸张形变。 [#12141](https://github.com/CesiumGS/cesium/pull/12141)
 - Added `Scene.prototype.pickMetadata` and `Scene.prototype.pickMetadataSchema`, enabling experimental support for picking property textures or property attributes [#12075](https://github.com/CesiumGS/cesium/pull/12075)
+  新增 `Scene.prototype.pickMetadata` 和 `Scene.prototype.pickMetadataSchema`，提供对拾取属性纹理（property textures）或属性特征（property attributes）的实验性支持。 [#12075](https://github.com/CesiumGS/cesium/pull/12075)
 - Added experimental support for the `NGA_gpm_local` glTF extension, for GPM 1.2 [#12204](https://github.com/CesiumGS/cesium/pull/12204)
+  新增对用于 GPM 1.2 的 `NGA_gpm_local` glTF 扩展的实验性支持。 [#12204](https://github.com/CesiumGS/cesium/pull/12204)
 
 #### Fixes :wrench:
 
 - Fix `Texture` errors when using a `HTMLVideoElement`. [#12219](https://github.com/CesiumGS/cesium/issues/12219)
+  修复了使用 `HTMLVideoElement` 时出现的 `Texture` 错误。 [#12219](https://github.com/CesiumGS/cesium/issues/12219)
 - Fixed noise in ambient occlusion post process. [#12201](https://github.com/CesiumGS/cesium/pull/12201)
+  修复了环境光遮蔽（ambient occlusion）后处理阶段的噪点问题。 [#12201](https://github.com/CesiumGS/cesium/pull/12201)
 - Use first `geometryBuffer` if no best match found in I3SNode. [#12132](https://github.com/CesiumGS/cesium/pull/12132)
+  在 I3SNode 中如果未找到最佳匹配项，则使用第一个 `geometryBuffer`。 [#12132](https://github.com/CesiumGS/cesium/pull/12132)
 - Update type definitions throughout `Core/` to allow undefined for optional parameters. [#12193](https://github.com/CesiumGS/cesium/pull/12193)
+  更新了 `Core/` 模块中的类型定义，允许可选参数为 undefined。 [#12193](https://github.com/CesiumGS/cesium/pull/12193)
 - Reverts Firefox OIT temporary fix. [#4815](https://github.com/CesiumGS/cesium/pull/4815)
+  还原了针对 Firefox 顺序无关半透明（OIT）的临时修复方案。 [#4815](https://github.com/CesiumGS/cesium/pull/4815)
 
 #### Deprecated :hourglass_flowing_sand:
 
 - `Rectangle.validate` has been deprecated. It will be removed in 1.124.
+  `Rectangle.validate` 已废弃。将在 1.124 版本中移除。
 
 ## 1.121.1 - 2024-09-04
 
 This is an npm-only release to extra source maps included in 1.121
+
+这是仅发布至 npm 的版本，用于补充 1.121 中包含的 source map。
 
 ## 1.121 - 2024-09-03
 
@@ -738,31 +1055,51 @@ This is an npm-only release to extra source maps included in 1.121
 #### Additions :tada:
 
 - Enable MSAA by default with 4 samples. To turn MSAA off set `scene.msaaSamples = 1` [#12158](https://github.com/CesiumGS/cesium/pull/12158)
+  默认启用 4 次采样的多重采样抗锯齿（MSAA）。若要关闭 MSAA，可设置 `scene.msaaSamples = 1`。 [#12158](https://github.com/CesiumGS/cesium/pull/12158)
 - Expose the `tonemapper` property of `PostProcessStageCollection` to allow changing the tonemap used when HDR is turned on. This defaults to the [PBR Neutral Tonemap from Khronos](https://github.com/KhronosGroup/ToneMapping/tree/main/PBR_Neutral) [#12160](https://github.com/CesiumGS/cesium/pull/12160)
+  公开了 `PostProcessStageCollection` 的 `tonemapper` 属性，允许更改开启 HDR 时使用的色调映射（tonemap）。默认采用 [PBR Neutral Tonemap from Khronos](https://github.com/KhronosGroup/ToneMapping/tree/main/PBR_Neutral)。 [#12160](https://github.com/CesiumGS/cesium/pull/12160)
   - The enum `Tonemapper` contains the list of valid tonemap options to use with the `tonemapper` setting
+    枚举 `Tonemapper` 包含了可用于 `tonemapper` 设置的有效色调映射选项列表。
 - Expose the `exposure` property of `PostProcessStageCollection` to allow changing the exposure used for the current HDR tonemap [#12160](https://github.com/CesiumGS/cesium/pull/12160)
+  公开了 `PostProcessStageCollection` 的 `exposure` 属性，允许修改当前 HDR 色调映射所使用的曝光度。 [#12160](https://github.com/CesiumGS/cesium/pull/12160)
 - Added `WaterMask` globe material, which visualizes areas of water or land based on the terrain's water mask. [#12149](https://github.com/CesiumGS/cesium/pull/12149)
+  新增 `WaterMask` 地球材质，根据地形的水掩膜（water mask）可视化水体或陆地区域。 [#12149](https://github.com/CesiumGS/cesium/pull/12149)
 - Made the `time` parameter optional for `Property`, using `JulianDate.now()` as default. [#12099](https://github.com/CesiumGS/cesium/pull/12099)
+  使 `Property` 的 `time` 参数变为可选，默认使用 `JulianDate.now()`。 [#12099](https://github.com/CesiumGS/cesium/pull/12099)
 - Exposes `ScreenSpaceCameraController.zoomFactor` to allow adjusting the zoom factor (speed). [#9145](https://github.com/CesiumGS/cesium/pull/9145)
+  公开了 `ScreenSpaceCameraController.zoomFactor`，允许调整缩放系数（缩放速度）。 [#9145](https://github.com/CesiumGS/cesium/pull/9145)
 
 #### Fixes :wrench:
 
 - Update `CameraEventAggregator` to only trigger events for the currently held modifier while dragging. Events are canceled for all modifiers when the mouse is lifted. [#11903](https://github.com/CesiumGS/cesium/pull/11903)
+  更新了 `CameraEventAggregator`，使其在拖拽时仅针对当前按下的修饰键触发事件。当鼠标松开时取消所有修饰键的事件。 [#11903](https://github.com/CesiumGS/cesium/pull/11903)
 - Fixed cube-mapping artifacts in image-based lighting. [#12100](https://github.com/CesiumGS/cesium/pull/12100)
+  修复了基于图像的光照（IBL）中立方体贴图的伪影瑕疵。 [#12100](https://github.com/CesiumGS/cesium/pull/12100)
 - Fixed specular reflection artifact in PBR direct lighting. [#12116](https://github.com/CesiumGS/cesium/pull/12116)
+  修复了 PBR 直接光照中的镜面反射伪影瑕疵。 [#12116](https://github.com/CesiumGS/cesium/pull/12116)
 - Added multiscattering terms to diffuse BRDF in image-based lighting. [#12118](https://github.com/CesiumGS/cesium/pull/12118)
+  在基于图像的光照（IBL）的漫反射 BRDF 中添加了多重散射项。 [#12118](https://github.com/CesiumGS/cesium/pull/12118)
 - Fixed `CallbackProperty` type not being present on entity position. [#12120](https://github.com/CesiumGS/cesium/pull/12120)
+  修复了实体位置类型定义中缺失 `CallbackProperty` 的问题。 [#12120](https://github.com/CesiumGS/cesium/pull/12120)
 - Additional TypeScript types export in `package.json` to assist some project configurations using Cesium. [#12122](https://github.com/CesiumGS/cesium/pull/12122)
+  在 `package.json` 中添加了额外的 TypeScript 类型导出，以适配某些使用 Cesium 的项目配置。 [#12122](https://github.com/CesiumGS/cesium/pull/12122)
 - Fixed documentation about default values for Label origins [#12139](https://github.com/CesiumGS/cesium/pull/12139)
+  修复了文档中关于 Label 原点默认值的说明。 [#12139](https://github.com/CesiumGS/cesium/pull/12139)
 
 #### Breaking Changes :mega:
 
 - Switched the default (non-HDR) tonemapping for models, atmosphere, and globe from ACES to [PBR Neutral Tonemap from Khronos](https://github.com/KhronosGroup/ToneMapping/tree/main/PBR_Neutral). The widens the gamut of possible colors, and provides more consistent color appearances across renderers. [#12160](https://github.com/CesiumGS/cesium/pull/12160)
+  将模型、大气层和地球的默认（非 HDR）色调映射从 ACES 切换为 [PBR Neutral Tonemap from Khronos](https://github.com/KhronosGroup/ToneMapping/tree/main/PBR_Neutral)。这拓宽了可用色域，并在不同渲染器间提供更一致的色彩呈现。 [#12160](https://github.com/CesiumGS/cesium/pull/12160)
 - Switched the default tonemapper when HDR is turned _on_ from ACES to [PBR Neutral Tonemap from Khronos](https://github.com/KhronosGroup/ToneMapping/tree/main/PBR_Neutral). To preserve the previous behavior set `viewer.scene.postProcessStages.tonemapper = Cesium.Tonemapper.ACES;` [#12160](https://github.com/CesiumGS/cesium/pull/12160)
+  将开启 HDR 时的默认色调映射器从 ACES 切换为 [PBR Neutral Tonemap from Khronos](https://github.com/KhronosGroup/ToneMapping/tree/main/PBR_Neutral)。若要保留之前的行为，请设置 `viewer.scene.postProcessStages.tonemapper = Cesium.Tonemapper.ACES;`。 [#12160](https://github.com/CesiumGS/cesium/pull/12160)
 - `SceneTransforms.wgs84ToWindowCoordinates` has been removed. Use `SceneTransforms.worldToWindowCoordinates` instead.
+  `SceneTransforms.wgs84ToWindowCoordinates` 已被移除。请改用 `SceneTransforms.worldToWindowCoordinates`。
 - `SceneTransforms.wgs84ToDrawingBufferCoordinates` has been removed. Use `SceneTransforms.worldToDrawingBufferCoordinates` instead.
+  `SceneTransforms.wgs84ToDrawingBufferCoordinates` 已被移除。请改用 `SceneTransforms.worldToDrawingBufferCoordinates`。
 - Removed `jitter` option from `VoxelPrimitive.js`, `VoxelRenderResources.js`, and related test code in `VoxelPrimitiveSpec.js`. [#11913](https://github.com/CesiumGS/cesium/issues/11913)
+  从 `VoxelPrimitive.js`、`VoxelRenderResources.js` 以及 `VoxelPrimitiveSpec.js` 的相关测试代码中移除了 `jitter`（抖动）选项。 [#11913](https://github.com/CesiumGS/cesium/issues/11913)
 - Custom specular environment maps in `ImageBasedLighting` now require either a WebGL2 context or a WebGL1 context that supports the [`EXT_shader_texture_lod` extension](https://registry.khronos.org/webgl/extensions/EXT_shader_texture_lod/).
+  `ImageBasedLighting` 中的自定义镜面反射环境贴图现在需要 WebGL2 上下文，或者支持 [`EXT_shader_texture_lod` 扩展](https://registry.khronos.org/webgl/extensions/EXT_shader_texture_lod/) 的 WebGL1 上下文。
 
 ## 1.120 - 2024-08-01
 
@@ -771,17 +1108,26 @@ This is an npm-only release to extra source maps included in 1.121
 #### Additions :tada:
 
 - Added `Transforms.computeIcrfToMoonFixedMatrix` and `Transforms.computeMoonFixedToIcrfMatrix` to compute the transformations between the Moon's fixed frame and ICRF at a given time.
+  新增 `Transforms.computeIcrfToMoonFixedMatrix` 与 `Transforms.computeMoonFixedToIcrfMatrix`，用于计算给定时间月球固连坐标系（Moon's fixed frame）与国际天球参考系（ICRF）之间的变换矩阵。
 - Added `Transforms.computeIcrfToCentralBodyFixedMatrix` to specific the default ICRF to fixed frame transformation to use internally, including for lighting calculations.
+  新增 `Transforms.computeIcrfToCentralBodyFixedMatrix`，用于指定内部使用的默认 ICRF 到固连坐标系的变换矩阵，包括光照计算。
 - Added SplitDirection property for display PointPrimitive and Billboard relative to the `Scene.splitPosition`. [#11982](https://github.com/CesiumGS/cesium/pull/11982)
+  为 `PointPrimitive` 和 `Billboard` 新增 `splitDirection` 属性，用于相对于 `Scene.splitPosition` 进行卷帘（split）显示控制。[#11982](https://github.com/CesiumGS/cesium/pull/11982)
 
 #### Fixes :wrench:
 
 - Fixed environment map LOD selection in image-based lighting. [#12070](https://github.com/CesiumGS/cesium/pull/12070)
+  修复了基于图像光照（IBL）中环境贴图 LOD（细节层次）选择的问题。[#12070](https://github.com/CesiumGS/cesium/pull/12070)
 - Corrected calculation of diffuse component in image-based lighting. [#12082](https://github.com/CesiumGS/cesium/pull/12082)
+  修正了基于图像光照中漫反射分量的计算。[#12082](https://github.com/CesiumGS/cesium/pull/12082)
 - Updated specular BRDF for image-based lighting. [#12083](https://github.com/CesiumGS/cesium/pull/12083)
+  更新了基于图像光照的镜面反射 BRDF（双向反射分布函数）。[#12083](https://github.com/CesiumGS/cesium/pull/12083)
 - Fixed environment map transform for image-based lighting. [#12091](https://github.com/CesiumGS/cesium/pull/12091)
+  修复了基于图像光照中环境贴图的变换问题。[#12091](https://github.com/CesiumGS/cesium/pull/12091)
 - Updated geometric self-shadowing function to improve direct lighting on models using physically-based rendering. [#12063](https://github.com/CesiumGS/cesium/pull/12063)
+  更新了几何自遮挡（self-shadowing）函数，以改善使用基于物理渲染（PBR）的模型上的直接光照效果。[#12063](https://github.com/CesiumGS/cesium/pull/12063)
 - Prevent Bing Imagery API format issues from throwing errors [#12094](https://github.com/CesiumGS/cesium/pull/12094)
+  防止 Bing 影像 API 格式问题抛出异常错误。[#12094](https://github.com/CesiumGS/cesium/pull/12094)
 
 ## 1.119 - 2024-07-01
 
@@ -790,41 +1136,59 @@ This is an npm-only release to extra source maps included in 1.121
 #### Additions :tada:
 
 - Added `Ellipsoid.default` to allow a central place to specify a default ellipsoid value to be used throughout the API where an ellipsoid is not otherwise specified. [#4245](https://github.com/CesiumGS/cesium/issues/4245)
+  新增 `Ellipsoid.default`，用于集中指定在整个 API 中未显式指定椭球时所使用的默认椭球值。[#4245](https://github.com/CesiumGS/cesium/issues/4245)
 - Various defaults have been updated to adjust when `Ellipsoid.default` is changed to a value other than the WGS84 ellipsoid.
+  更新了多处默认配置，以在 `Ellipsoid.default` 被修改为非 WGS84 椭球时进行相应调整。
 - Added `Scene.ellipsoid`, `CesiumWidget.ellipsoid`, and `Viewer.ellipsoid` to set the default ellipsoid used for rendering.
+  新增 `Scene.ellipsoid`、`CesiumWidget.ellipsoid` 和 `Viewer.ellipsoid`，用于设置渲染时所使用的默认椭球。
 - Added `SkyBox.createEarthSkyBox` which creates a skybox instance with the default starmap for the Earth.
+  新增 `SkyBox.createEarthSkyBox`，用于创建一个包含地球默认星空图的天空盒实例。
 - Added support for the `scale` property of a normal texture in a glTF material. [#12018](https://github.com/CesiumGS/cesium/pull/12018)
+  新增对 glTF 材质中法线贴图 `scale` 属性的支持。[#12018](https://github.com/CesiumGS/cesium/pull/12018)
 
 #### Fixes :wrench:
 
 - Fixed diffuse color calculation for PBR materials. Many models will now appear slightly brighter. [#12043](https://github.com/CesiumGS/cesium/pull/12043)
+  修复了 PBR 材质的漫反射颜色计算。许多模型现在看起来会略微更明亮一些。[#12043](https://github.com/CesiumGS/cesium/pull/12043)
 - Fixed the calculation of base color in materials using the KHR_materials_specular extension [#12041](https://github.com/CesiumGS/cesium/issues/12041).
+  修复了在使用 KHR_materials_specular 扩展的材质中基础颜色（base color）的计算[#12041](https://github.com/CesiumGS/cesium/issues/12041)。
 - Fixed issue where Entities would not use a custom ellipsoid. [#3543](https://github.com/CesiumGS/cesium/issues/3543)
+  修复了 Entity 实体无法使用自定义椭球的问题。[#3543](https://github.com/CesiumGS/cesium/issues/3543)
 - Adjusted spacing for on screen Credits and updated recommendations for positioning custom ones. [#11912](https://github.com/CesiumGS/cesium/issues/11912)
+  调整了屏幕版权信息（Credits）的间距，并更新了自定义版权信息定位的推荐规范。[#11912](https://github.com/CesiumGS/cesium/issues/11912)
 - Fixed issue where Property 'availability' is missing in type 'CustomHeightmapTerrainProvider' but required in type 'TerrainProvider' when using with typescript
+  修复了在 TypeScript 中使用时，类型 'CustomHeightmapTerrainProvider' 缺少属性 'availability' 但该属性在类型 'TerrainProvider' 中为必填项的问题。
 
 #### Breaking Changes :mega:
 
 - `CircleGeometry.unpack` now defaults to `Ellipsoid.default` rather than `Ellipsoid.UNIT_SPHERE`.
+  `CircleGeometry.unpack` 现在默认使用 `Ellipsoid.default`，而非 `Ellipsoid.UNIT_SPHERE`（单位球体）。
 
 #### Deprecated :hourglass_flowing_sand:
 
 - `SceneTransforms.wgs84ToDrawingBufferCoordinates` has been deprecated. It will be removed in 1.121. Use `SceneTransforms.worldToDrawingBufferCoordinates` instead.
+  `SceneTransforms.wgs84ToDrawingBufferCoordinates` 已被废弃，将在 1.121 版本中移除。请改用 `SceneTransforms.worldToDrawingBufferCoordinates`。
 - `SceneTransforms.wgs84ToWindowCoordinates` has been deprecated. It will be removed in 1.121. Use `SceneTransforms.worldToWindowCoordinates` instead.
+  `SceneTransforms.wgs84ToWindowCoordinates` 已被废弃，将在 1.121 版本中移除。请改用 `SceneTransforms.worldToWindowCoordinates`。
 
 ### @cesium/widgets
 
 #### Breaking Changes :mega:
 
 - `BaseLayerPicker` no longer overrides the default imagery or terrain unless `options.selectedImageryProviderViewModel` or `options.selectedTerrainProviderViewModel` is provided respectively.
+  除非分别提供了 `options.selectedImageryProviderViewModel` 或 `options.selectedTerrainProviderViewModel`，否则 `BaseLayerPicker` 不再覆盖默认的影像或地形。
 
 ## 1.118.2 - 2024-06-03
 
 This is an npm-only release to fix a dependency issue published in 1.118.1
 
+这是一个仅发布于 npm 的版本，用于修复在 1.118.1 中发布的依赖项问题。
+
 ## 1.118.1 - 2024-06-03
 
 This is an npm-only release to fix a dependency issue published in 1.118
+
+这是一个仅发布于 npm 的版本，用于修复在 1.118 中发布的依赖项问题。
 
 ## 1.118 - 2024-06-03
 
@@ -833,18 +1197,28 @@ This is an npm-only release to fix a dependency issue published in 1.118
 #### Additions :tada:
 
 - Added support for glTF models with the [KHR_materials_specular extension](https://github.com/KhronosGroup/glTF/tree/main/extensions/2.0/Khronos/KHR_materials_specular). [#11970](https://github.com/CesiumGS/cesium/pull/11970)
+  新增对包含 [KHR_materials_specular 扩展](https://github.com/KhronosGroup/glTF/tree/main/extensions/2.0/Khronos/KHR_materials_specular) 的 glTF 模型的支持。[#11970](https://github.com/CesiumGS/cesium/pull/11970)
 - Added support for glTF models with the [KHR_materials_anisotropy extension](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_materials_anisotropy/README.md). [#11988](https://github.com/CesiumGS/cesium/pull/11988)
+  新增对包含 [KHR_materials_anisotropy 扩展](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_materials_anisotropy/README.md)（各向异性材质）的 glTF 模型的支持。[#11988](https://github.com/CesiumGS/cesium/pull/11988)
 - Added support for glTF models with the [KHR_materials_clearcoat extension](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_materials_clearcoat/README.md). [#12006](https://github.com/CesiumGS/cesium/pull/12006)
+  新增对包含 [KHR_materials_clearcoat 扩展](https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_materials_clearcoat/README.md)（清漆层材质）的 glTF 模型的支持。[#12006](https://github.com/CesiumGS/cesium/pull/12006)
 
 #### Fixes :wrench:
 
 - Fixed a bug where `scene.pickPosition` returned incorrect results against the globe when `depthTestAgainstTerrain` is `false`. [#4368](https://github.com/CesiumGS/cesium/issues/4368)
+  修复了当 `depthTestAgainstTerrain` 为 `false` 时，`scene.pickPosition` 在地球表面拾取返回错误结果的 Bug。[#4368](https://github.com/CesiumGS/cesium/issues/4368)
 - Fixed a bug where `TaskProcessor` worker loading would check the worker module ID rather than the absolute URL when determining if it is cross-origin. [#11833](https://github.com/CesiumGS/cesium/pull/11833)
+  修复了 `TaskProcessor` 加载 Worker 时，在判断是否跨域时检查的是 Worker 模块 ID 而非绝对 URL 的 Bug。[#11833](https://github.com/CesiumGS/cesium/pull/11833)
 - Fixed a bug where cross-origin workers would error when loaded with the CommonJS `importScripts` shim instead of an ESM `import`. [#11833](https://github.com/CesiumGS/cesium/pull/11833)
+  修复了跨域 Worker 在使用 CommonJS 的 `importScripts` shim 而不是 ESM `import` 加载时发生错误的 Bug。[#11833](https://github.com/CesiumGS/cesium/pull/11833)
 - Fixed an error in the specular reflection calculations for image-based lighting from supplied environment maps. [#12008](https://github.com/CesiumGS/cesium/issues/12008)
+  修复了基于提供的环境贴图进行基于图像光照时，镜面反射计算中的一个错误。[#12008](https://github.com/CesiumGS/cesium/issues/12008)
 - Fixed a normalization error in image-based lighting. [#11994](https://github.com/CesiumGS/cesium/issues/11994)
+  修复了基于图像光照中的归一化错误。[#11994](https://github.com/CesiumGS/cesium/issues/11994)
 - Fixes a bug where `sampleTerrain` did not respect the `rejectOnTileFail` flag for failed requests other than the first. [#11998](https://github.com/CesiumGS/cesium/pull/11998)
+  修复了 `sampleTerrain` 在第一个请求之后的失败请求中未遵循 `rejectOnTileFail` 标志的 Bug。[#11998](https://github.com/CesiumGS/cesium/pull/11998)
 - Corrected the Typescript types for `Billboard.id` and `Label.id` to be `any` [#11973](https://github.com/CesiumGS/cesium/issues/11973)
+  将 `Billboard.id` 和 `Label.id` 的 TypeScript 类型修正为 `any`。[#11973](https://github.com/CesiumGS/cesium/issues/11973)
 
 ## 1.117 - 2024-05-01
 
@@ -853,19 +1227,25 @@ This is an npm-only release to fix a dependency issue published in 1.118
 #### Additions :tada:
 
 - Added `ClippingPolygon` and `ClippingPolygonCollection` for applying multiple clipping regions, with support for concave regions and inverse clipping regions, to 3D Tiles and Terrain. [#11750](https://github.com/CesiumGS/cesium/pull/11750)
+  新增 `ClippingPolygon` 和 `ClippingPolygonCollection`，用于对 3D Tiles 和地形应用多个裁剪区域，支持凹多边形区域和反向裁剪区域。[#11750](https://github.com/CesiumGS/cesium/pull/11750)
 - Added `Cesium3DTileset.clippingPolygons`, `Globe.clippingPolygons`, and `Model.clippingPolygons` properties for defining clipping regions from world positions. [#11750](https://github.com/CesiumGS/cesium/pull/11750)
+  新增 `Cesium3DTileset.clippingPolygons`、`Globe.clippingPolygons` 和 `Model.clippingPolygons` 属性，用于根据世界坐标位置定义裁剪区域。[#11750](https://github.com/CesiumGS/cesium/pull/11750)
 
 #### Fixes :wrench:
 
 - Fixed a bug where a data source was not automatically rendered after is was added in request render mode. [#11934](https://github.com/CesiumGS/cesium/pull/11934)
+  修复了在按需渲染模式（request render mode）下添加数据源后未自动触发渲染的 Bug。[#11934](https://github.com/CesiumGS/cesium/pull/11934)
 - Fixes Typescript definition for `Event.raiseEvent`. [#10498](https://github.com/CesiumGS/cesium/issues/10498)
+  修复了 `Event.raiseEvent` 的 TypeScript 类型定义。[#10498](https://github.com/CesiumGS/cesium/issues/10498)
 - Fixed a bug that Label position height may not be correctly updated when its HeightReference is relative. [#11929](https://github.com/CesiumGS/cesium/pull/11929)
+  修复了当 Label 的 HeightReference 为相对高度（relative）时，其位置高度可能无法正确更新的 Bug。[#11929](https://github.com/CesiumGS/cesium/pull/11929)
 
 ### @cesium/widgets
 
 #### Fixes :wrench:
 
 - Fixed leaked CSS styling from `I3SBuildingSceneLayerExplorer` widget. [#11959](https://github.com/CesiumGS/cesium/pull/11959)
+  修复了 `I3SBuildingSceneLayerExplorer` 部件引起的 CSS 样式泄漏问题。[#11959](https://github.com/CesiumGS/cesium/pull/11959)
 
 ## 1.116 - 2024-04-01
 
@@ -874,22 +1254,33 @@ This is an npm-only release to fix a dependency issue published in 1.118
 #### Breaking Changes :mega:
 
 - `Cesium3DTileset.disableCollision` has been removed. Use `Cesium3DTileset.enableCollision` instead.
+  `Cesium3DTileset.disableCollision` 已被移除。请改用 `Cesium3DTileset.enableCollision`。
 - `Globe.terrainExaggeration` and `Globe.terrainExaggerationRelativeHeight` have been removed. Use `Scene.verticalExaggeration` and `Scene.verticalExaggerationRelativeHeight` instead.
+  `Globe.terrainExaggeration` 和 `Globe.terrainExaggerationRelativeHeight` 已被移除。请改用 `Scene.verticalExaggeration` 和 `Scene.verticalExaggerationRelativeHeight`。
 
 #### Additions :tada:
 
 - Surface normals are now computed for clipping and shape bounds in VoxelEllipsoidShape and VoxelCylinderShape. [#11847](https://github.com/CesiumGS/cesium/pull/11847)
+  现在为 `VoxelEllipsoidShape`（体素椭球体）和 `VoxelCylinderShape`（体素圆柱体）的裁剪与形状边界计算表面法线。[#11847](https://github.com/CesiumGS/cesium/pull/11847)
 - Implemented sharper rendering and lighting on voxels with CYLINDER and ELLIPSOID shape. [#11875](https://github.com/CesiumGS/cesium/pull/11875)
+  实现了具有 CYLINDER（圆柱）和 ELLIPSOID（椭球）形状的体素更清晰锐利的渲染与光照效果。[#11875](https://github.com/CesiumGS/cesium/pull/11875)
 - Implemented vertical exaggeration for voxels with BOX shape. [#11887](https://github.com/CesiumGS/cesium/pull/11887)
+  实现了具有 BOX（长方体）形状的体素的高程垂直夸大（vertical exaggeration）。[#11887](https://github.com/CesiumGS/cesium/pull/11887)
 - Added the `Check` object of validators to the public api and types. [#11901](https://github.com/CesiumGS/cesium/pull/11901)
+  将参数校验器对象 `Check` 添加到公共 API 和类型定义中。[#11901](https://github.com/CesiumGS/cesium/pull/11901)
 
 #### Fixes :wrench:
 
 - Fixed issue with `BingMapsImageryProvider` where given culture option is ineffective [#11695](https://github.com/CesiumGS/cesium/issues/11695)
+  修复了 `BingMapsImageryProvider` 中指定的 culture 区域文化选项无效的问题。[#11695](https://github.com/CesiumGS/cesium/issues/11695)
 - Fixed a bug with performance in scenes with multiple tilesets [#11878](https://github.com/CesiumGS/cesium/pull/11878)
+  修复了包含多个瓦片集的场景中的性能 Bug。[#11878](https://github.com/CesiumGS/cesium/pull/11878)
 - Fixes issue with PolygonGeometry uvs are improperly computed [#11767](https://github.com/CesiumGS/cesium/issues/11767)
+  修复了 `PolygonGeometry` 的 UV 坐标计算不正确的问题。[#11767](https://github.com/CesiumGS/cesium/issues/11767)
 - Fixed voxel rendering bugs for non-spherical ellipsoid shapes [#11848](https://github.com/CesiumGS/cesium/pull/11848)
+  修复了非球形椭球体形状的体素渲染 Bug。[#11848](https://github.com/CesiumGS/cesium/pull/11848)
 - Fixed a bug where dynamic geometries caused the Scene to continuously render when running in requestRenderMode [#6631](https://github.com/CesiumGS/cesium/issues/6631)
+  修复了在 requestRenderMode（按需渲染模式）下运行时，动态几何体导致场景持续渲染的 Bug。[#6631](https://github.com/CesiumGS/cesium/issues/6631)
 
 ## 1.115 - 2024-03-01
 
@@ -898,34 +1289,49 @@ This is an npm-only release to fix a dependency issue published in 1.118
 #### Breaking Changes :mega:
 
 - By default, instances of `Cesium3DTileset` will no longer default to enable collisions for camera collision or for clamping entities. [#11829](https://github.com/CesiumGS/cesium/pull/11829)
+  默认情况下，`Cesium3DTileset` 实例将不再默认启用针对相机碰撞或实体贴地（clamping entities）的碰撞检测。[#11829](https://github.com/CesiumGS/cesium/pull/11829)
   - This behavior can be enabled by setting `Cesium3DTileset.enableCollision` to true.
+    可以通过将 `Cesium3DTileset.enableCollision` 设置为 true 来启用该行为。
 
 #### Additions :tada:
 
 - Added support for I3S Building Scene Layer. [#11678](https://github.com/CesiumGS/cesium/pull/11678)
+  新增对 I3S 建筑场景图层（Building Scene Layer）的支持。[#11678](https://github.com/CesiumGS/cesium/pull/11678)
 - Added `Scene.pickVoxel` to pick individual cells from a `VoxelPrimitive`, and `VoxelCell` to report information about the picked cell. [#11828](https://github.com/CesiumGS/cesium/pull/11828)
+  新增 `Scene.pickVoxel` 用于拾取来自 `VoxelPrimitive` 的单个体素单元，以及 `VoxelCell` 用于报告被拾取体素单元的信息。[#11828](https://github.com/CesiumGS/cesium/pull/11828)
 - Added `Scene.defaultLogDepthBuffer` to allow changing the default behavior of the `logDepthBuffer` for newly created `Scene` instances. [#11859](https://github.com/CesiumGS/cesium/pull/11859)
+  新增 `Scene.defaultLogDepthBuffer`，允许更改新创建 `Scene` 实例的对数深度缓冲区（`logDepthBuffer`）的默认行为。[#11859](https://github.com/CesiumGS/cesium/pull/11859)
 - Added `SensorVolumePortionToDisplay` to assist `CzmlDataSource` in parsing CZML. [#11859](https://github.com/CesiumGS/cesium/pull/11859)
+  新增 `SensorVolumePortionToDisplay` 以协助 `CzmlDataSource` 解析 CZML。[#11859](https://github.com/CesiumGS/cesium/pull/11859)
 
 #### Fixes :wrench:
 
 - Fixed a bug where the camera can stay underground when 3D Tiles are loading in. [#11824](https://github.com/CesiumGS/cesium/issues/11824)
+  修复了在 3D Tiles 加载过程中相机可能停留在地下的 Bug。[#11824](https://github.com/CesiumGS/cesium/issues/11824)
 - Fixed a bug with where a mix of empty and non-empty tiles were not refining. [#9356](https://github.com/CesiumGS/cesium/issues/9356)
+  修复了空瓦片与非空瓦片混合存在时未进行细分细化（refine）的 Bug。[#9356](https://github.com/CesiumGS/cesium/issues/9356)
 - Fixed a bug with camera collision with tilesets containing tiles with interleaved buffers [#11812](https://github.com/CesiumGS/cesium/issues/11812)
+  修复了相机与包含交错缓冲区（interleaved buffers）瓦片的瓦片集发生碰撞时的 Bug。[#11812](https://github.com/CesiumGS/cesium/issues/11812)
 - Fixed a bug affecting voxel shader compilation in WebGL1 contexts. [#11798](https://github.com/CesiumGS/cesium/pull/11798)
+  修复了影响 WebGL1 环境下体素着色器编译的 Bug。[#11798](https://github.com/CesiumGS/cesium/pull/11798)
 - Fixed a bug where legacy B3DM files that contained glTF 1.0 data that used a `CONSTANT` technique in the `KHR_material_common` extension and only defined ambient- or emissive textures (but no diffuse textures) showed up without any texture [#11825](https://github.com/CesiumGS/cesium/pull/11825)
+  修复了传统的 B3DM 文件若包含使用 `KHR_material_common` 扩展中 `CONSTANT` technique 的 glTF 1.0 数据，且仅定义了环境贴图或自发光贴图（但没有漫反射贴图）时，显示为完全没有纹理的 Bug。[#11825](https://github.com/CesiumGS/cesium/pull/11825)
 - Fixed an error when the `screenSpaceEventHandler` was destroyed before `Viewer` [#10576](https://github.com/CesiumGS/cesium/issues/10576)
+  修复了在 `Viewer` 之前销毁 `screenSpaceEventHandler` 时抛出的错误。[#10576](https://github.com/CesiumGS/cesium/issues/10576)
 - Fixed how `Camera.changed` handles changes in `roll`. [#11844](https://github.com/CesiumGS/cesium/pull/11844)
+  修复了 `Camera.changed` 处理翻滚角（`roll`）变化时的行为。[#11844](https://github.com/CesiumGS/cesium/pull/11844)
 
 #### Deprecated :hourglass_flowing_sand:
 
 - `Cesium3DTileset.disableCollision` has been deprecated and will be removed in 1.116. Use `Cesium3DTileset.enableCollision` instead.
+  `Cesium3DTileset.disableCollision` 已被废弃，将在 1.116 版本中移除。请改用 `Cesium3DTileset.enableCollision`。
 
 ### @cesium/widgets
 
 #### Additions :tada:
 
 - Added `I3SBuildingSceneLayerExplorer` widget for working with I3S Building Scene Layer data. [#11678](https://github.com/CesiumGS/cesium/pull/11678)
+  新增 `I3SBuildingSceneLayerExplorer` 部件，用于操作和浏览 I3S 建筑场景图层数据。[#11678](https://github.com/CesiumGS/cesium/pull/11678)
 
 ## 1.114 - 2024-02-01
 
@@ -934,45 +1340,74 @@ This is an npm-only release to fix a dependency issue published in 1.118
 #### Breaking Changes :mega:
 
 - By default, the screen space camera controller will no longer go inside or under instances of `Cesium3DTileset`. [#11581](https://github.com/CesiumGS/cesium/pull/11581)
+  默认情况下，屏幕空间相机控制器将不再穿入或沉入 `Cesium3DTileset` 实例的内部或下方。[#11581](https://github.com/CesiumGS/cesium/pull/11581)
   - This behavior can be disabled by setting `Cesium3DTileset.disableCollision` to true.
+    可以通过将 `Cesium3DTileset.disableCollision` 设置为 true 来禁用此行为。
   - This feature is enabled by default only for WebGL 2 and above, but can be enabled for WebGL 1 by setting the `enablePick` option to true when creating the `Cesium3DTileset`.
+    该特性仅在 WebGL 2 及以上环境中默认启用，但对于 WebGL 1，可以在创建 `Cesium3DTileset` 时将 `enablePick` 选项设置为 true 来启用。
 - Clamping to ground, `HeightReference.CLAMP_TO_GROUND`, and `HeightReference.RELATIVE_TO_GROUND` now take into account 3D Tilesets. These options will clamp to either 3D Tilesets or Terrain, whichever has a greater height. [#11604](https://github.com/CesiumGS/cesium/pull/11604)
+  贴地（Clamping to ground）、`HeightReference.CLAMP_TO_GROUND` 以及 `HeightReference.RELATIVE_TO_GROUND` 现在会考虑 3D Tileset。这些选项将贴合到 3D Tileset 或地形中高度较高的一方。[#11604](https://github.com/CesiumGS/cesium/pull/11604)
   - To restore previous behavior where an entity is clamped only to terrain or relative only to terrain, set `heightReference` to `HeightReference.CLAMP_TO_TERRAIN` or `HeightReference.RELATIVE_TO_TERRAIN` respectively.
+    若要恢复仅贴合地形或仅相对于地形的原有行为，请分别将 `heightReference` 设置为 `HeightReference.CLAMP_TO_TERRAIN` 或 `HeightReference.RELATIVE_TO_TERRAIN`。
 - Removed the need for node internal packages `http`, `https`, `url` and `zlib` in the `Resource` class. This means they do not need to be marked external by build tools anymore. [#11773](https://github.com/CesiumGS/cesium/pull/11773)
+  在 `Resource` 类中移除了对 Node.js 内置包 `http`、`https`、`url` 和 `zlib` 的依赖。这意味着构建工具不再需要将它们标记为 external。[#11773](https://github.com/CesiumGS/cesium/pull/11773)
   - This slightly changed the contents of the `RequestErrorEvent` error that is thrown in node environments when a request fails. The `response` property is now a [`Response`](https://developer.mozilla.org/en-US/docs/Web/API/Response) object instead of an [`http.IncomingMessage`](https://nodejs.org/docs/latest-v20.x/api/http.html#class-httpincomingmessage)
+    这略微改变了在 Node 环境下请求失败时抛出的 `RequestErrorEvent` 错误的内容。`response` 属性现在是一个 [`Response`](https://developer.mozilla.org/en-US/docs/Web/API/Response) 对象，而非 [`http.IncomingMessage`](https://nodejs.org/docs/latest-v20.x/api/http.html#class-httpincomingmessage)。
 - The `Cesium3DTileset.dynamicScreenSpaceError` optimization is now enabled by default, as this improves performance for street-level horizon views. Furthermore, the default settings of this feature were tuned for improved performance. `Cesium3DTileset.dynamicScreenSpaceErrorDensity` was changed from 0.00278 to 0.0002. `Cesium3DTileset.dynamicScreenSpaceErrorFactor` was changed from 4 to 24. [#11718](https://github.com/CesiumGS/cesium/pull/11718)
+  `Cesium3DTileset.dynamicScreenSpaceError`（动态屏幕空间误差）优化现在默认启用，因为这能显著提升街道级别地平线视角的渲染性能。此外，该特性的默认参数设置也进行了微调以提升性能。`Cesium3DTileset.dynamicScreenSpaceErrorDensity` 从 0.00278 更改为 0.0002。`Cesium3DTileset.dynamicScreenSpaceErrorFactor` 从 4 更改为 24。[#11718](https://github.com/CesiumGS/cesium/pull/11718)
 - `PolygonGeometry.computeRectangle` has been removed. Use `PolygonGeometry.computeRectangleFromPositions` instead.
+  `PolygonGeometry.computeRectangle` 已被移除。请改用 `PolygonGeometry.computeRectangleFromPositions`。
 
 #### Additions :tada:
 
 - Added `HeightReference.CLAMP_TO_TERRAIN`, `HeightReference.RELATIVE_TO_TERRAIN`, `HeightReference.CLAMP_TO_3D_TILE`, and `HeightReference.RELATIVE_TO_3D_TILE` to position relative to terrain or 3D tilesets exclusively.[#11604](https://github.com/CesiumGS/cesium/pull/11604)
+  新增 `HeightReference.CLAMP_TO_TERRAIN`、`HeightReference.RELATIVE_TO_TERRAIN`、`HeightReference.CLAMP_TO_3D_TILE` 和 `HeightReference.RELATIVE_TO_3D_TILE`，用于专门相对于地形或 3D 瓦片集进行定位贴合。[#11604](https://github.com/CesiumGS/cesium/pull/11604)
 - Added `Cesium3DTileset.getHeight` to sample height values of the loaded tiles. If using WebGL 1, the `enablePick` option must be set to true to use this function. [#11581](https://github.com/CesiumGS/cesium/pull/11581)
+  新增 `Cesium3DTileset.getHeight` 以对已加载瓦片的高程值进行采样。若使用 WebGL 1，必须将 `enablePick` 选项设置为 true 才能使用此函数。[#11581](https://github.com/CesiumGS/cesium/pull/11581)
 - Added `Cesium3DTileset.disableCollision` to allow the camera from to go inside or below a 3D tileset, for instance, to be used with 3D Tiles interiors. [#11581](https://github.com/CesiumGS/cesium/pull/11581)
+  新增 `Cesium3DTileset.disableCollision`，允许相机进入 3D 瓦片集内部或穿到其下方，例如用于 3D Tiles 室内场景。[#11581](https://github.com/CesiumGS/cesium/pull/11581)
 - Fog rendering now applies to glTF models and 3D Tiles. This can be configured using `scene.fog` and `scene.atmosphere`. [#11744](https://github.com/CesiumGS/cesium/pull/11744)
+  雾效渲染现在支持应用于 glTF 模型和 3D Tiles。可以通过 `scene.fog` 和 `scene.atmosphere` 进行配置。[#11744](https://github.com/CesiumGS/cesium/pull/11744)
 - Added `scene.atmosphere` to store common atmosphere lighting parameters. [#11744](https://github.com/CesiumGS/cesium/pull/11744) and [#11681](https://github.com/CesiumGS/cesium/issues/11681)
+  新增 `scene.atmosphere`，用于存储通用的大气光照参数。[#11744](https://github.com/CesiumGS/cesium/pull/11744) 与 [#11681](https://github.com/CesiumGS/cesium/issues/11681)
 - Added `createWorldBathymetryAsync` helper function to make it easier to load Bathymetry terrain. [#11790](https://github.com/CesiumGS/cesium/issues/11790)
+  新增 `createWorldBathymetryAsync` 辅助函数，使加载水深地形（Bathymetry terrain）更加便捷。[#11790](https://github.com/CesiumGS/cesium/issues/11790)
 
 #### Fixes :wrench:
 
 - Fixed an issue where `DataSource` objects incorrectly shared a single `PolylineCollection` in the `PolylineGeometryUpdater`. Updated `PolylineGeometryUpdater` to create a distinct `PolylineCollection` instance per `DataSource`. This resolves the crashes reported under [#7758](https://github.com/CesiumGS/cesium/issues/7758) and [#9154](https://github.com/CesiumGS/cesium/issues/9154).
+  修复了 `DataSource` 对象在 `PolylineGeometryUpdater` 中错误地共享同一个 `PolylineCollection` 的问题。更新了 `PolylineGeometryUpdater` 为每个 `DataSource` 创建独立的 `PolylineCollection` 实例。这解决了在 [#7758](https://github.com/CesiumGS/cesium/issues/7758) 和 [#9154](https://github.com/CesiumGS/cesium/issues/9154) 中报告的崩溃问题。
 - Fixed a geometry displacement on iOS devices that was caused by NaN value in `czm_translateRelativeToEye` function. [#7100](https://github.com/CesiumGS/cesium/issues/7100)
+  修复了 iOS 设备上由于 `czm_translateRelativeToEye` 函数中的 NaN 值导致的几何体偏移问题。[#7100](https://github.com/CesiumGS/cesium/issues/7100)
 - Fixed improper scaling of ellipsoid inner radii in 3D mode. [#11656](https://github.com/CesiumGS/cesium/issues/11656) and [#10245](https://github.com/CesiumGS/cesium/issues/10245)
+  修复了 3D 模式下椭球体内部半径缩放不正确的问题。[#11656](https://github.com/CesiumGS/cesium/issues/11656) 与 [#10245](https://github.com/CesiumGS/cesium/issues/10245)
 - Updated `approximateTerrainHeights.json` to account for CWB heights to help with ground primitives when using Cesium World Bathymetry [#11805](https://github.com/CesiumGS/cesium/pull/11805)
+  更新了 `approximateTerrainHeights.json` 以纳入 CWB 高度，有助于在使用 Cesium World Bathymetry（全球水深数据）时正确处理贴地图元（ground primitives）。[#11805](https://github.com/CesiumGS/cesium/pull/11805)
 - Fix globe materials when lighting is false. Slope/Aspect material no longer rely on turning on lighting or shadows. [#11563](https://github.com/CesiumGS/cesium/issues/11563)
+  修复了当关闭光照（lighting 为 false）时的地球材质问题。坡度/坡向（Slope/Aspect）材质不再依赖于开启光照或阴影。[#11563](https://github.com/CesiumGS/cesium/issues/11563)
 - Fixed a bug where `GregorianDate` constructor would not validate the input parameters for valid date. [#10057](https://github.com/CesiumGS/cesium/issues/10057)
+  修复了 `GregorianDate` 构造函数未对输入参数进行有效日期验证的 Bug。[#10057](https://github.com/CesiumGS/cesium/issues/10057)
 - Fixed a bug where the `Cesium3DTileset` constructor was ignoring the options `dynamicScreenSpaceError`, `dynamicScreenSpaceErrorDensity`, `dynamicScreenSpaceErrorFactor` and `dynamicScreenSpaceErrorHeightFalloff`. [#11677](https://github.com/CesiumGS/cesium/issues/11677)
+  修复了 `Cesium3DTileset` 构造函数忽略 `dynamicScreenSpaceError`、`dynamicScreenSpaceErrorDensity`、`dynamicScreenSpaceErrorFactor` 和 `dynamicScreenSpaceErrorHeightFalloff` 选项的 Bug。[#11677](https://github.com/CesiumGS/cesium/issues/11677)
 - Fixed a bug where transforms that had been defined with the `KHR_texture_transform` extension had not been applied to Property Textures in `EXT_structural_metadata`. [#11708](https://github.com/CesiumGS/cesium/issues/11708)
+  修复了使用 `KHR_texture_transform` 扩展定义的变换未能应用到 `EXT_structural_metadata` 中属性纹理（Property Textures）的 Bug。[#11708](https://github.com/CesiumGS/cesium/issues/11708)
 - Fixed a bug where transforms that had been defined with the `KHR_texture_transform` extension had not been applied to Feature ID Textures in `EXT_mesh_features`. [#11731](https://github.com/CesiumGS/cesium/issues/11731)
+  修复了使用 `KHR_texture_transform` 扩展定义的变换未能应用到 `EXT_mesh_features` 中要素 ID 纹理（Feature ID Textures）的 Bug。[#11731](https://github.com/CesiumGS/cesium/issues/11731)
 - Fixed `Entity` documentation for `orientation` property. [#11762](https://github.com/CesiumGS/cesium/pull/11762)
+  修复了 `Entity` 中 `orientation` 属性的文档说明。[#11762](https://github.com/CesiumGS/cesium/pull/11762)
 - The `EntityCollection#add` method was documented to throw a `DeveloperError` for duplicate IDs, but did throw a `RuntimeError` in this case. This is now changed to throw a `DeveloperError`. [#11776](https://github.com/CesiumGS/cesium/pull/11776)
+  文档中说明 `EntityCollection#add` 方法在遇到重复 ID 时会抛出 `DeveloperError`，但实际上此前抛出了 `RuntimeError`。现已修改为抛出 `DeveloperError`。[#11776](https://github.com/CesiumGS/cesium/pull/11776)
 - Parts of the documentation have been updated to resolve potential issues with the generated TypedScript definitions. [#11776](https://github.com/CesiumGS/cesium/pull/11776)
+  更新了部分文档以解决生成的 TypeScript 类型定义中的潜在问题。[#11776](https://github.com/CesiumGS/cesium/pull/11776)
 - Fixed type definition for `Camera.constrainedAxis`. [#11475](https://github.com/CesiumGS/cesium/issues/11475)
+  修复了 `Camera.constrainedAxis` 的类型定义。[#11475](https://github.com/CesiumGS/cesium/issues/11475)
 
 ### @cesium/widgets
 
 #### Fixes :wrench:
 
 - Fixed a bug where the 3D Tiles Inspector's `dynamicScreenSpaceErrorDensity` slider did not update the tileset [#6143](https://github.com/CesiumGS/cesium/issues/6143)
+  修复了 3D Tiles Inspector（3D 瓦片检查器）的 `dynamicScreenSpaceErrorDensity` 滑块无法更新瓦片集的 Bug。[#6143](https://github.com/CesiumGS/cesium/issues/6143)
 
 ## 1.113 - 2024-01-02
 
