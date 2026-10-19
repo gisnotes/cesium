@@ -115,8 +115,8 @@
   },
   "scripts": {
     "prepare": "gulp prepare && husky && node scripts/isCI.js || playwright install --with-deps",
-    "start": "node server.js",
-    "start-public": "node server.js --public",
+    "start": "node server.js --no-embeddings",
+    "start-public": "node server.js --public --no-embeddings",
     "build": "gulp build",
     "build-release": "gulp buildRelease",
     "build-watch": "gulp buildWatch",

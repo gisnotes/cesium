@@ -385,7 +385,7 @@ export async function buildGalleryList(options = {}) {
 }
 
 // If running the script directly using node
-if (import.meta.url.endsWith(`${pathToFileURL(process.argv[1])}`)) {
+if (process.argv[1] && import.meta.url.endsWith(`${pathToFileURL(process.argv[1])}`)) {
   const argv = yargs(hideBin(process.argv))
     .option("embeddings", {
       type: "boolean",

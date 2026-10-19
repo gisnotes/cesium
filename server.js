@@ -168,7 +168,10 @@ const throttle = (callback) => {
     const __dirname = path.dirname(fileURLToPath(import.meta.url));
     if (
       buildSandcastleApp &&
-      !fs.existsSync(path.join(__dirname, "/Apps/Sandcastle2/index.html"))
+      (!fs.existsSync(path.join(__dirname, "/Apps/Sandcastle2/index.html")) ||
+        !fs.existsSync(
+          path.join(__dirname, "/Apps/Sandcastle2/gallery/list.json"),
+        ))
     ) {
       // Sandcastle takes a bit of time to build and is unlikely to change often
       // Only build it when we detect it doesn't exist to save on dev time
