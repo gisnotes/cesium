@@ -2,6 +2,32 @@
 
 ## 1.146 - 2026-10-01
 
+### Major Announcements :loudspeaker:
+
+- CesiumJS now publishes a new package, `@cesium/core`, containing the math, geometry, time, and utility classes that were previously part of `@cesium/engine`. [#13805](https://github.com/CesiumGS/cesium/pull/13805)
+  CesiumJS 现已发布一个新包 `@cesium/core`，其中包含此前属于 `@cesium/engine` 的数学、几何、时间与实用工具类。[#13805](https://github.com/CesiumGS/cesium/pull/13805)
+  - Code that imports from `cesium` does not need to change.
+    从 `cesium` 导入代码的项目无需修改。
+  - Code that imports these classes from `@cesium/engine` should import them from `@cesium/core` instead, and add `@cesium/core` to its `package.json` dependencies. The `@cesium/engine` exports are deprecated and will be removed in 1.150. Example:
+    从 `@cesium/engine` 导入这些类的代码应改从 `@cesium/core` 导入，并将其添加到 `package.json` 依赖项中。从 `@cesium/engine` 的导出已被废弃，并将在 1.150 版本中移除。示例：
+
+```js
+// Before
+import { Cartesian3, Color } from "@cesium/engine";
+
+// After
+import { Cartesian3, Color } from "@cesium/core";
+```
+
+### @cesium/core
+
+#### Additions :tada:
+
+- Added the `@cesium/core` package. [#13805](https://github.com/CesiumGS/cesium/pull/13805)
+  新增 `@cesium/core` 核心包。[#13805](https://github.com/CesiumGS/cesium/pull/13805)
+- Promoted `AttributeCompression`, `EllipsoidalOccluder`, `GeometryOffsetAttribute`, `InterpolationType`, `AttributeType`, `TimeConstants`, `VerticalExaggeration`, `PolygonPipeline`, and `PolylinePipeline` to the public API. [#13805](https://github.com/CesiumGS/cesium/pull/13805)
+  将 `AttributeCompression`、`EllipsoidalOccluder`、`GeometryOffsetAttribute`、`InterpolationType`、`AttributeType`、`TimeConstants`、`VerticalExaggeration`、`PolygonPipeline` 和 `PolylinePipeline` 升级为公共 API。[#13805](https://github.com/CesiumGS/cesium/pull/13805)
+
 ### @cesium/engine
 
 #### Additions :tada:
@@ -10,6 +36,8 @@
   在 `Cesium3DTileset` 中新增了 `vectorBlendOption` 属性，用于选择不透明（opaque）或半透明（translucent）混合模式。此外，在 `BufferPointCollection`、`BufferPolylineCollection` 和 `BufferPolygonCollection` 实例化后，其 `blendOption` 属性现在也支持动态修改。 [#13764](https://github.com/CesiumGS/cesium/issues/13764)
 - Added `.pickObject` getter/setter to BufferPrimitive. [#13811](https://github.com/CesiumGS/cesium/pull/13811)
   为 `BufferPrimitive` 新增了 `.pickObject` 的 getter/setter 属性。 [#13811](https://github.com/CesiumGS/cesium/pull/13811)
+- Added batch `.setPositions` method to BufferPrimitiveCollection, improving performance when animating vertex positions on a range of many point, line, or polygon primitives. [#13590](https://github.com/CesiumGS/cesium/issues/13590)
+  为 `BufferPrimitiveCollection` 新增批量 `.setPositions` 方法，在对大量点、线或多边形图元范围内的顶点坐标执行动画时可提升性能。[#13590](https://github.com/CesiumGS/cesium/issues/13590)
 
 #### Fixes :wrench:
 
@@ -36,6 +64,15 @@
 
 - `Matrix4.fromCamera` has been deprecated and will be removed in 1.151. Use `Camera.prototype.viewMatrix` or `Matrix4.computeView` instead.
   `Matrix4.fromCamera` 已被废弃，并将在 1.151 版本中移除。请改用 `Camera.prototype.viewMatrix` 或 `Matrix4.computeView`。
+- The math, geometry, time, and utility classes, enums, and functions listed below have moved from `@cesium/engine` to `@cesium/core`. Importing them from `@cesium/engine` is deprecated and will be removed in 1.150. Using a deprecated name logs a one-time console warning. [#13805](https://github.com/CesiumGS/cesium/pull/13805)
+  下文列出的数学、几何、时间与实用工具类、枚举及函数已从 `@cesium/engine` 移动至 `@cesium/core`。从 `@cesium/engine` 中导入这些内容已被废弃，并将在 1.150 版本中移除。使用已废弃的名称将记录一次性控制台警告日志。[#13805](https://github.com/CesiumGS/cesium/pull/13805)
+
+  <details>
+  <summary>Moved to @cesium/core</summary>
+
+  `ArcType`, `AssociativeArray`, `AxisAlignedBoundingBox`, `BoundingRectangle`, `BoundingSphere`, `BoxGeometry`, `BoxOutlineGeometry`, `Cartesian2`, `Cartesian3`, `Cartesian4`, `Cartographic`, `CatmullRomSpline`, `Check`, `CircleGeometry`, `CircleOutlineGeometry`, `Clock`, `ClockRange`, `ClockStep`, `Color`, `ColorGeometryInstanceAttribute`, `ComponentDatatype`, `ConstantSpline`, `CoplanarPolygonGeometry`, `CoplanarPolygonOutlineGeometry`, `CornerType`, `CorridorGeometry`, `CorridorOutlineGeometry`, `CubicRealPolynomial`, `CullingVolume`, `CylinderGeometry`, `CylinderOutlineGeometry`, `DeveloperError`, `DistanceDisplayCondition`, `DistanceDisplayConditionGeometryInstanceAttribute`, `EllipseGeometry`, `EllipseOutlineGeometry`, `Ellipsoid`, `EllipsoidGeodesic`, `EllipsoidGeometry`, `EllipsoidOutlineGeometry`, `EllipsoidRhumbLine`, `EllipsoidTangentPlane`, `Event`, `EventHelper`, `ExtrapolationType`, `Frozen`, `GeographicProjection`, `Geometry`, `GeometryAttribute`, `GeometryAttributes`, `GeometryFactory`, `GeometryInstance`, `GeometryInstanceAttribute`, `GeometryPipeline`, `GregorianDate`, `HeadingPitchRange`, `HeadingPitchRoll`, `HermitePolynomialApproximation`, `HermiteSpline`, `IndexDatatype`, `Intersect`, `IntersectionTests`, `Intersections2D`, `Interval`, `Iso8601`, `JulianDate`, `LagrangePolynomialApproximation`, `LeapSecond`, `LinearApproximation`, `LinearSpline`, `MapProjection`, `Math`, `Matrix2`, `Matrix3`, `Matrix4`, `MorphWeightSpline`, `NearFarScalar`, `Occluder`, `OrientedBoundingBox`, `OrthographicFrustum`, `OrthographicOffCenterFrustum`, `Packable`, `PackableForInterpolation`, `PerspectiveFrustum`, `PerspectiveOffCenterFrustum`, `PixelDatatype`, `PixelFormat`, `Plane`, `PlaneGeometry`, `PlaneOutlineGeometry`, `PolygonGeometry`, `PolygonHierarchy`, `PolygonOutlineGeometry`, `PolylineGeometry`, `PolylineVolumeGeometry`, `PolylineVolumeOutlineGeometry`, `PrimitiveType`, `QuadraticRealPolynomial`, `QuarticRealPolynomial`, `Quaternion`, `QuaternionSpline`, `Queue`, `Ray`, `Rectangle`, `RectangleGeometry`, `RectangleOutlineGeometry`, `ReferenceFrame`, `RuntimeError`, `ShowGeometryInstanceAttribute`, `SimplePolylineGeometry`, `SphereGeometry`, `SphereOutlineGeometry`, `Spherical`, `Spline`, `SteppedSpline`, `Stereographic`, `TimeInterval`, `TimeIntervalCollection`, `TimeStandard`, `TrackingReferenceFrame`, `TranslationRotationScale`, `TridiagonalSystemSolver`, `VertexFormat`, `Visibility`, `WallGeometry`, `WallOutlineGeometry`, `WebGLConstants`, `WebMercatorProjection`, `WindingOrder`, `barycentricCoordinates`, `binarySearch`, `clone`, `combine`, `createGuid`, `defined`, `destroyObject`, `formatError`, `getAbsoluteUri`, `getBaseUri`, `getExtensionFromUri`, `getFilenameFromUri`, `getTimestamp`, `isLeapYear`, `mergeSort`, `objectToQuery`, `pointInsideTriangle`, `queryToObject`, `srgbToLinear`, `subdivideArray`
+
+  </details>
 
 ## 1.145 - 2026-09-02
 
