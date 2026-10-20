@@ -190,6 +190,20 @@ const throttle = (callback) => {
         `Sandcastle built in ${formatTimeSinceInSeconds(startTime)} seconds.`,
       );
     }
+
+    if (!fs.existsSync(path.join(__dirname, "Source/Cesium.d.ts"))) {
+      console.log("Building TypeScript definitions for Sandcastle intellisense...");
+      const startTime = performance.now();
+      try {
+        const { buildTs } = await import("./gulpfile.js");
+        await buildTs();
+        console.log(
+          `TypeScript definitions built in ${formatTimeSinceInSeconds(startTime)} seconds.`,
+        );
+      } catch (e) {
+        console.warn("Could not build TypeScript definitions:", e.message);
+      }
+    }
   }
 
   const app = express();
@@ -450,6 +464,16 @@ const throttle = (callback) => {
       !fs.existsSync(path.resolve("./Apps/Sandcastle2/gallery/embeddings.json"))
     ) {
       res.json({ disabled: true, embeddings: {} });
+      return;
+    }
+    next();
+  });
+
+  // When TypeScript definition files are not yet generated, respond with a valid empty type stub so browser does not log 404
+  app.get(/\.d\.ts$/, function (req, res, next) {
+    const fullPath = path.resolve("." + req.path);
+    if (!fs.existsSync(fullPath)) {
+      res.type("application/typescript").send("declare const _default: any; export default _default;");
       return;
     }
     next();
