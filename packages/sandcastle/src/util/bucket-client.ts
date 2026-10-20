@@ -14,7 +14,22 @@ declare global {
   }
 }
 
-const OUTER_ORIGIN = __OUTER_ORIGIN__;
+function getOuterOrigin(): string {
+  if (typeof window !== "undefined") {
+    const hostname = window.location.hostname;
+    if (hostname === "localhost" || hostname === "127.0.0.1") {
+      if (window.location.port === "8081") {
+        return `${window.location.protocol}//${hostname}:8080`;
+      }
+    }
+    return window.location.origin;
+  }
+  return typeof __OUTER_ORIGIN__ !== "undefined"
+    ? __OUTER_ORIGIN__
+    : "http://localhost:8080";
+}
+
+const OUTER_ORIGIN = getOuterOrigin();
 
 /**
  * Apply and run sandcastle code to the page

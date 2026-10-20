@@ -443,13 +443,13 @@ const throttle = (callback) => {
     app.use("/Build/CesiumUnminified", express.static("Build/CesiumDev"));
   }
 
-  // When semantic search embeddings are disabled or absent, respond with 204 No Content so browser does not log 404
+  // When semantic search embeddings are disabled or absent, respond with disabled JSON so browser does not 404 or fail parsing
   app.get("/Apps/Sandcastle2/gallery/embeddings.json", function (req, res, next) {
     if (
       (!argv.embeddings || process.env.SANDCASTLE_NO_EMBEDDINGS) &&
       !fs.existsSync(path.resolve("./Apps/Sandcastle2/gallery/embeddings.json"))
     ) {
-      res.status(204).end();
+      res.json({ disabled: true, embeddings: {} });
       return;
     }
     next();

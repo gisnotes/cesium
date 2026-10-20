@@ -358,6 +358,12 @@ export async function buildGalleryList(options = {}) {
       join(outputDirectory, "embeddings.json"),
       JSON.stringify(embeddingsMap),
     );
+  } else {
+    // Write disabled placeholder so browser does not 404 or fail parsing
+    await writeFile(
+      join(outputDirectory, "embeddings.json"),
+      JSON.stringify({ disabled: true, embeddings: {} }),
+    );
   }
 
   await pagefindIndex.writeFiles({

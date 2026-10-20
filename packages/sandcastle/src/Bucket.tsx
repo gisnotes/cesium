@@ -8,10 +8,38 @@ import {
   MessageToApp,
 } from "./util/IframeBridge";
 
-const INNER_ORIGIN = __INNER_ORIGIN__;
-// This constructs urls like `[__INNER_ORIGIN__]/[pathname]/templates/bucket.html`
-// using location.pathname lets this adapt to deployed locations like CI
-const bucketUrl = `${new URL(`${location.pathname.replace(/[^\/]+.html/, "")}templates/bucket.html`, __INNER_ORIGIN__)}`;
+function getInnerOrigin(): string {
+  if (typeof window !== "undefined") {
+    const hostname = window.location.hostname;
+    if (hostname === "localhost" || hostname === "127.0.0.1") {
+      if (window.location.port === "8080") {
+        return `${window.location.protocol}//${hostname}:8081`;
+      }
+    }
+    return window.location.origin;
+  }
+  return typeof __INNER_ORIGIN__ !== "undefined"
+    ? __INNER_ORIGIN__
+    : "http://localhost:8081";
+}
+
+function getBucketUrl(): string {
+  if (typeof window === "undefined") {
+    return "";
+  }
+  let dir = window.location.pathname;
+  if (dir.endsWith("/")) {
+    // Already ends with slash
+  } else if (dir.includes(".")) {
+    dir = dir.substring(0, dir.lastIndexOf("/") + 1);
+  } else {
+    dir = dir + "/";
+  }
+  return `${new URL(`${dir}templates/bucket.html`, getInnerOrigin())}`;
+}
+
+const INNER_ORIGIN = getInnerOrigin();
+const bucketUrl = getBucketUrl();
 
 export function Bucket({
   code,

@@ -50,14 +50,40 @@ class EmbeddingSearch {
 
     this.galleryList = galleryList;
 
-    const embeddingsResponse = await fetch("gallery/embeddings.json");
-    const contentType = embeddingsResponse.headers.get("content-type");
-    if (!embeddingsResponse.ok || !contentType?.includes("json")) {
+    let embeddingsResponse: Response;
+    try {
+      embeddingsResponse = await fetch("gallery/embeddings.json");
+    } catch {
       this.embeddingsAvailable = false;
       this.onUnavailableCallbacks.forEach((cb) => cb());
       return;
     }
-    const embeddingsData: Embeddings = await embeddingsResponse.json();
+
+    const contentType = embeddingsResponse.headers.get("content-type");
+    if (
+      !embeddingsResponse.ok ||
+      embeddingsResponse.status === 204 ||
+      !contentType?.includes("json")
+    ) {
+      this.embeddingsAvailable = false;
+      this.onUnavailableCallbacks.forEach((cb) => cb());
+      return;
+    }
+
+    let embeddingsData: Embeddings | undefined;
+    try {
+      embeddingsData = await embeddingsResponse.json();
+    } catch {
+      this.embeddingsAvailable = false;
+      this.onUnavailableCallbacks.forEach((cb) => cb());
+      return;
+    }
+
+    if (!embeddingsData?.model || !embeddingsData?.embeddings) {
+      this.embeddingsAvailable = false;
+      this.onUnavailableCallbacks.forEach((cb) => cb());
+      return;
+    }
 
     const modelId = embeddingsData.model;
     const dtype = embeddingsData.dtype as NonNullable<
