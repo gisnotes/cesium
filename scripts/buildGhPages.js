@@ -35,7 +35,10 @@ async function main() {
   console.log("=== 2. Building Sandcastle static app ===");
   run("npx gulp -f gulpfile.apps.js buildSandcastle --no-embeddings");
 
-  console.log("=== 3. Preparing gh-pages worktree ===");
+  console.log("=== 3. Building CesiumViewer app ===");
+  run("npx gulp -f gulpfile.apps.js buildCesiumViewer");
+
+  console.log("=== 4. Preparing gh-pages worktree ===");
   if (fs.existsSync(worktreePath)) {
     try {
       run(`git worktree remove --force "${worktreePath}"`);
@@ -46,7 +49,7 @@ async function main() {
   }
   run(`git worktree add "${worktreePath}" gh-pages`);
 
-  console.log("=== 4. Syncing built artifacts to gh-pages ===");
+  console.log("=== 5. Syncing built artifacts to gh-pages ===");
   // Sync Apps/Sandcastle2
   fs.rmSync(path.join(worktreePath, "Apps/Sandcastle2"), {
     recursive: true,
@@ -55,6 +58,22 @@ async function main() {
   copyDir(
     path.join(repoRoot, "Apps/Sandcastle2"),
     path.join(worktreePath, "Apps/Sandcastle2"),
+  );
+
+  // Sync Apps/CesiumViewer
+  fs.rmSync(path.join(worktreePath, "Apps/CesiumViewer"), {
+    recursive: true,
+    force: true,
+  });
+  copyDir(
+    path.join(repoRoot, "Apps/CesiumViewer"),
+    path.join(worktreePath, "Apps/CesiumViewer"),
+  );
+
+  // Sync Apps/HelloWorld.html
+  fs.copyFileSync(
+    path.join(repoRoot, "Apps/HelloWorld.html"),
+    path.join(worktreePath, "Apps/HelloWorld.html"),
   );
 
   // Sync Build/CesiumUnminified
@@ -66,6 +85,30 @@ async function main() {
     path.join(repoRoot, "Build/CesiumUnminified"),
     path.join(worktreePath, "Build/CesiumUnminified"),
   );
+
+  // Sync Build/Apps/CesiumViewer
+  if (fs.existsSync(path.join(repoRoot, "Build/Apps/CesiumViewer"))) {
+    fs.rmSync(path.join(worktreePath, "Build/Apps/CesiumViewer"), {
+      recursive: true,
+      force: true,
+    });
+    copyDir(
+      path.join(repoRoot, "Build/Apps/CesiumViewer"),
+      path.join(worktreePath, "Build/Apps/CesiumViewer"),
+    );
+  }
+
+  // Sync Source/Widgets (widgets.css, lighter.css and components)
+  if (fs.existsSync(path.join(repoRoot, "Source/Widgets"))) {
+    fs.rmSync(path.join(worktreePath, "Source/Widgets"), {
+      recursive: true,
+      force: true,
+    });
+    copyDir(
+      path.join(repoRoot, "Source/Widgets"),
+      path.join(worktreePath, "Source/Widgets"),
+    );
+  }
 
   // Sync packages/*/Build
   const packagesWithBuild = ["core", "gltf", "engine", "widgets"];
@@ -107,19 +150,19 @@ async function main() {
     fs.writeFileSync(nojekyll, "");
   }
 
-  console.log("=== 5. Committing to gh-pages ===");
+  console.log("=== 6. Committing to gh-pages ===");
   run("git add -A", worktreePath);
   run(
-    "git add -f packages/core/Build packages/gltf/Build packages/engine/Build packages/widgets/Build Build/CesiumUnminified Source/Cesium.d.ts packages/core/index.d.ts packages/gltf/index.d.ts packages/engine/index.d.ts packages/widgets/index.d.ts Apps/Sandcastle2",
+    "git add -f packages/core/Build packages/gltf/Build packages/engine/Build packages/widgets/Build Build/CesiumUnminified Build/Apps/CesiumViewer Source/Widgets Source/Cesium.d.ts packages/core/index.d.ts packages/gltf/index.d.ts packages/engine/index.d.ts packages/widgets/index.d.ts Apps/Sandcastle2",
     worktreePath,
   );
   try {
-    run('git commit -m "deploy: update gh-pages static build"', worktreePath);
+    run('git commit -m "deploy: update gh-pages static build with CesiumViewer and Source/Widgets"', worktreePath);
   } catch {
     console.log("No changes to commit on gh-pages (already up to date).");
   }
 
-  console.log("=== 6. Cleaning up worktree ===");
+  console.log("=== 7. Cleaning up worktree ===");
   run(`git worktree remove "${worktreePath}"`);
 
   console.log("\n✅ gh-pages 分支构建并提交成功！");

@@ -91,7 +91,6 @@ export async function buildCesiumViewer() {
     .pipe(gulp.src(["web.config"]))
     .pipe(gulp.dest(cesiumViewerOutputDirectory));
 
-  await finished(stream);
   return stream;
 }
 
