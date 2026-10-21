@@ -67,6 +67,17 @@ async function main() {
     path.join(worktreePath, "Build/CesiumUnminified"),
   );
 
+  // Sync packages/*/Build
+  const packagesWithBuild = ["core", "gltf", "engine", "widgets"];
+  for (const pkg of packagesWithBuild) {
+    const srcPkgBuild = path.join(repoRoot, `packages/${pkg}/Build`);
+    const destPkgBuild = path.join(worktreePath, `packages/${pkg}/Build`);
+    if (fs.existsSync(srcPkgBuild)) {
+      fs.rmSync(destPkgBuild, { recursive: true, force: true });
+      copyDir(srcPkgBuild, destPkgBuild);
+    }
+  }
+
   // Sync packages/engine/Source/Core/Ion.js
   fs.copyFileSync(
     path.join(repoRoot, "packages/engine/Source/Core/Ion.js"),
@@ -98,6 +109,10 @@ async function main() {
 
   console.log("=== 5. Committing to gh-pages ===");
   run("git add -A", worktreePath);
+  run(
+    "git add -f packages/core/Build packages/gltf/Build packages/engine/Build packages/widgets/Build Build/CesiumUnminified Source/Cesium.d.ts packages/core/index.d.ts packages/gltf/index.d.ts packages/engine/index.d.ts packages/widgets/index.d.ts Apps/Sandcastle2",
+    worktreePath,
+  );
   try {
     run('git commit -m "deploy: update gh-pages static build"', worktreePath);
   } catch {
