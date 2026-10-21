@@ -125,6 +125,7 @@
     "build-apps": "gulp -f gulpfile.apps.js buildApps",
     "build-cesium-viewer": "gulp -f gulpfile.apps.js buildCesiumViewer",
     "build-sandcastle": "gulp -f gulpfile.apps.js buildSandcastle",
+    "build-gh-pages": "node scripts/buildGhPages.js",
     "clean": "gulp clean",
     "cloc": "gulp cloc",
     "update-ion-token": "node scripts/updateIonToken.js",
