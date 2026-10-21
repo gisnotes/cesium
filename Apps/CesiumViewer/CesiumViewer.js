@@ -1,6 +1,8 @@
 window.CESIUM_BASE_URL = window.CESIUM_BASE_URL
   ? window.CESIUM_BASE_URL
-  : "../../Build/CesiumUnminified/";
+  : typeof CESIUM_BASE_URL !== "undefined"
+    ? CESIUM_BASE_URL
+    : "../../Build/CesiumUnminified/";
 
 import {
   Cartesian3,

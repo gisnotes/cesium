@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="zhCN">
   <head>
     <!-- Use correct character set. -->
     <meta charset="utf-8" />
@@ -11,6 +11,17 @@
       content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no"
     />
     <title>Hello World!</title>
+    <script>
+      (function () {
+        var isLocal =
+          window.location.hostname === "localhost" ||
+          window.location.hostname === "127.0.0.1";
+        if (!isLocal) {
+          window.CESIUM_BASE_URL =
+            "https://cdn.jsdelivr.net/gh/gisnotes/cesium@gh-pages/Build/CesiumUnminified/";
+        }
+      })();
+    </script>
     <script src="../Build/CesiumUnminified/Cesium.js"></script>
     <style>
       @import url(../Build/CesiumUnminified/Widgets/widgets.css);

@@ -5976,27 +5976,979 @@ function createDefaultTerrainProviderViewModels() {
 }
 var createDefaultTerrainProviderViewModels_default = createDefaultTerrainProviderViewModels;
 
-// packages/widgets/Source/Cesium3DTilesInspector/Cesium3DTilesInspector.js
-import { Check as Check3, destroyObject as destroyObject5 } from "@cesium/core";
+// packages/widgets/Source/CesiumInspector/CesiumInspector.js
+import { DeveloperError as DeveloperError10, defined as defined11, destroyObject as destroyObject5 } from "@cesium/core";
 import { getElement as getElement3 } from "@cesium/engine";
 
+// packages/widgets/Source/CesiumInspector/CesiumInspectorViewModel.js
+import {
+  Cartesian3,
+  DeveloperError as DeveloperError9,
+  Ray,
+  Rectangle,
+  defined as defined10,
+  destroyObject as destroyObject4
+} from "@cesium/core";
+import {
+  DebugModelMatrixPrimitive,
+  PerformanceDisplay,
+  ScreenSpaceEventHandler,
+  ScreenSpaceEventType,
+  TileCoordinatesImageryProvider
+} from "@cesium/engine";
+function frustumStatisticsToString(statistics) {
+  let str;
+  if (defined10(statistics)) {
+    str = "Command Statistics";
+    const com = statistics.commandsInFrustums;
+    for (const n in com) {
+      if (com.hasOwnProperty(n)) {
+        let num = parseInt(n, 10);
+        let s;
+        if (num === 7) {
+          s = "1, 2 and 3";
+        } else {
+          const f = [];
+          for (let i = 2; i >= 0; i--) {
+            const p = Math.pow(2, i);
+            if (num >= p) {
+              f.push(i + 1);
+              num -= p;
+            }
+          }
+          s = f.reverse().join(" and ");
+        }
+        str += `<br>&nbsp;&nbsp;&nbsp;&nbsp;${com[n]} in frustum ${s}`;
+      }
+    }
+    str += `<br>Total: ${statistics.totalCommands}`;
+  }
+  return str;
+}
+function boundDepthFrustum(lower, upper, proposed) {
+  let bounded = Math.min(proposed, upper);
+  bounded = Math.max(bounded, lower);
+  return bounded;
+}
+var scratchPickRay = new Ray();
+var scratchPickCartesian = new Cartesian3();
+function CesiumInspectorViewModel(scene, performanceContainer) {
+  if (!defined10(scene)) {
+    throw new DeveloperError9("scene is required");
+  }
+  if (!defined10(performanceContainer)) {
+    throw new DeveloperError9("performanceContainer is required");
+  }
+  const that = this;
+  const canvas = scene.canvas;
+  const eventHandler = new ScreenSpaceEventHandler(canvas);
+  this._eventHandler = eventHandler;
+  this._scene = scene;
+  this._canvas = canvas;
+  this._primitive = void 0;
+  this._tile = void 0;
+  this._modelMatrixPrimitive = void 0;
+  this._performanceDisplay = void 0;
+  this._performanceContainer = performanceContainer;
+  const globe = this._scene.globe;
+  globe.depthTestAgainstTerrain = true;
+  this.frustums = false;
+  this.frustumPlanes = false;
+  this.performance = false;
+  this.shaderCacheText = "";
+  this.primitiveBoundingSphere = false;
+  this.primitiveReferenceFrame = false;
+  this.filterPrimitive = false;
+  this.tileBoundingSphere = false;
+  this.filterTile = false;
+  this.wireframe = false;
+  this.depthFrustum = 1;
+  this._numberOfFrustums = 1;
+  this.suspendUpdates = false;
+  this.tileCoordinates = false;
+  this.frustumStatisticText = false;
+  this.tileText = "";
+  this.hasPickedPrimitive = false;
+  this.hasPickedTile = false;
+  this.pickPrimitiveActive = false;
+  this.pickTileActive = false;
+  this.dropDownVisible = true;
+  this.generalVisible = true;
+  this.primitivesVisible = false;
+  this.terrainVisible = false;
+  this.depthFrustumText = "";
+  knockout_default.track(this, [
+    "frustums",
+    "frustumPlanes",
+    "performance",
+    "shaderCacheText",
+    "primitiveBoundingSphere",
+    "primitiveReferenceFrame",
+    "filterPrimitive",
+    "tileBoundingSphere",
+    "filterTile",
+    "wireframe",
+    "depthFrustum",
+    "suspendUpdates",
+    "tileCoordinates",
+    "frustumStatisticText",
+    "tileText",
+    "hasPickedPrimitive",
+    "hasPickedTile",
+    "pickPrimitiveActive",
+    "pickTileActive",
+    "dropDownVisible",
+    "generalVisible",
+    "primitivesVisible",
+    "terrainVisible",
+    "depthFrustumText"
+  ]);
+  this._toggleDropDown = createCommand_default(function() {
+    that.dropDownVisible = !that.dropDownVisible;
+  });
+  this._toggleGeneral = createCommand_default(function() {
+    that.generalVisible = !that.generalVisible;
+  });
+  this._togglePrimitives = createCommand_default(function() {
+    that.primitivesVisible = !that.primitivesVisible;
+  });
+  this._toggleTerrain = createCommand_default(function() {
+    that.terrainVisible = !that.terrainVisible;
+  });
+  this._frustumsSubscription = knockout_default.getObservable(this, "frustums").subscribe(function(val) {
+    that._scene.debugShowFrustums = val;
+    that._scene.requestRender();
+  });
+  this._frustumPlanesSubscription = knockout_default.getObservable(this, "frustumPlanes").subscribe(function(val) {
+    that._scene.debugShowFrustumPlanes = val;
+    that._scene.requestRender();
+  });
+  this._performanceSubscription = knockout_default.getObservable(this, "performance").subscribe(function(val) {
+    if (val) {
+      that._performanceDisplay = new PerformanceDisplay({
+        container: that._performanceContainer
+      });
+    } else {
+      that._performanceContainer.innerHTML = "";
+    }
+  });
+  this._showPrimitiveBoundingSphere = createCommand_default(function() {
+    that._primitive.debugShowBoundingVolume = that.primitiveBoundingSphere;
+    that._scene.requestRender();
+    return true;
+  });
+  this._primitiveBoundingSphereSubscription = knockout_default.getObservable(this, "primitiveBoundingSphere").subscribe(function() {
+    that._showPrimitiveBoundingSphere();
+  });
+  this._showPrimitiveReferenceFrame = createCommand_default(function() {
+    if (that.primitiveReferenceFrame) {
+      const modelMatrix = that._primitive.modelMatrix;
+      that._modelMatrixPrimitive = new DebugModelMatrixPrimitive({
+        modelMatrix
+      });
+      that._scene.primitives.add(that._modelMatrixPrimitive);
+    } else if (defined10(that._modelMatrixPrimitive)) {
+      that._scene.primitives.remove(that._modelMatrixPrimitive);
+      that._modelMatrixPrimitive = void 0;
+    }
+    that._scene.requestRender();
+    return true;
+  });
+  this._primitiveReferenceFrameSubscription = knockout_default.getObservable(this, "primitiveReferenceFrame").subscribe(function() {
+    that._showPrimitiveReferenceFrame();
+  });
+  this._doFilterPrimitive = createCommand_default(function() {
+    if (that.filterPrimitive) {
+      that._scene.debugCommandFilter = function(command) {
+        if (defined10(that._modelMatrixPrimitive) && command.owner === that._modelMatrixPrimitive._primitive) {
+          return true;
+        } else if (defined10(that._primitive)) {
+          return command.owner === that._primitive || command.owner === that._primitive._billboardCollection || command.owner.primitive === that._primitive;
+        }
+        return false;
+      };
+    } else {
+      that._scene.debugCommandFilter = void 0;
+    }
+    return true;
+  });
+  this._filterPrimitiveSubscription = knockout_default.getObservable(this, "filterPrimitive").subscribe(function() {
+    that._doFilterPrimitive();
+    that._scene.requestRender();
+  });
+  this._wireframeSubscription = knockout_default.getObservable(this, "wireframe").subscribe(function(val) {
+    globe._surface.tileProvider._debug.wireframe = val;
+    that._scene.requestRender();
+  });
+  this._depthFrustumSubscription = knockout_default.getObservable(this, "depthFrustum").subscribe(function(val) {
+    that._scene.debugShowDepthFrustum = val;
+    that._scene.requestRender();
+  });
+  this._incrementDepthFrustum = createCommand_default(function() {
+    const next = that.depthFrustum + 1;
+    that.depthFrustum = boundDepthFrustum(1, that._numberOfFrustums, next);
+    that._scene.requestRender();
+    return true;
+  });
+  this._decrementDepthFrustum = createCommand_default(function() {
+    const next = that.depthFrustum - 1;
+    that.depthFrustum = boundDepthFrustum(1, that._numberOfFrustums, next);
+    that._scene.requestRender();
+    return true;
+  });
+  this._suspendUpdatesSubscription = knockout_default.getObservable(this, "suspendUpdates").subscribe(function(val) {
+    globe._surface._debug.suspendLodUpdate = val;
+    if (!val) {
+      that.filterTile = false;
+    }
+  });
+  let tileBoundariesLayer;
+  this._showTileCoordinates = createCommand_default(function() {
+    if (that.tileCoordinates && !defined10(tileBoundariesLayer)) {
+      tileBoundariesLayer = scene.imageryLayers.addImageryProvider(
+        new TileCoordinatesImageryProvider({
+          tilingScheme: scene.terrainProvider.tilingScheme
+        })
+      );
+    } else if (!that.tileCoordinates && defined10(tileBoundariesLayer)) {
+      scene.imageryLayers.remove(tileBoundariesLayer);
+      tileBoundariesLayer = void 0;
+    }
+    return true;
+  });
+  this._tileCoordinatesSubscription = knockout_default.getObservable(this, "tileCoordinates").subscribe(function() {
+    that._showTileCoordinates();
+    that._scene.requestRender();
+  });
+  this._tileBoundingSphereSubscription = knockout_default.getObservable(this, "tileBoundingSphere").subscribe(function() {
+    that._showTileBoundingSphere();
+    that._scene.requestRender();
+  });
+  this._showTileBoundingSphere = createCommand_default(function() {
+    if (that.tileBoundingSphere) {
+      globe._surface.tileProvider._debug.boundingSphereTile = that._tile;
+    } else {
+      globe._surface.tileProvider._debug.boundingSphereTile = void 0;
+    }
+    that._scene.requestRender();
+    return true;
+  });
+  this._doFilterTile = createCommand_default(function() {
+    if (!that.filterTile) {
+      that.suspendUpdates = false;
+    } else {
+      that.suspendUpdates = true;
+      globe._surface._tilesToRender = [];
+      if (defined10(that._tile) && that._tile.renderable) {
+        globe._surface._tilesToRender.push(that._tile);
+      }
+    }
+    return true;
+  });
+  this._filterTileSubscription = knockout_default.getObservable(this, "filterTile").subscribe(function() {
+    that.doFilterTile();
+    that._scene.requestRender();
+  });
+  function pickPrimitive(e) {
+    const newPick = that._scene.pick({
+      x: e.position.x,
+      y: e.position.y
+    });
+    if (defined10(newPick)) {
+      that.primitive = defined10(newPick.collection) ? newPick.collection : newPick.primitive;
+    }
+    that._scene.requestRender();
+    that.pickPrimitiveActive = false;
+  }
+  this._pickPrimitive = createCommand_default(function() {
+    that.pickPrimitiveActive = !that.pickPrimitiveActive;
+  });
+  this._pickPrimitiveActiveSubscription = knockout_default.getObservable(this, "pickPrimitiveActive").subscribe(function(val) {
+    if (val) {
+      eventHandler.setInputAction(
+        pickPrimitive,
+        ScreenSpaceEventType.LEFT_CLICK
+      );
+    } else {
+      eventHandler.removeInputAction(ScreenSpaceEventType.LEFT_CLICK);
+    }
+  });
+  function selectTile(e) {
+    let selectedTile;
+    const ellipsoid = globe.ellipsoid;
+    const ray = that._scene.camera.getPickRay(e.position, scratchPickRay);
+    const cartesian = globe.pick(ray, that._scene, scratchPickCartesian);
+    if (defined10(cartesian)) {
+      const cartographic = ellipsoid.cartesianToCartographic(cartesian);
+      const tilesRendered = globe._surface.tileProvider._tilesToRenderByTextureCount;
+      for (let textureCount = 0; !selectedTile && textureCount < tilesRendered.length; ++textureCount) {
+        const tilesRenderedByTextureCount = tilesRendered[textureCount];
+        if (!defined10(tilesRenderedByTextureCount)) {
+          continue;
+        }
+        for (let tileIndex = 0; !selectedTile && tileIndex < tilesRenderedByTextureCount.length; ++tileIndex) {
+          const tile = tilesRenderedByTextureCount[tileIndex];
+          if (Rectangle.contains(tile.rectangle, cartographic)) {
+            selectedTile = tile;
+          }
+        }
+      }
+    }
+    that.tile = selectedTile;
+    that.pickTileActive = false;
+  }
+  this._pickTile = createCommand_default(function() {
+    that.pickTileActive = !that.pickTileActive;
+  });
+  this._pickTileActiveSubscription = knockout_default.getObservable(this, "pickTileActive").subscribe(function(val) {
+    if (val) {
+      eventHandler.setInputAction(
+        selectTile,
+        ScreenSpaceEventType.LEFT_CLICK
+      );
+    } else {
+      eventHandler.removeInputAction(ScreenSpaceEventType.LEFT_CLICK);
+    }
+  });
+  this._removePostRenderEvent = scene.postRender.addEventListener(function() {
+    that._update();
+  });
+}
+Object.defineProperties(CesiumInspectorViewModel.prototype, {
+  /**
+   * Gets the scene to control.
+   * @memberof CesiumInspectorViewModel.prototype
+   *
+   * @type {Scene}
+   */
+  scene: {
+    get: function() {
+      return this._scene;
+    }
+  },
+  /**
+   * Gets the container of the PerformanceDisplay
+   * @memberof CesiumInspectorViewModel.prototype
+   *
+   * @type {Element}
+   */
+  performanceContainer: {
+    get: function() {
+      return this._performanceContainer;
+    }
+  },
+  /**
+   * Gets the command to toggle the visibility of the drop down.
+   * @memberof CesiumInspectorViewModel.prototype
+   *
+   * @type {Command}
+   */
+  toggleDropDown: {
+    get: function() {
+      return this._toggleDropDown;
+    }
+  },
+  /**
+   * Gets the command to toggle the visibility of a BoundingSphere for a primitive
+   * @memberof CesiumInspectorViewModel.prototype
+   *
+   * @type {Command}
+   */
+  showPrimitiveBoundingSphere: {
+    get: function() {
+      return this._showPrimitiveBoundingSphere;
+    }
+  },
+  /**
+   * Gets the command to toggle the visibility of a {@link DebugModelMatrixPrimitive} for the model matrix of a primitive
+   * @memberof CesiumInspectorViewModel.prototype
+   *
+   * @type {Command}
+   */
+  showPrimitiveReferenceFrame: {
+    get: function() {
+      return this._showPrimitiveReferenceFrame;
+    }
+  },
+  /**
+   * Gets the command to toggle a filter that renders only a selected primitive
+   * @memberof CesiumInspectorViewModel.prototype
+   *
+   * @type {Command}
+   */
+  doFilterPrimitive: {
+    get: function() {
+      return this._doFilterPrimitive;
+    }
+  },
+  /**
+   * Gets the command to increment the depth frustum index to be shown
+   * @memberof CesiumInspectorViewModel.prototype
+   *
+   * @type {Command}
+   */
+  incrementDepthFrustum: {
+    get: function() {
+      return this._incrementDepthFrustum;
+    }
+  },
+  /**
+   * Gets the command to decrement the depth frustum index to be shown
+   * @memberof CesiumInspectorViewModel.prototype
+   *
+   * @type {Command}
+   */
+  decrementDepthFrustum: {
+    get: function() {
+      return this._decrementDepthFrustum;
+    }
+  },
+  /**
+   * Gets the command to toggle the visibility of tile coordinates
+   * @memberof CesiumInspectorViewModel.prototype
+   *
+   * @type {Command}
+   */
+  showTileCoordinates: {
+    get: function() {
+      return this._showTileCoordinates;
+    }
+  },
+  /**
+   * Gets the command to toggle the visibility of a BoundingSphere for a selected tile
+   * @memberof CesiumInspectorViewModel.prototype
+   *
+   * @type {Command}
+   */
+  showTileBoundingSphere: {
+    get: function() {
+      return this._showTileBoundingSphere;
+    }
+  },
+  /**
+   * Gets the command to toggle a filter that renders only a selected tile
+   * @memberof CesiumInspectorViewModel.prototype
+   *
+   * @type {Command}
+   */
+  doFilterTile: {
+    get: function() {
+      return this._doFilterTile;
+    }
+  },
+  /**
+   * Gets the command to expand and collapse the general section
+   * @memberof CesiumInspectorViewModel.prototype
+   *
+   * @type {Command}
+   */
+  toggleGeneral: {
+    get: function() {
+      return this._toggleGeneral;
+    }
+  },
+  /**
+   * Gets the command to expand and collapse the primitives section
+   * @memberof CesiumInspectorViewModel.prototype
+   *
+   * @type {Command}
+   */
+  togglePrimitives: {
+    get: function() {
+      return this._togglePrimitives;
+    }
+  },
+  /**
+   * Gets the command to expand and collapse the terrain section
+   * @memberof CesiumInspectorViewModel.prototype
+   *
+   * @type {Command}
+   */
+  toggleTerrain: {
+    get: function() {
+      return this._toggleTerrain;
+    }
+  },
+  /**
+   * Gets the command to pick a primitive
+   * @memberof CesiumInspectorViewModel.prototype
+   *
+   * @type {Command}
+   */
+  pickPrimitive: {
+    get: function() {
+      return this._pickPrimitive;
+    }
+  },
+  /**
+   * Gets the command to pick a tile
+   * @memberof CesiumInspectorViewModel.prototype
+   *
+   * @type {Command}
+   */
+  pickTile: {
+    get: function() {
+      return this._pickTile;
+    }
+  },
+  /**
+   * Gets the command to pick a tile
+   * @memberof CesiumInspectorViewModel.prototype
+   *
+   * @type {Command}
+   */
+  selectParent: {
+    get: function() {
+      const that = this;
+      return createCommand_default(function() {
+        that.tile = that.tile.parent;
+      });
+    }
+  },
+  /**
+   * Gets the command to pick a tile
+   * @memberof CesiumInspectorViewModel.prototype
+   *
+   * @type {Command}
+   */
+  selectNW: {
+    get: function() {
+      const that = this;
+      return createCommand_default(function() {
+        that.tile = that.tile.northwestChild;
+      });
+    }
+  },
+  /**
+   * Gets the command to pick a tile
+   * @memberof CesiumInspectorViewModel.prototype
+   *
+   * @type {Command}
+   */
+  selectNE: {
+    get: function() {
+      const that = this;
+      return createCommand_default(function() {
+        that.tile = that.tile.northeastChild;
+      });
+    }
+  },
+  /**
+   * Gets the command to pick a tile
+   * @memberof CesiumInspectorViewModel.prototype
+   *
+   * @type {Command}
+   */
+  selectSW: {
+    get: function() {
+      const that = this;
+      return createCommand_default(function() {
+        that.tile = that.tile.southwestChild;
+      });
+    }
+  },
+  /**
+   * Gets the command to pick a tile
+   * @memberof CesiumInspectorViewModel.prototype
+   *
+   * @type {Command}
+   */
+  selectSE: {
+    get: function() {
+      const that = this;
+      return createCommand_default(function() {
+        that.tile = that.tile.southeastChild;
+      });
+    }
+  },
+  /**
+   * Gets or sets the current selected primitive
+   * @memberof CesiumInspectorViewModel.prototype
+   *
+   * @type {Command}
+   */
+  primitive: {
+    get: function() {
+      return this._primitive;
+    },
+    set: function(newPrimitive) {
+      const oldPrimitive = this._primitive;
+      if (newPrimitive !== oldPrimitive) {
+        this.hasPickedPrimitive = true;
+        if (defined10(oldPrimitive)) {
+          oldPrimitive.debugShowBoundingVolume = false;
+        }
+        this._scene.debugCommandFilter = void 0;
+        if (defined10(this._modelMatrixPrimitive)) {
+          this._scene.primitives.remove(this._modelMatrixPrimitive);
+          this._modelMatrixPrimitive = void 0;
+        }
+        this._primitive = newPrimitive;
+        newPrimitive.show = false;
+        setTimeout(function() {
+          newPrimitive.show = true;
+        }, 50);
+        this.showPrimitiveBoundingSphere();
+        this.showPrimitiveReferenceFrame();
+        this.doFilterPrimitive();
+      }
+    }
+  },
+  /**
+   * Gets or sets the current selected tile
+   * @memberof CesiumInspectorViewModel.prototype
+   *
+   * @type {Command}
+   */
+  tile: {
+    get: function() {
+      return this._tile;
+    },
+    set: function(newTile) {
+      if (defined10(newTile)) {
+        this.hasPickedTile = true;
+        const oldTile = this._tile;
+        if (newTile !== oldTile) {
+          this.tileText = `L: ${newTile.level} X: ${newTile.x} Y: ${newTile.y}`;
+          this.tileText += `<br>SW corner: ${newTile.rectangle.west}, ${newTile.rectangle.south}`;
+          this.tileText += `<br>NE corner: ${newTile.rectangle.east}, ${newTile.rectangle.north}`;
+          const data = newTile.data;
+          if (defined10(data) && defined10(data.tileBoundingRegion)) {
+            this.tileText += `<br>Min: ${data.tileBoundingRegion.minimumHeight} Max: ${data.tileBoundingRegion.maximumHeight}`;
+          } else {
+            this.tileText += "<br>(Tile is not loaded)";
+          }
+        }
+        this._tile = newTile;
+        this.showTileBoundingSphere();
+        this.doFilterTile();
+      } else {
+        this.hasPickedTile = false;
+        this._tile = void 0;
+      }
+    }
+  }
+});
+CesiumInspectorViewModel.prototype._update = function() {
+  if (this.frustums) {
+    this.frustumStatisticText = frustumStatisticsToString(
+      this._scene.debugFrustumStatistics
+    );
+  }
+  const numberOfFrustums = this._scene.numberOfFrustums;
+  this._numberOfFrustums = numberOfFrustums;
+  this.depthFrustum = boundDepthFrustum(1, numberOfFrustums, this.depthFrustum);
+  this.depthFrustumText = `${this.depthFrustum} of ${numberOfFrustums}`;
+  if (this.performance) {
+    this._performanceDisplay.update();
+  }
+  if (this.primitiveReferenceFrame) {
+    this._modelMatrixPrimitive.modelMatrix = this._primitive.modelMatrix;
+  }
+  this.shaderCacheText = `Cached shaders: ${this._scene.context.shaderCache.numberOfShaders}`;
+};
+CesiumInspectorViewModel.prototype.isDestroyed = function() {
+  return false;
+};
+CesiumInspectorViewModel.prototype.destroy = function() {
+  this._eventHandler.destroy();
+  this._removePostRenderEvent();
+  this._frustumsSubscription.dispose();
+  this._frustumPlanesSubscription.dispose();
+  this._performanceSubscription.dispose();
+  this._primitiveBoundingSphereSubscription.dispose();
+  this._primitiveReferenceFrameSubscription.dispose();
+  this._filterPrimitiveSubscription.dispose();
+  this._wireframeSubscription.dispose();
+  this._depthFrustumSubscription.dispose();
+  this._suspendUpdatesSubscription.dispose();
+  this._tileCoordinatesSubscription.dispose();
+  this._tileBoundingSphereSubscription.dispose();
+  this._filterTileSubscription.dispose();
+  this._pickPrimitiveActiveSubscription.dispose();
+  this._pickTileActiveSubscription.dispose();
+  return destroyObject4(this);
+};
+var CesiumInspectorViewModel_default = CesiumInspectorViewModel;
+
+// packages/widgets/Source/CesiumInspector/CesiumInspector.js
+function CesiumInspector(container, scene) {
+  if (!defined11(container)) {
+    throw new DeveloperError10("container is required.");
+  }
+  if (!defined11(scene)) {
+    throw new DeveloperError10("scene is required.");
+  }
+  container = getElement3(container);
+  const performanceContainer = document.createElement("div");
+  const viewModel = new CesiumInspectorViewModel_default(scene, performanceContainer);
+  this._viewModel = viewModel;
+  this._container = container;
+  const element = document.createElement("div");
+  this._element = element;
+  const text = document.createElement("div");
+  text.textContent = "Cesium Inspector";
+  text.className = "cesium-cesiumInspector-button";
+  text.setAttribute("data-bind", "click: toggleDropDown");
+  element.appendChild(text);
+  element.className = "cesium-cesiumInspector";
+  element.setAttribute(
+    "data-bind",
+    'css: { "cesium-cesiumInspector-visible" : dropDownVisible, "cesium-cesiumInspector-hidden" : !dropDownVisible }'
+  );
+  container.appendChild(this._element);
+  const panel = document.createElement("div");
+  panel.className = "cesium-cesiumInspector-dropDown";
+  element.appendChild(panel);
+  const createSection = InspectorShared_default.createSection;
+  const createCheckbox = InspectorShared_default.createCheckbox;
+  const generalSection = createSection(
+    panel,
+    "General",
+    "generalVisible",
+    "toggleGeneral"
+  );
+  const debugShowFrustums = createCheckbox("Show Frustums", "frustums");
+  const frustumStatistics = document.createElement("div");
+  frustumStatistics.className = "cesium-cesiumInspector-frustumStatistics";
+  frustumStatistics.setAttribute(
+    "data-bind",
+    "visible: frustums, html: frustumStatisticText"
+  );
+  debugShowFrustums.appendChild(frustumStatistics);
+  generalSection.appendChild(debugShowFrustums);
+  generalSection.appendChild(
+    createCheckbox("Show Frustum Planes", "frustumPlanes")
+  );
+  generalSection.appendChild(
+    createCheckbox("Performance Display", "performance")
+  );
+  performanceContainer.className = "cesium-cesiumInspector-performanceDisplay";
+  generalSection.appendChild(performanceContainer);
+  const shaderCacheDisplay = document.createElement("div");
+  shaderCacheDisplay.className = "cesium-cesiumInspector-shaderCache";
+  shaderCacheDisplay.setAttribute("data-bind", "html: shaderCacheText");
+  generalSection.appendChild(shaderCacheDisplay);
+  const depthFrustum = document.createElement("div");
+  generalSection.appendChild(depthFrustum);
+  const gLabel = document.createElement("span");
+  gLabel.setAttribute(
+    "data-bind",
+    'html: "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Frustum:"'
+  );
+  depthFrustum.appendChild(gLabel);
+  const gText = document.createElement("span");
+  gText.setAttribute("data-bind", "text: depthFrustumText");
+  depthFrustum.appendChild(gText);
+  const gMinusButton = document.createElement("input");
+  gMinusButton.type = "button";
+  gMinusButton.value = "-";
+  gMinusButton.className = "cesium-cesiumInspector-pickButton";
+  gMinusButton.setAttribute("data-bind", "click: decrementDepthFrustum");
+  depthFrustum.appendChild(gMinusButton);
+  const gPlusButton = document.createElement("input");
+  gPlusButton.type = "button";
+  gPlusButton.value = "+";
+  gPlusButton.className = "cesium-cesiumInspector-pickButton";
+  gPlusButton.setAttribute("data-bind", "click: incrementDepthFrustum");
+  depthFrustum.appendChild(gPlusButton);
+  const primSection = createSection(
+    panel,
+    "Primitives",
+    "primitivesVisible",
+    "togglePrimitives"
+  );
+  const pickPrimRequired = document.createElement("div");
+  pickPrimRequired.className = "cesium-cesiumInspector-pickSection";
+  primSection.appendChild(pickPrimRequired);
+  const pickPrimitiveButton = document.createElement("input");
+  pickPrimitiveButton.type = "button";
+  pickPrimitiveButton.value = "Pick a primitive";
+  pickPrimitiveButton.className = "cesium-cesiumInspector-pickButton";
+  pickPrimitiveButton.setAttribute(
+    "data-bind",
+    'css: {"cesium-cesiumInspector-pickButtonHighlight" : pickPrimitiveActive}, click: pickPrimitive'
+  );
+  let buttonWrap = document.createElement("div");
+  buttonWrap.className = "cesium-cesiumInspector-center";
+  buttonWrap.appendChild(pickPrimitiveButton);
+  pickPrimRequired.appendChild(buttonWrap);
+  pickPrimRequired.appendChild(
+    createCheckbox(
+      "Show bounding sphere",
+      "primitiveBoundingSphere",
+      "hasPickedPrimitive"
+    )
+  );
+  pickPrimRequired.appendChild(
+    createCheckbox(
+      "Show reference frame",
+      "primitiveReferenceFrame",
+      "hasPickedPrimitive"
+    )
+  );
+  this._primitiveOnly = createCheckbox(
+    "Show only selected",
+    "filterPrimitive",
+    "hasPickedPrimitive"
+  );
+  pickPrimRequired.appendChild(this._primitiveOnly);
+  const terrainSection = createSection(
+    panel,
+    "Terrain",
+    "terrainVisible",
+    "toggleTerrain"
+  );
+  const pickTileRequired = document.createElement("div");
+  pickTileRequired.className = "cesium-cesiumInspector-pickSection";
+  terrainSection.appendChild(pickTileRequired);
+  const pickTileButton = document.createElement("input");
+  pickTileButton.type = "button";
+  pickTileButton.value = "Pick a tile";
+  pickTileButton.className = "cesium-cesiumInspector-pickButton";
+  pickTileButton.setAttribute(
+    "data-bind",
+    'css: {"cesium-cesiumInspector-pickButtonHighlight" : pickTileActive}, click: pickTile'
+  );
+  buttonWrap = document.createElement("div");
+  buttonWrap.appendChild(pickTileButton);
+  buttonWrap.className = "cesium-cesiumInspector-center";
+  pickTileRequired.appendChild(buttonWrap);
+  const tileInfo = document.createElement("div");
+  pickTileRequired.appendChild(tileInfo);
+  const parentTile = document.createElement("input");
+  parentTile.type = "button";
+  parentTile.value = "Parent";
+  parentTile.className = "cesium-cesiumInspector-pickButton";
+  parentTile.setAttribute("data-bind", "click: selectParent");
+  const nwTile = document.createElement("input");
+  nwTile.type = "button";
+  nwTile.value = "NW";
+  nwTile.className = "cesium-cesiumInspector-pickButton";
+  nwTile.setAttribute("data-bind", "click: selectNW");
+  const neTile = document.createElement("input");
+  neTile.type = "button";
+  neTile.value = "NE";
+  neTile.className = "cesium-cesiumInspector-pickButton";
+  neTile.setAttribute("data-bind", "click: selectNE");
+  const swTile = document.createElement("input");
+  swTile.type = "button";
+  swTile.value = "SW";
+  swTile.className = "cesium-cesiumInspector-pickButton";
+  swTile.setAttribute("data-bind", "click: selectSW");
+  const seTile = document.createElement("input");
+  seTile.type = "button";
+  seTile.value = "SE";
+  seTile.className = "cesium-cesiumInspector-pickButton";
+  seTile.setAttribute("data-bind", "click: selectSE");
+  const tileText = document.createElement("div");
+  tileText.className = "cesium-cesiumInspector-tileText";
+  tileInfo.className = "cesium-cesiumInspector-frustumStatistics";
+  tileInfo.appendChild(tileText);
+  tileInfo.setAttribute("data-bind", "visible: hasPickedTile");
+  tileText.setAttribute("data-bind", "html: tileText");
+  const relativeText = document.createElement("div");
+  relativeText.className = "cesium-cesiumInspector-relativeText";
+  relativeText.textContent = "Select relative:";
+  tileInfo.appendChild(relativeText);
+  const table = document.createElement("table");
+  const tr1 = document.createElement("tr");
+  const tr2 = document.createElement("tr");
+  const td1 = document.createElement("td");
+  td1.appendChild(parentTile);
+  const td2 = document.createElement("td");
+  td2.appendChild(nwTile);
+  const td3 = document.createElement("td");
+  td3.appendChild(neTile);
+  tr1.appendChild(td1);
+  tr1.appendChild(td2);
+  tr1.appendChild(td3);
+  const td4 = document.createElement("td");
+  const td5 = document.createElement("td");
+  td5.appendChild(swTile);
+  const td6 = document.createElement("td");
+  td6.appendChild(seTile);
+  tr2.appendChild(td4);
+  tr2.appendChild(td5);
+  tr2.appendChild(td6);
+  table.appendChild(tr1);
+  table.appendChild(tr2);
+  tileInfo.appendChild(table);
+  pickTileRequired.appendChild(
+    createCheckbox(
+      "Show bounding volume",
+      "tileBoundingSphere",
+      "hasPickedTile"
+    )
+  );
+  pickTileRequired.appendChild(
+    createCheckbox("Show only selected", "filterTile", "hasPickedTile")
+  );
+  terrainSection.appendChild(createCheckbox("Wireframe", "wireframe"));
+  terrainSection.appendChild(
+    createCheckbox("Suspend LOD update", "suspendUpdates")
+  );
+  terrainSection.appendChild(
+    createCheckbox("Show tile coordinates", "tileCoordinates")
+  );
+  knockout_default.applyBindings(viewModel, this._element);
+}
+Object.defineProperties(CesiumInspector.prototype, {
+  /**
+   * Gets the parent container.
+   * @memberof CesiumInspector.prototype
+   *
+   * @type {Element}
+   */
+  container: {
+    get: function() {
+      return this._container;
+    }
+  },
+  /**
+   * Gets the view model.
+   * @memberof CesiumInspector.prototype
+   *
+   * @type {CesiumInspectorViewModel}
+   */
+  viewModel: {
+    get: function() {
+      return this._viewModel;
+    }
+  }
+});
+CesiumInspector.prototype.isDestroyed = function() {
+  return false;
+};
+CesiumInspector.prototype.destroy = function() {
+  knockout_default.cleanNode(this._element);
+  this._container.removeChild(this._element);
+  this.viewModel.destroy();
+  return destroyObject5(this);
+};
+var CesiumInspector_default = CesiumInspector;
+
+// packages/widgets/Source/Cesium3DTilesInspector/Cesium3DTilesInspector.js
+import { Check as Check3, destroyObject as destroyObject7 } from "@cesium/core";
+import { getElement as getElement4 } from "@cesium/engine";
+
 // packages/widgets/Source/Cesium3DTilesInspector/Cesium3DTilesInspectorViewModel.js
-import { Check as Check2, Color as Color2, defined as defined10, destroyObject as destroyObject4 } from "@cesium/core";
+import { Check as Check2, Color as Color2, defined as defined12, destroyObject as destroyObject6 } from "@cesium/core";
 import {
   Cesium3DTileColorBlendMode,
   Cesium3DTileFeature,
   Cesium3DTilePass,
   Cesium3DTileset,
   Cesium3DTileStyle,
-  PerformanceDisplay,
+  PerformanceDisplay as PerformanceDisplay2,
   ResourceCache,
-  ScreenSpaceEventHandler,
-  ScreenSpaceEventType
+  ScreenSpaceEventHandler as ScreenSpaceEventHandler2,
+  ScreenSpaceEventType as ScreenSpaceEventType2
 } from "@cesium/engine";
 function getPickTileset(viewModel) {
   return function(e) {
     const pick = viewModel._scene.pick(e.position);
-    if (defined10(pick) && pick.primitive instanceof Cesium3DTileset) {
+    if (defined12(pick) && pick.primitive instanceof Cesium3DTileset) {
       viewModel.tileset = pick.primitive;
     }
     viewModel.pickActive = false;
@@ -6006,12 +6958,12 @@ function selectTilesetOnHover(viewModel, value) {
   if (value) {
     viewModel._eventHandler.setInputAction(function(e) {
       const pick = viewModel._scene.pick(e.endPosition);
-      if (defined10(pick) && pick.primitive instanceof Cesium3DTileset) {
+      if (defined12(pick) && pick.primitive instanceof Cesium3DTileset) {
         viewModel.tileset = pick.primitive;
       }
-    }, ScreenSpaceEventType.MOUSE_MOVE);
+    }, ScreenSpaceEventType2.MOUSE_MOVE);
   } else {
-    viewModel._eventHandler.removeInputAction(ScreenSpaceEventType.MOUSE_MOVE);
+    viewModel._eventHandler.removeInputAction(ScreenSpaceEventType2.MOUSE_MOVE);
     viewModel.picking = viewModel.picking;
   }
 }
@@ -6026,7 +6978,7 @@ function formatMemoryString(memorySizeInBytes) {
   return Math.round(memoryInMegabytes).toLocaleString();
 }
 function getStatistics(tileset, isPick) {
-  if (!defined10(tileset)) {
+  if (!defined12(tileset)) {
     return "";
   }
   const statistics = isPick ? tileset._statisticsPerPass[Cesium3DTilePass.PICK] : tileset._statisticsPerPass[Cesium3DTilePass.RENDER];
@@ -6099,11 +7051,11 @@ function Cesium3DTilesInspectorViewModel(scene, performanceContainer) {
   Check2.typeOf.object("performanceContainer", performanceContainer);
   const that = this;
   const canvas = scene.canvas;
-  this._eventHandler = new ScreenSpaceEventHandler(canvas);
+  this._eventHandler = new ScreenSpaceEventHandler2(canvas);
   this._scene = scene;
   this._performanceContainer = performanceContainer;
   this._canvas = canvas;
-  this._performanceDisplay = new PerformanceDisplay({
+  this._performanceDisplay = new PerformanceDisplay2({
     container: performanceContainer
   });
   this._statisticsText = "";
@@ -6169,7 +7121,7 @@ function Cesium3DTilesInspectorViewModel(scene, performanceContainer) {
     },
     set: function(value) {
       dynamicScreenSpaceError(value);
-      if (defined10(that._tileset)) {
+      if (defined12(that._tileset)) {
         that._tileset.dynamicScreenSpaceError = value;
       }
     }
@@ -6182,7 +7134,7 @@ function Cesium3DTilesInspectorViewModel(scene, performanceContainer) {
     },
     set: function(value) {
       colorBlendMode(value);
-      if (defined10(that._tileset)) {
+      if (defined12(that._tileset)) {
         that._tileset.colorBlendMode = value;
         that._scene.requestRender();
       }
@@ -6203,21 +7155,21 @@ function Cesium3DTilesInspectorViewModel(scene, performanceContainer) {
           if (picked instanceof Cesium3DTileFeature) {
             that.feature = picked;
             that.tile = picked.content.tile;
-          } else if (defined10(picked) && defined10(picked.content)) {
+          } else if (defined12(picked) && defined12(picked.content)) {
             that.feature = void 0;
             that.tile = picked.content.tile;
           } else {
             that.feature = void 0;
             that.tile = void 0;
           }
-          if (!defined10(that._tileset)) {
+          if (!defined12(that._tileset)) {
             return;
           }
-          if (showOnlyPickedTileDebugLabel && defined10(picked) && defined10(picked.content)) {
+          if (showOnlyPickedTileDebugLabel && defined12(picked) && defined12(picked.content)) {
             let position;
             if (scene.pickPositionSupported) {
               position = scene.pickPosition(e.endPosition);
-              if (defined10(position)) {
+              if (defined12(position)) {
                 that._tileset.debugPickPosition = position;
               }
             }
@@ -6226,11 +7178,11 @@ function Cesium3DTilesInspectorViewModel(scene, performanceContainer) {
             that._tileset.debugPickedTile = void 0;
           }
           that._scene.requestRender();
-        }, ScreenSpaceEventType.MOUSE_MOVE);
+        }, ScreenSpaceEventType2.MOUSE_MOVE);
       } else {
         that.feature = void 0;
         that.tile = void 0;
-        that._eventHandler.removeInputAction(ScreenSpaceEventType.MOUSE_MOVE);
+        that._eventHandler.removeInputAction(ScreenSpaceEventType2.MOUSE_MOVE);
       }
     }
   });
@@ -6242,7 +7194,7 @@ function Cesium3DTilesInspectorViewModel(scene, performanceContainer) {
     },
     set: function(value) {
       colorize(value);
-      if (defined10(that._tileset)) {
+      if (defined12(that._tileset)) {
         that._tileset.debugColorizeTiles = value;
         that._scene.requestRender();
       }
@@ -6256,7 +7208,7 @@ function Cesium3DTilesInspectorViewModel(scene, performanceContainer) {
     },
     set: function(value) {
       wireframe(value);
-      if (defined10(that._tileset)) {
+      if (defined12(that._tileset)) {
         that._tileset.debugWireframe = value;
         that._scene.requestRender();
       }
@@ -6270,7 +7222,7 @@ function Cesium3DTilesInspectorViewModel(scene, performanceContainer) {
     },
     set: function(value) {
       showBoundingVolumes(value);
-      if (defined10(that._tileset)) {
+      if (defined12(that._tileset)) {
         that._tileset.debugShowBoundingVolume = value;
         that._scene.requestRender();
       }
@@ -6284,7 +7236,7 @@ function Cesium3DTilesInspectorViewModel(scene, performanceContainer) {
     },
     set: function(value) {
       showContentBoundingVolumes(value);
-      if (defined10(that._tileset)) {
+      if (defined12(that._tileset)) {
         that._tileset.debugShowContentBoundingVolume = value;
         that._scene.requestRender();
       }
@@ -6298,7 +7250,7 @@ function Cesium3DTilesInspectorViewModel(scene, performanceContainer) {
     },
     set: function(value) {
       showRequestVolumes(value);
-      if (defined10(that._tileset)) {
+      if (defined12(that._tileset)) {
         that._tileset.debugShowViewerRequestVolume = value;
         that._scene.requestRender();
       }
@@ -6312,7 +7264,7 @@ function Cesium3DTilesInspectorViewModel(scene, performanceContainer) {
     },
     set: function(value) {
       freezeFrame(value);
-      if (defined10(that._tileset)) {
+      if (defined12(that._tileset)) {
         that._tileset.debugFreezeFrame = value;
         that._scene.debugShowFrustumPlanes = value;
         that._scene.requestRender();
@@ -6326,7 +7278,7 @@ function Cesium3DTilesInspectorViewModel(scene, performanceContainer) {
     },
     set: function(value) {
       showOnlyPickedTileDebugLabel(value);
-      if (defined10(that._tileset)) {
+      if (defined12(that._tileset)) {
         that._tileset.debugPickedTileLabelOnly = value;
         that._scene.requestRender();
       }
@@ -6340,7 +7292,7 @@ function Cesium3DTilesInspectorViewModel(scene, performanceContainer) {
     },
     set: function(value) {
       showGeometricError(value);
-      if (defined10(that._tileset)) {
+      if (defined12(that._tileset)) {
         that._tileset.debugShowGeometricError = value;
         that._scene.requestRender();
       }
@@ -6354,7 +7306,7 @@ function Cesium3DTilesInspectorViewModel(scene, performanceContainer) {
     },
     set: function(value) {
       showRenderingStatistics(value);
-      if (defined10(that._tileset)) {
+      if (defined12(that._tileset)) {
         that._tileset.debugShowRenderingStatistics = value;
         that._scene.requestRender();
       }
@@ -6368,7 +7320,7 @@ function Cesium3DTilesInspectorViewModel(scene, performanceContainer) {
     },
     set: function(value) {
       showMemoryUsage(value);
-      if (defined10(that._tileset)) {
+      if (defined12(that._tileset)) {
         that._tileset.debugShowMemoryUsage = value;
         that._scene.requestRender();
       }
@@ -6382,7 +7334,7 @@ function Cesium3DTilesInspectorViewModel(scene, performanceContainer) {
     },
     set: function(value) {
       showUrl(value);
-      if (defined10(that._tileset)) {
+      if (defined12(that._tileset)) {
         that._tileset.debugShowUrl = value;
         that._scene.requestRender();
       }
@@ -6398,7 +7350,7 @@ function Cesium3DTilesInspectorViewModel(scene, performanceContainer) {
       value = Number(value);
       if (!isNaN(value)) {
         maximumScreenSpaceError(value);
-        if (defined10(that._tileset)) {
+        if (defined12(that._tileset)) {
           that._tileset.maximumScreenSpaceError = value;
         }
       }
@@ -6414,7 +7366,7 @@ function Cesium3DTilesInspectorViewModel(scene, performanceContainer) {
       value = Number(value);
       if (!isNaN(value)) {
         dynamicScreenSpaceErrorDensity(value);
-        if (defined10(that._tileset)) {
+        if (defined12(that._tileset)) {
           that._tileset.dynamicScreenSpaceErrorDensity = value;
         }
       }
@@ -6429,7 +7381,7 @@ function Cesium3DTilesInspectorViewModel(scene, performanceContainer) {
     set: function(value) {
       const scaledValue = Math.pow(value, 6);
       dynamicScreenSpaceErrorDensity(scaledValue);
-      if (defined10(that._tileset)) {
+      if (defined12(that._tileset)) {
         that._tileset.dynamicScreenSpaceErrorDensity = scaledValue;
       }
     }
@@ -6443,7 +7395,7 @@ function Cesium3DTilesInspectorViewModel(scene, performanceContainer) {
       value = Number(value);
       if (!isNaN(value)) {
         dynamicScreenSpaceErrorFactor(value);
-        if (defined10(that._tileset)) {
+        if (defined12(that._tileset)) {
           that._tileset.dynamicScreenSpaceErrorFactor = value;
         }
       }
@@ -6461,10 +7413,10 @@ function Cesium3DTilesInspectorViewModel(scene, performanceContainer) {
       if (value) {
         that._eventHandler.setInputAction(
           pickTileset,
-          ScreenSpaceEventType.LEFT_CLICK
+          ScreenSpaceEventType2.LEFT_CLICK
         );
       } else {
-        that._eventHandler.removeInputAction(ScreenSpaceEventType.LEFT_CLICK);
+        that._eventHandler.removeInputAction(ScreenSpaceEventType2.LEFT_CLICK);
       }
     }
   });
@@ -6475,7 +7427,7 @@ function Cesium3DTilesInspectorViewModel(scene, performanceContainer) {
     },
     set: function(value) {
       pointCloudShading(value);
-      if (defined10(that._tileset)) {
+      if (defined12(that._tileset)) {
         that._tileset.pointCloudShading.attenuation = value;
       }
     }
@@ -6490,7 +7442,7 @@ function Cesium3DTilesInspectorViewModel(scene, performanceContainer) {
       value = Number(value);
       if (!isNaN(value)) {
         geometricErrorScale(value);
-        if (defined10(that._tileset)) {
+        if (defined12(that._tileset)) {
           that._tileset.pointCloudShading.geometricErrorScale = value;
         }
       }
@@ -6506,7 +7458,7 @@ function Cesium3DTilesInspectorViewModel(scene, performanceContainer) {
       value = Number(value);
       if (!isNaN(value)) {
         maximumAttenuation(value);
-        if (defined10(that._tileset)) {
+        if (defined12(that._tileset)) {
           that._tileset.pointCloudShading.maximumAttenuation = value === 0 ? void 0 : value;
         }
       }
@@ -6522,7 +7474,7 @@ function Cesium3DTilesInspectorViewModel(scene, performanceContainer) {
       value = Number(value);
       if (!isNaN(value)) {
         baseResolution(value);
-        if (defined10(that._tileset)) {
+        if (defined12(that._tileset)) {
           that._tileset.pointCloudShading.baseResolution = value === 0 ? void 0 : value;
         }
       }
@@ -6536,7 +7488,7 @@ function Cesium3DTilesInspectorViewModel(scene, performanceContainer) {
     },
     set: function(value) {
       eyeDomeLighting(value);
-      if (defined10(that._tileset)) {
+      if (defined12(that._tileset)) {
         that._tileset.pointCloudShading.eyeDomeLighting = value;
       }
     }
@@ -6551,7 +7503,7 @@ function Cesium3DTilesInspectorViewModel(scene, performanceContainer) {
       value = Number(value);
       if (!isNaN(value)) {
         eyeDomeLightingStrength(value);
-        if (defined10(that._tileset)) {
+        if (defined12(that._tileset)) {
           that._tileset.pointCloudShading.eyeDomeLightingStrength = value;
         }
       }
@@ -6567,7 +7519,7 @@ function Cesium3DTilesInspectorViewModel(scene, performanceContainer) {
       value = Number(value);
       if (!isNaN(value)) {
         eyeDomeLightingRadius(value);
-        if (defined10(that._tileset)) {
+        if (defined12(that._tileset)) {
           that._tileset.pointCloudShading.eyeDomeLightingRadius = value;
         }
       }
@@ -6582,7 +7534,7 @@ function Cesium3DTilesInspectorViewModel(scene, performanceContainer) {
     },
     set: function(value) {
       skipLevelOfDetail(value);
-      if (defined10(that._tileset)) {
+      if (defined12(that._tileset)) {
         that._tileset.skipLevelOfDetail = value;
       }
     }
@@ -6597,7 +7549,7 @@ function Cesium3DTilesInspectorViewModel(scene, performanceContainer) {
       value = Number(value);
       if (!isNaN(value)) {
         skipScreenSpaceErrorFactor(value);
-        if (defined10(that._tileset)) {
+        if (defined12(that._tileset)) {
           that._tileset.skipScreenSpaceErrorFactor = value;
         }
       }
@@ -6613,7 +7565,7 @@ function Cesium3DTilesInspectorViewModel(scene, performanceContainer) {
       value = Number(value);
       if (!isNaN(value)) {
         baseScreenSpaceError(value);
-        if (defined10(that._tileset)) {
+        if (defined12(that._tileset)) {
           that._tileset.baseScreenSpaceError = value;
         }
       }
@@ -6629,7 +7581,7 @@ function Cesium3DTilesInspectorViewModel(scene, performanceContainer) {
       value = Number(value);
       if (!isNaN(value)) {
         skipLevels(value);
-        if (defined10(that._tileset)) {
+        if (defined12(that._tileset)) {
           that._tileset.skipLevels = value;
         }
       }
@@ -6643,7 +7595,7 @@ function Cesium3DTilesInspectorViewModel(scene, performanceContainer) {
     },
     set: function(value) {
       immediatelyLoadDesiredLevelOfDetail(value);
-      if (defined10(that._tileset)) {
+      if (defined12(that._tileset)) {
         that._tileset.immediatelyLoadDesiredLevelOfDetail = value;
       }
     }
@@ -6656,7 +7608,7 @@ function Cesium3DTilesInspectorViewModel(scene, performanceContainer) {
     },
     set: function(value) {
       loadSiblings(value);
-      if (defined10(that._tileset)) {
+      if (defined12(that._tileset)) {
         that._tileset.loadSiblings = value;
       }
     }
@@ -6702,7 +7654,7 @@ function Cesium3DTilesInspectorViewModel(scene, performanceContainer) {
   this._removePostRenderEvent = scene.postRender.addEventListener(function() {
     that._update();
   });
-  if (!defined10(this._tileset)) {
+  if (!defined12(this._tileset)) {
     selectTilesetOnHover(this, true);
   }
 }
@@ -6799,7 +7751,7 @@ Object.defineProperties(Cesium3DTilesInspectorViewModel.prototype, {
       this.styleString = "{}";
       this.feature = void 0;
       this.tile = void 0;
-      if (defined10(tileset)) {
+      if (defined12(tileset)) {
         this._properties(tileset.properties);
         const settings = [
           "colorize",
@@ -6863,15 +7815,15 @@ Object.defineProperties(Cesium3DTilesInspectorViewModel.prototype, {
         return;
       }
       const currentFeature = this._feature;
-      if (defined10(currentFeature) && !currentFeature.content.isDestroyed()) {
-        if (!this.colorize && defined10(this._style)) {
-          currentFeature.color = defined10(this._style.color) ? this._style.color.evaluateColor(currentFeature, scratchColor) : Color2.WHITE;
+      if (defined12(currentFeature) && !currentFeature.content.isDestroyed()) {
+        if (!this.colorize && defined12(this._style)) {
+          currentFeature.color = defined12(this._style.color) ? this._style.color.evaluateColor(currentFeature, scratchColor) : Color2.WHITE;
         } else {
           currentFeature.color = oldColor;
         }
         this._scene.requestRender();
       }
-      if (defined10(feature)) {
+      if (defined12(feature)) {
         Color2.clone(feature.color, oldColor);
         feature.color = highlightColor;
         this._scene.requestRender();
@@ -6893,11 +7845,11 @@ Object.defineProperties(Cesium3DTilesInspectorViewModel.prototype, {
         return;
       }
       const currentTile = this._tile;
-      if (defined10(currentTile) && !currentTile.isDestroyed() && !hasFeatures(currentTile.content)) {
+      if (defined12(currentTile) && !currentTile.isDestroyed() && !hasFeatures(currentTile.content)) {
         currentTile.color = oldColor;
         this._scene.requestRender();
       }
-      if (defined10(tile) && !hasFeatures(tile.content)) {
+      if (defined12(tile) && !hasFeatures(tile.content)) {
         Color2.clone(tile.color, oldColor);
         tile.color = highlightColor;
         this._scene.requestRender();
@@ -6907,14 +7859,14 @@ Object.defineProperties(Cesium3DTilesInspectorViewModel.prototype, {
   }
 });
 function hasFeatures(content) {
-  if (!defined10(content)) {
+  if (!defined12(content)) {
     return false;
   }
   if (content.featuresLength > 0) {
     return true;
   }
   const innerContents = content.innerContents;
-  if (defined10(innerContents)) {
+  if (defined12(innerContents)) {
     const length = innerContents.length;
     for (let i = 0; i < length; ++i) {
       if (!hasFeatures(innerContents[i])) {
@@ -6953,13 +7905,13 @@ Cesium3DTilesInspectorViewModel.prototype.toggleOptimization = function() {
   this.optimizationVisible = !this.optimizationVisible;
 };
 Cesium3DTilesInspectorViewModel.prototype.trimTilesCache = function() {
-  if (defined10(this._tileset)) {
+  if (defined12(this._tileset)) {
     this._tileset.trimLoadedTiles();
   }
 };
 Cesium3DTilesInspectorViewModel.prototype.compileStyle = function() {
   const tileset = this._tileset;
-  if (!defined10(tileset) || this.styleString === JSON.stringify(tileset.style)) {
+  if (!defined12(tileset) || this.styleString === JSON.stringify(tileset.style)) {
     return;
   }
   this._editorError = "";
@@ -7019,7 +7971,7 @@ Cesium3DTilesInspectorViewModel.prototype._update = function() {
   if (this.performance) {
     this._performanceDisplay.update();
   }
-  if (defined10(tileset)) {
+  if (defined12(tileset)) {
     if (tileset.isDestroyed()) {
       this.tile = void 0;
       this.feature = void 0;
@@ -7053,7 +8005,7 @@ Cesium3DTilesInspectorViewModel.prototype.destroy = function() {
   this._definedProperties.forEach(function(property) {
     knockout_default.getObservable(that, property).dispose();
   });
-  return destroyObject4(this);
+  return destroyObject6(this);
 };
 Cesium3DTilesInspectorViewModel.getStatistics = getStatistics;
 var Cesium3DTilesInspectorViewModel_default = Cesium3DTilesInspectorViewModel;
@@ -7062,7 +8014,7 @@ var Cesium3DTilesInspectorViewModel_default = Cesium3DTilesInspectorViewModel;
 function Cesium3DTilesInspector(container, scene) {
   Check3.defined("container", container);
   Check3.typeOf.object("scene", scene);
-  container = getElement3(container);
+  container = getElement4(container);
   const element = document.createElement("div");
   const performanceContainer = document.createElement("div");
   performanceContainer.setAttribute("data-bind", "visible: performance");
@@ -7391,961 +8343,9 @@ Cesium3DTilesInspector.prototype.destroy = function() {
   knockout_default.cleanNode(this._element);
   this._container.removeChild(this._element);
   this.viewModel.destroy();
-  return destroyObject5(this);
-};
-var Cesium3DTilesInspector_default = Cesium3DTilesInspector;
-
-// packages/widgets/Source/CesiumInspector/CesiumInspector.js
-import { DeveloperError as DeveloperError10, defined as defined12, destroyObject as destroyObject7 } from "@cesium/core";
-import { getElement as getElement4 } from "@cesium/engine";
-
-// packages/widgets/Source/CesiumInspector/CesiumInspectorViewModel.js
-import {
-  Cartesian3,
-  DeveloperError as DeveloperError9,
-  Ray,
-  Rectangle,
-  defined as defined11,
-  destroyObject as destroyObject6
-} from "@cesium/core";
-import {
-  DebugModelMatrixPrimitive,
-  PerformanceDisplay as PerformanceDisplay2,
-  ScreenSpaceEventHandler as ScreenSpaceEventHandler2,
-  ScreenSpaceEventType as ScreenSpaceEventType2,
-  TileCoordinatesImageryProvider
-} from "@cesium/engine";
-function frustumStatisticsToString(statistics) {
-  let str;
-  if (defined11(statistics)) {
-    str = "Command Statistics";
-    const com = statistics.commandsInFrustums;
-    for (const n in com) {
-      if (com.hasOwnProperty(n)) {
-        let num = parseInt(n, 10);
-        let s;
-        if (num === 7) {
-          s = "1, 2 and 3";
-        } else {
-          const f = [];
-          for (let i = 2; i >= 0; i--) {
-            const p = Math.pow(2, i);
-            if (num >= p) {
-              f.push(i + 1);
-              num -= p;
-            }
-          }
-          s = f.reverse().join(" and ");
-        }
-        str += `<br>&nbsp;&nbsp;&nbsp;&nbsp;${com[n]} in frustum ${s}`;
-      }
-    }
-    str += `<br>Total: ${statistics.totalCommands}`;
-  }
-  return str;
-}
-function boundDepthFrustum(lower, upper, proposed) {
-  let bounded = Math.min(proposed, upper);
-  bounded = Math.max(bounded, lower);
-  return bounded;
-}
-var scratchPickRay = new Ray();
-var scratchPickCartesian = new Cartesian3();
-function CesiumInspectorViewModel(scene, performanceContainer) {
-  if (!defined11(scene)) {
-    throw new DeveloperError9("scene is required");
-  }
-  if (!defined11(performanceContainer)) {
-    throw new DeveloperError9("performanceContainer is required");
-  }
-  const that = this;
-  const canvas = scene.canvas;
-  const eventHandler = new ScreenSpaceEventHandler2(canvas);
-  this._eventHandler = eventHandler;
-  this._scene = scene;
-  this._canvas = canvas;
-  this._primitive = void 0;
-  this._tile = void 0;
-  this._modelMatrixPrimitive = void 0;
-  this._performanceDisplay = void 0;
-  this._performanceContainer = performanceContainer;
-  const globe = this._scene.globe;
-  globe.depthTestAgainstTerrain = true;
-  this.frustums = false;
-  this.frustumPlanes = false;
-  this.performance = false;
-  this.shaderCacheText = "";
-  this.primitiveBoundingSphere = false;
-  this.primitiveReferenceFrame = false;
-  this.filterPrimitive = false;
-  this.tileBoundingSphere = false;
-  this.filterTile = false;
-  this.wireframe = false;
-  this.depthFrustum = 1;
-  this._numberOfFrustums = 1;
-  this.suspendUpdates = false;
-  this.tileCoordinates = false;
-  this.frustumStatisticText = false;
-  this.tileText = "";
-  this.hasPickedPrimitive = false;
-  this.hasPickedTile = false;
-  this.pickPrimitiveActive = false;
-  this.pickTileActive = false;
-  this.dropDownVisible = true;
-  this.generalVisible = true;
-  this.primitivesVisible = false;
-  this.terrainVisible = false;
-  this.depthFrustumText = "";
-  knockout_default.track(this, [
-    "frustums",
-    "frustumPlanes",
-    "performance",
-    "shaderCacheText",
-    "primitiveBoundingSphere",
-    "primitiveReferenceFrame",
-    "filterPrimitive",
-    "tileBoundingSphere",
-    "filterTile",
-    "wireframe",
-    "depthFrustum",
-    "suspendUpdates",
-    "tileCoordinates",
-    "frustumStatisticText",
-    "tileText",
-    "hasPickedPrimitive",
-    "hasPickedTile",
-    "pickPrimitiveActive",
-    "pickTileActive",
-    "dropDownVisible",
-    "generalVisible",
-    "primitivesVisible",
-    "terrainVisible",
-    "depthFrustumText"
-  ]);
-  this._toggleDropDown = createCommand_default(function() {
-    that.dropDownVisible = !that.dropDownVisible;
-  });
-  this._toggleGeneral = createCommand_default(function() {
-    that.generalVisible = !that.generalVisible;
-  });
-  this._togglePrimitives = createCommand_default(function() {
-    that.primitivesVisible = !that.primitivesVisible;
-  });
-  this._toggleTerrain = createCommand_default(function() {
-    that.terrainVisible = !that.terrainVisible;
-  });
-  this._frustumsSubscription = knockout_default.getObservable(this, "frustums").subscribe(function(val) {
-    that._scene.debugShowFrustums = val;
-    that._scene.requestRender();
-  });
-  this._frustumPlanesSubscription = knockout_default.getObservable(this, "frustumPlanes").subscribe(function(val) {
-    that._scene.debugShowFrustumPlanes = val;
-    that._scene.requestRender();
-  });
-  this._performanceSubscription = knockout_default.getObservable(this, "performance").subscribe(function(val) {
-    if (val) {
-      that._performanceDisplay = new PerformanceDisplay2({
-        container: that._performanceContainer
-      });
-    } else {
-      that._performanceContainer.innerHTML = "";
-    }
-  });
-  this._showPrimitiveBoundingSphere = createCommand_default(function() {
-    that._primitive.debugShowBoundingVolume = that.primitiveBoundingSphere;
-    that._scene.requestRender();
-    return true;
-  });
-  this._primitiveBoundingSphereSubscription = knockout_default.getObservable(this, "primitiveBoundingSphere").subscribe(function() {
-    that._showPrimitiveBoundingSphere();
-  });
-  this._showPrimitiveReferenceFrame = createCommand_default(function() {
-    if (that.primitiveReferenceFrame) {
-      const modelMatrix = that._primitive.modelMatrix;
-      that._modelMatrixPrimitive = new DebugModelMatrixPrimitive({
-        modelMatrix
-      });
-      that._scene.primitives.add(that._modelMatrixPrimitive);
-    } else if (defined11(that._modelMatrixPrimitive)) {
-      that._scene.primitives.remove(that._modelMatrixPrimitive);
-      that._modelMatrixPrimitive = void 0;
-    }
-    that._scene.requestRender();
-    return true;
-  });
-  this._primitiveReferenceFrameSubscription = knockout_default.getObservable(this, "primitiveReferenceFrame").subscribe(function() {
-    that._showPrimitiveReferenceFrame();
-  });
-  this._doFilterPrimitive = createCommand_default(function() {
-    if (that.filterPrimitive) {
-      that._scene.debugCommandFilter = function(command) {
-        if (defined11(that._modelMatrixPrimitive) && command.owner === that._modelMatrixPrimitive._primitive) {
-          return true;
-        } else if (defined11(that._primitive)) {
-          return command.owner === that._primitive || command.owner === that._primitive._billboardCollection || command.owner.primitive === that._primitive;
-        }
-        return false;
-      };
-    } else {
-      that._scene.debugCommandFilter = void 0;
-    }
-    return true;
-  });
-  this._filterPrimitiveSubscription = knockout_default.getObservable(this, "filterPrimitive").subscribe(function() {
-    that._doFilterPrimitive();
-    that._scene.requestRender();
-  });
-  this._wireframeSubscription = knockout_default.getObservable(this, "wireframe").subscribe(function(val) {
-    globe._surface.tileProvider._debug.wireframe = val;
-    that._scene.requestRender();
-  });
-  this._depthFrustumSubscription = knockout_default.getObservable(this, "depthFrustum").subscribe(function(val) {
-    that._scene.debugShowDepthFrustum = val;
-    that._scene.requestRender();
-  });
-  this._incrementDepthFrustum = createCommand_default(function() {
-    const next = that.depthFrustum + 1;
-    that.depthFrustum = boundDepthFrustum(1, that._numberOfFrustums, next);
-    that._scene.requestRender();
-    return true;
-  });
-  this._decrementDepthFrustum = createCommand_default(function() {
-    const next = that.depthFrustum - 1;
-    that.depthFrustum = boundDepthFrustum(1, that._numberOfFrustums, next);
-    that._scene.requestRender();
-    return true;
-  });
-  this._suspendUpdatesSubscription = knockout_default.getObservable(this, "suspendUpdates").subscribe(function(val) {
-    globe._surface._debug.suspendLodUpdate = val;
-    if (!val) {
-      that.filterTile = false;
-    }
-  });
-  let tileBoundariesLayer;
-  this._showTileCoordinates = createCommand_default(function() {
-    if (that.tileCoordinates && !defined11(tileBoundariesLayer)) {
-      tileBoundariesLayer = scene.imageryLayers.addImageryProvider(
-        new TileCoordinatesImageryProvider({
-          tilingScheme: scene.terrainProvider.tilingScheme
-        })
-      );
-    } else if (!that.tileCoordinates && defined11(tileBoundariesLayer)) {
-      scene.imageryLayers.remove(tileBoundariesLayer);
-      tileBoundariesLayer = void 0;
-    }
-    return true;
-  });
-  this._tileCoordinatesSubscription = knockout_default.getObservable(this, "tileCoordinates").subscribe(function() {
-    that._showTileCoordinates();
-    that._scene.requestRender();
-  });
-  this._tileBoundingSphereSubscription = knockout_default.getObservable(this, "tileBoundingSphere").subscribe(function() {
-    that._showTileBoundingSphere();
-    that._scene.requestRender();
-  });
-  this._showTileBoundingSphere = createCommand_default(function() {
-    if (that.tileBoundingSphere) {
-      globe._surface.tileProvider._debug.boundingSphereTile = that._tile;
-    } else {
-      globe._surface.tileProvider._debug.boundingSphereTile = void 0;
-    }
-    that._scene.requestRender();
-    return true;
-  });
-  this._doFilterTile = createCommand_default(function() {
-    if (!that.filterTile) {
-      that.suspendUpdates = false;
-    } else {
-      that.suspendUpdates = true;
-      globe._surface._tilesToRender = [];
-      if (defined11(that._tile) && that._tile.renderable) {
-        globe._surface._tilesToRender.push(that._tile);
-      }
-    }
-    return true;
-  });
-  this._filterTileSubscription = knockout_default.getObservable(this, "filterTile").subscribe(function() {
-    that.doFilterTile();
-    that._scene.requestRender();
-  });
-  function pickPrimitive(e) {
-    const newPick = that._scene.pick({
-      x: e.position.x,
-      y: e.position.y
-    });
-    if (defined11(newPick)) {
-      that.primitive = defined11(newPick.collection) ? newPick.collection : newPick.primitive;
-    }
-    that._scene.requestRender();
-    that.pickPrimitiveActive = false;
-  }
-  this._pickPrimitive = createCommand_default(function() {
-    that.pickPrimitiveActive = !that.pickPrimitiveActive;
-  });
-  this._pickPrimitiveActiveSubscription = knockout_default.getObservable(this, "pickPrimitiveActive").subscribe(function(val) {
-    if (val) {
-      eventHandler.setInputAction(
-        pickPrimitive,
-        ScreenSpaceEventType2.LEFT_CLICK
-      );
-    } else {
-      eventHandler.removeInputAction(ScreenSpaceEventType2.LEFT_CLICK);
-    }
-  });
-  function selectTile(e) {
-    let selectedTile;
-    const ellipsoid = globe.ellipsoid;
-    const ray = that._scene.camera.getPickRay(e.position, scratchPickRay);
-    const cartesian = globe.pick(ray, that._scene, scratchPickCartesian);
-    if (defined11(cartesian)) {
-      const cartographic = ellipsoid.cartesianToCartographic(cartesian);
-      const tilesRendered = globe._surface.tileProvider._tilesToRenderByTextureCount;
-      for (let textureCount = 0; !selectedTile && textureCount < tilesRendered.length; ++textureCount) {
-        const tilesRenderedByTextureCount = tilesRendered[textureCount];
-        if (!defined11(tilesRenderedByTextureCount)) {
-          continue;
-        }
-        for (let tileIndex = 0; !selectedTile && tileIndex < tilesRenderedByTextureCount.length; ++tileIndex) {
-          const tile = tilesRenderedByTextureCount[tileIndex];
-          if (Rectangle.contains(tile.rectangle, cartographic)) {
-            selectedTile = tile;
-          }
-        }
-      }
-    }
-    that.tile = selectedTile;
-    that.pickTileActive = false;
-  }
-  this._pickTile = createCommand_default(function() {
-    that.pickTileActive = !that.pickTileActive;
-  });
-  this._pickTileActiveSubscription = knockout_default.getObservable(this, "pickTileActive").subscribe(function(val) {
-    if (val) {
-      eventHandler.setInputAction(
-        selectTile,
-        ScreenSpaceEventType2.LEFT_CLICK
-      );
-    } else {
-      eventHandler.removeInputAction(ScreenSpaceEventType2.LEFT_CLICK);
-    }
-  });
-  this._removePostRenderEvent = scene.postRender.addEventListener(function() {
-    that._update();
-  });
-}
-Object.defineProperties(CesiumInspectorViewModel.prototype, {
-  /**
-   * Gets the scene to control.
-   * @memberof CesiumInspectorViewModel.prototype
-   *
-   * @type {Scene}
-   */
-  scene: {
-    get: function() {
-      return this._scene;
-    }
-  },
-  /**
-   * Gets the container of the PerformanceDisplay
-   * @memberof CesiumInspectorViewModel.prototype
-   *
-   * @type {Element}
-   */
-  performanceContainer: {
-    get: function() {
-      return this._performanceContainer;
-    }
-  },
-  /**
-   * Gets the command to toggle the visibility of the drop down.
-   * @memberof CesiumInspectorViewModel.prototype
-   *
-   * @type {Command}
-   */
-  toggleDropDown: {
-    get: function() {
-      return this._toggleDropDown;
-    }
-  },
-  /**
-   * Gets the command to toggle the visibility of a BoundingSphere for a primitive
-   * @memberof CesiumInspectorViewModel.prototype
-   *
-   * @type {Command}
-   */
-  showPrimitiveBoundingSphere: {
-    get: function() {
-      return this._showPrimitiveBoundingSphere;
-    }
-  },
-  /**
-   * Gets the command to toggle the visibility of a {@link DebugModelMatrixPrimitive} for the model matrix of a primitive
-   * @memberof CesiumInspectorViewModel.prototype
-   *
-   * @type {Command}
-   */
-  showPrimitiveReferenceFrame: {
-    get: function() {
-      return this._showPrimitiveReferenceFrame;
-    }
-  },
-  /**
-   * Gets the command to toggle a filter that renders only a selected primitive
-   * @memberof CesiumInspectorViewModel.prototype
-   *
-   * @type {Command}
-   */
-  doFilterPrimitive: {
-    get: function() {
-      return this._doFilterPrimitive;
-    }
-  },
-  /**
-   * Gets the command to increment the depth frustum index to be shown
-   * @memberof CesiumInspectorViewModel.prototype
-   *
-   * @type {Command}
-   */
-  incrementDepthFrustum: {
-    get: function() {
-      return this._incrementDepthFrustum;
-    }
-  },
-  /**
-   * Gets the command to decrement the depth frustum index to be shown
-   * @memberof CesiumInspectorViewModel.prototype
-   *
-   * @type {Command}
-   */
-  decrementDepthFrustum: {
-    get: function() {
-      return this._decrementDepthFrustum;
-    }
-  },
-  /**
-   * Gets the command to toggle the visibility of tile coordinates
-   * @memberof CesiumInspectorViewModel.prototype
-   *
-   * @type {Command}
-   */
-  showTileCoordinates: {
-    get: function() {
-      return this._showTileCoordinates;
-    }
-  },
-  /**
-   * Gets the command to toggle the visibility of a BoundingSphere for a selected tile
-   * @memberof CesiumInspectorViewModel.prototype
-   *
-   * @type {Command}
-   */
-  showTileBoundingSphere: {
-    get: function() {
-      return this._showTileBoundingSphere;
-    }
-  },
-  /**
-   * Gets the command to toggle a filter that renders only a selected tile
-   * @memberof CesiumInspectorViewModel.prototype
-   *
-   * @type {Command}
-   */
-  doFilterTile: {
-    get: function() {
-      return this._doFilterTile;
-    }
-  },
-  /**
-   * Gets the command to expand and collapse the general section
-   * @memberof CesiumInspectorViewModel.prototype
-   *
-   * @type {Command}
-   */
-  toggleGeneral: {
-    get: function() {
-      return this._toggleGeneral;
-    }
-  },
-  /**
-   * Gets the command to expand and collapse the primitives section
-   * @memberof CesiumInspectorViewModel.prototype
-   *
-   * @type {Command}
-   */
-  togglePrimitives: {
-    get: function() {
-      return this._togglePrimitives;
-    }
-  },
-  /**
-   * Gets the command to expand and collapse the terrain section
-   * @memberof CesiumInspectorViewModel.prototype
-   *
-   * @type {Command}
-   */
-  toggleTerrain: {
-    get: function() {
-      return this._toggleTerrain;
-    }
-  },
-  /**
-   * Gets the command to pick a primitive
-   * @memberof CesiumInspectorViewModel.prototype
-   *
-   * @type {Command}
-   */
-  pickPrimitive: {
-    get: function() {
-      return this._pickPrimitive;
-    }
-  },
-  /**
-   * Gets the command to pick a tile
-   * @memberof CesiumInspectorViewModel.prototype
-   *
-   * @type {Command}
-   */
-  pickTile: {
-    get: function() {
-      return this._pickTile;
-    }
-  },
-  /**
-   * Gets the command to pick a tile
-   * @memberof CesiumInspectorViewModel.prototype
-   *
-   * @type {Command}
-   */
-  selectParent: {
-    get: function() {
-      const that = this;
-      return createCommand_default(function() {
-        that.tile = that.tile.parent;
-      });
-    }
-  },
-  /**
-   * Gets the command to pick a tile
-   * @memberof CesiumInspectorViewModel.prototype
-   *
-   * @type {Command}
-   */
-  selectNW: {
-    get: function() {
-      const that = this;
-      return createCommand_default(function() {
-        that.tile = that.tile.northwestChild;
-      });
-    }
-  },
-  /**
-   * Gets the command to pick a tile
-   * @memberof CesiumInspectorViewModel.prototype
-   *
-   * @type {Command}
-   */
-  selectNE: {
-    get: function() {
-      const that = this;
-      return createCommand_default(function() {
-        that.tile = that.tile.northeastChild;
-      });
-    }
-  },
-  /**
-   * Gets the command to pick a tile
-   * @memberof CesiumInspectorViewModel.prototype
-   *
-   * @type {Command}
-   */
-  selectSW: {
-    get: function() {
-      const that = this;
-      return createCommand_default(function() {
-        that.tile = that.tile.southwestChild;
-      });
-    }
-  },
-  /**
-   * Gets the command to pick a tile
-   * @memberof CesiumInspectorViewModel.prototype
-   *
-   * @type {Command}
-   */
-  selectSE: {
-    get: function() {
-      const that = this;
-      return createCommand_default(function() {
-        that.tile = that.tile.southeastChild;
-      });
-    }
-  },
-  /**
-   * Gets or sets the current selected primitive
-   * @memberof CesiumInspectorViewModel.prototype
-   *
-   * @type {Command}
-   */
-  primitive: {
-    get: function() {
-      return this._primitive;
-    },
-    set: function(newPrimitive) {
-      const oldPrimitive = this._primitive;
-      if (newPrimitive !== oldPrimitive) {
-        this.hasPickedPrimitive = true;
-        if (defined11(oldPrimitive)) {
-          oldPrimitive.debugShowBoundingVolume = false;
-        }
-        this._scene.debugCommandFilter = void 0;
-        if (defined11(this._modelMatrixPrimitive)) {
-          this._scene.primitives.remove(this._modelMatrixPrimitive);
-          this._modelMatrixPrimitive = void 0;
-        }
-        this._primitive = newPrimitive;
-        newPrimitive.show = false;
-        setTimeout(function() {
-          newPrimitive.show = true;
-        }, 50);
-        this.showPrimitiveBoundingSphere();
-        this.showPrimitiveReferenceFrame();
-        this.doFilterPrimitive();
-      }
-    }
-  },
-  /**
-   * Gets or sets the current selected tile
-   * @memberof CesiumInspectorViewModel.prototype
-   *
-   * @type {Command}
-   */
-  tile: {
-    get: function() {
-      return this._tile;
-    },
-    set: function(newTile) {
-      if (defined11(newTile)) {
-        this.hasPickedTile = true;
-        const oldTile = this._tile;
-        if (newTile !== oldTile) {
-          this.tileText = `L: ${newTile.level} X: ${newTile.x} Y: ${newTile.y}`;
-          this.tileText += `<br>SW corner: ${newTile.rectangle.west}, ${newTile.rectangle.south}`;
-          this.tileText += `<br>NE corner: ${newTile.rectangle.east}, ${newTile.rectangle.north}`;
-          const data = newTile.data;
-          if (defined11(data) && defined11(data.tileBoundingRegion)) {
-            this.tileText += `<br>Min: ${data.tileBoundingRegion.minimumHeight} Max: ${data.tileBoundingRegion.maximumHeight}`;
-          } else {
-            this.tileText += "<br>(Tile is not loaded)";
-          }
-        }
-        this._tile = newTile;
-        this.showTileBoundingSphere();
-        this.doFilterTile();
-      } else {
-        this.hasPickedTile = false;
-        this._tile = void 0;
-      }
-    }
-  }
-});
-CesiumInspectorViewModel.prototype._update = function() {
-  if (this.frustums) {
-    this.frustumStatisticText = frustumStatisticsToString(
-      this._scene.debugFrustumStatistics
-    );
-  }
-  const numberOfFrustums = this._scene.numberOfFrustums;
-  this._numberOfFrustums = numberOfFrustums;
-  this.depthFrustum = boundDepthFrustum(1, numberOfFrustums, this.depthFrustum);
-  this.depthFrustumText = `${this.depthFrustum} of ${numberOfFrustums}`;
-  if (this.performance) {
-    this._performanceDisplay.update();
-  }
-  if (this.primitiveReferenceFrame) {
-    this._modelMatrixPrimitive.modelMatrix = this._primitive.modelMatrix;
-  }
-  this.shaderCacheText = `Cached shaders: ${this._scene.context.shaderCache.numberOfShaders}`;
-};
-CesiumInspectorViewModel.prototype.isDestroyed = function() {
-  return false;
-};
-CesiumInspectorViewModel.prototype.destroy = function() {
-  this._eventHandler.destroy();
-  this._removePostRenderEvent();
-  this._frustumsSubscription.dispose();
-  this._frustumPlanesSubscription.dispose();
-  this._performanceSubscription.dispose();
-  this._primitiveBoundingSphereSubscription.dispose();
-  this._primitiveReferenceFrameSubscription.dispose();
-  this._filterPrimitiveSubscription.dispose();
-  this._wireframeSubscription.dispose();
-  this._depthFrustumSubscription.dispose();
-  this._suspendUpdatesSubscription.dispose();
-  this._tileCoordinatesSubscription.dispose();
-  this._tileBoundingSphereSubscription.dispose();
-  this._filterTileSubscription.dispose();
-  this._pickPrimitiveActiveSubscription.dispose();
-  this._pickTileActiveSubscription.dispose();
-  return destroyObject6(this);
-};
-var CesiumInspectorViewModel_default = CesiumInspectorViewModel;
-
-// packages/widgets/Source/CesiumInspector/CesiumInspector.js
-function CesiumInspector(container, scene) {
-  if (!defined12(container)) {
-    throw new DeveloperError10("container is required.");
-  }
-  if (!defined12(scene)) {
-    throw new DeveloperError10("scene is required.");
-  }
-  container = getElement4(container);
-  const performanceContainer = document.createElement("div");
-  const viewModel = new CesiumInspectorViewModel_default(scene, performanceContainer);
-  this._viewModel = viewModel;
-  this._container = container;
-  const element = document.createElement("div");
-  this._element = element;
-  const text = document.createElement("div");
-  text.textContent = "Cesium Inspector";
-  text.className = "cesium-cesiumInspector-button";
-  text.setAttribute("data-bind", "click: toggleDropDown");
-  element.appendChild(text);
-  element.className = "cesium-cesiumInspector";
-  element.setAttribute(
-    "data-bind",
-    'css: { "cesium-cesiumInspector-visible" : dropDownVisible, "cesium-cesiumInspector-hidden" : !dropDownVisible }'
-  );
-  container.appendChild(this._element);
-  const panel = document.createElement("div");
-  panel.className = "cesium-cesiumInspector-dropDown";
-  element.appendChild(panel);
-  const createSection = InspectorShared_default.createSection;
-  const createCheckbox = InspectorShared_default.createCheckbox;
-  const generalSection = createSection(
-    panel,
-    "General",
-    "generalVisible",
-    "toggleGeneral"
-  );
-  const debugShowFrustums = createCheckbox("Show Frustums", "frustums");
-  const frustumStatistics = document.createElement("div");
-  frustumStatistics.className = "cesium-cesiumInspector-frustumStatistics";
-  frustumStatistics.setAttribute(
-    "data-bind",
-    "visible: frustums, html: frustumStatisticText"
-  );
-  debugShowFrustums.appendChild(frustumStatistics);
-  generalSection.appendChild(debugShowFrustums);
-  generalSection.appendChild(
-    createCheckbox("Show Frustum Planes", "frustumPlanes")
-  );
-  generalSection.appendChild(
-    createCheckbox("Performance Display", "performance")
-  );
-  performanceContainer.className = "cesium-cesiumInspector-performanceDisplay";
-  generalSection.appendChild(performanceContainer);
-  const shaderCacheDisplay = document.createElement("div");
-  shaderCacheDisplay.className = "cesium-cesiumInspector-shaderCache";
-  shaderCacheDisplay.setAttribute("data-bind", "html: shaderCacheText");
-  generalSection.appendChild(shaderCacheDisplay);
-  const depthFrustum = document.createElement("div");
-  generalSection.appendChild(depthFrustum);
-  const gLabel = document.createElement("span");
-  gLabel.setAttribute(
-    "data-bind",
-    'html: "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Frustum:"'
-  );
-  depthFrustum.appendChild(gLabel);
-  const gText = document.createElement("span");
-  gText.setAttribute("data-bind", "text: depthFrustumText");
-  depthFrustum.appendChild(gText);
-  const gMinusButton = document.createElement("input");
-  gMinusButton.type = "button";
-  gMinusButton.value = "-";
-  gMinusButton.className = "cesium-cesiumInspector-pickButton";
-  gMinusButton.setAttribute("data-bind", "click: decrementDepthFrustum");
-  depthFrustum.appendChild(gMinusButton);
-  const gPlusButton = document.createElement("input");
-  gPlusButton.type = "button";
-  gPlusButton.value = "+";
-  gPlusButton.className = "cesium-cesiumInspector-pickButton";
-  gPlusButton.setAttribute("data-bind", "click: incrementDepthFrustum");
-  depthFrustum.appendChild(gPlusButton);
-  const primSection = createSection(
-    panel,
-    "Primitives",
-    "primitivesVisible",
-    "togglePrimitives"
-  );
-  const pickPrimRequired = document.createElement("div");
-  pickPrimRequired.className = "cesium-cesiumInspector-pickSection";
-  primSection.appendChild(pickPrimRequired);
-  const pickPrimitiveButton = document.createElement("input");
-  pickPrimitiveButton.type = "button";
-  pickPrimitiveButton.value = "Pick a primitive";
-  pickPrimitiveButton.className = "cesium-cesiumInspector-pickButton";
-  pickPrimitiveButton.setAttribute(
-    "data-bind",
-    'css: {"cesium-cesiumInspector-pickButtonHighlight" : pickPrimitiveActive}, click: pickPrimitive'
-  );
-  let buttonWrap = document.createElement("div");
-  buttonWrap.className = "cesium-cesiumInspector-center";
-  buttonWrap.appendChild(pickPrimitiveButton);
-  pickPrimRequired.appendChild(buttonWrap);
-  pickPrimRequired.appendChild(
-    createCheckbox(
-      "Show bounding sphere",
-      "primitiveBoundingSphere",
-      "hasPickedPrimitive"
-    )
-  );
-  pickPrimRequired.appendChild(
-    createCheckbox(
-      "Show reference frame",
-      "primitiveReferenceFrame",
-      "hasPickedPrimitive"
-    )
-  );
-  this._primitiveOnly = createCheckbox(
-    "Show only selected",
-    "filterPrimitive",
-    "hasPickedPrimitive"
-  );
-  pickPrimRequired.appendChild(this._primitiveOnly);
-  const terrainSection = createSection(
-    panel,
-    "Terrain",
-    "terrainVisible",
-    "toggleTerrain"
-  );
-  const pickTileRequired = document.createElement("div");
-  pickTileRequired.className = "cesium-cesiumInspector-pickSection";
-  terrainSection.appendChild(pickTileRequired);
-  const pickTileButton = document.createElement("input");
-  pickTileButton.type = "button";
-  pickTileButton.value = "Pick a tile";
-  pickTileButton.className = "cesium-cesiumInspector-pickButton";
-  pickTileButton.setAttribute(
-    "data-bind",
-    'css: {"cesium-cesiumInspector-pickButtonHighlight" : pickTileActive}, click: pickTile'
-  );
-  buttonWrap = document.createElement("div");
-  buttonWrap.appendChild(pickTileButton);
-  buttonWrap.className = "cesium-cesiumInspector-center";
-  pickTileRequired.appendChild(buttonWrap);
-  const tileInfo = document.createElement("div");
-  pickTileRequired.appendChild(tileInfo);
-  const parentTile = document.createElement("input");
-  parentTile.type = "button";
-  parentTile.value = "Parent";
-  parentTile.className = "cesium-cesiumInspector-pickButton";
-  parentTile.setAttribute("data-bind", "click: selectParent");
-  const nwTile = document.createElement("input");
-  nwTile.type = "button";
-  nwTile.value = "NW";
-  nwTile.className = "cesium-cesiumInspector-pickButton";
-  nwTile.setAttribute("data-bind", "click: selectNW");
-  const neTile = document.createElement("input");
-  neTile.type = "button";
-  neTile.value = "NE";
-  neTile.className = "cesium-cesiumInspector-pickButton";
-  neTile.setAttribute("data-bind", "click: selectNE");
-  const swTile = document.createElement("input");
-  swTile.type = "button";
-  swTile.value = "SW";
-  swTile.className = "cesium-cesiumInspector-pickButton";
-  swTile.setAttribute("data-bind", "click: selectSW");
-  const seTile = document.createElement("input");
-  seTile.type = "button";
-  seTile.value = "SE";
-  seTile.className = "cesium-cesiumInspector-pickButton";
-  seTile.setAttribute("data-bind", "click: selectSE");
-  const tileText = document.createElement("div");
-  tileText.className = "cesium-cesiumInspector-tileText";
-  tileInfo.className = "cesium-cesiumInspector-frustumStatistics";
-  tileInfo.appendChild(tileText);
-  tileInfo.setAttribute("data-bind", "visible: hasPickedTile");
-  tileText.setAttribute("data-bind", "html: tileText");
-  const relativeText = document.createElement("div");
-  relativeText.className = "cesium-cesiumInspector-relativeText";
-  relativeText.textContent = "Select relative:";
-  tileInfo.appendChild(relativeText);
-  const table = document.createElement("table");
-  const tr1 = document.createElement("tr");
-  const tr2 = document.createElement("tr");
-  const td1 = document.createElement("td");
-  td1.appendChild(parentTile);
-  const td2 = document.createElement("td");
-  td2.appendChild(nwTile);
-  const td3 = document.createElement("td");
-  td3.appendChild(neTile);
-  tr1.appendChild(td1);
-  tr1.appendChild(td2);
-  tr1.appendChild(td3);
-  const td4 = document.createElement("td");
-  const td5 = document.createElement("td");
-  td5.appendChild(swTile);
-  const td6 = document.createElement("td");
-  td6.appendChild(seTile);
-  tr2.appendChild(td4);
-  tr2.appendChild(td5);
-  tr2.appendChild(td6);
-  table.appendChild(tr1);
-  table.appendChild(tr2);
-  tileInfo.appendChild(table);
-  pickTileRequired.appendChild(
-    createCheckbox(
-      "Show bounding volume",
-      "tileBoundingSphere",
-      "hasPickedTile"
-    )
-  );
-  pickTileRequired.appendChild(
-    createCheckbox("Show only selected", "filterTile", "hasPickedTile")
-  );
-  terrainSection.appendChild(createCheckbox("Wireframe", "wireframe"));
-  terrainSection.appendChild(
-    createCheckbox("Suspend LOD update", "suspendUpdates")
-  );
-  terrainSection.appendChild(
-    createCheckbox("Show tile coordinates", "tileCoordinates")
-  );
-  knockout_default.applyBindings(viewModel, this._element);
-}
-Object.defineProperties(CesiumInspector.prototype, {
-  /**
-   * Gets the parent container.
-   * @memberof CesiumInspector.prototype
-   *
-   * @type {Element}
-   */
-  container: {
-    get: function() {
-      return this._container;
-    }
-  },
-  /**
-   * Gets the view model.
-   * @memberof CesiumInspector.prototype
-   *
-   * @type {CesiumInspectorViewModel}
-   */
-  viewModel: {
-    get: function() {
-      return this._viewModel;
-    }
-  }
-});
-CesiumInspector.prototype.isDestroyed = function() {
-  return false;
-};
-CesiumInspector.prototype.destroy = function() {
-  knockout_default.cleanNode(this._element);
-  this._container.removeChild(this._element);
-  this.viewModel.destroy();
   return destroyObject7(this);
 };
-var CesiumInspector_default = CesiumInspector;
+var Cesium3DTilesInspector_default = Cesium3DTilesInspector;
 
 // packages/widgets/Source/FullscreenButton/FullscreenButton.js
 import { DeveloperError as DeveloperError12, defined as defined14, destroyObject as destroyObject9 } from "@cesium/core";
@@ -8501,34 +8501,153 @@ FullscreenButton.prototype.destroy = function() {
 };
 var FullscreenButton_default = FullscreenButton;
 
+// packages/widgets/Source/HomeButton/HomeButton.js
+import { DeveloperError as DeveloperError14, defined as defined16, destroyObject as destroyObject10 } from "@cesium/core";
+import { getElement as getElement7 } from "@cesium/engine";
+
+// packages/widgets/Source/HomeButton/HomeButtonViewModel.js
+import { DeveloperError as DeveloperError13, defined as defined15 } from "@cesium/core";
+function HomeButtonViewModel(scene, duration) {
+  if (!defined15(scene)) {
+    throw new DeveloperError13("scene is required.");
+  }
+  this._scene = scene;
+  this._duration = duration;
+  const that = this;
+  this._command = createCommand_default(function() {
+    that._scene.camera.flyHome(that._duration);
+  });
+  this.tooltip = "View Home";
+  knockout_default.track(this, ["tooltip"]);
+}
+Object.defineProperties(HomeButtonViewModel.prototype, {
+  /**
+   * Gets the scene to control.
+   * @memberof HomeButtonViewModel.prototype
+   *
+   * @type {Scene}
+   */
+  scene: {
+    get: function() {
+      return this._scene;
+    }
+  },
+  /**
+   * Gets the Command that is executed when the button is clicked.
+   * @memberof HomeButtonViewModel.prototype
+   *
+   * @type {Command}
+   */
+  command: {
+    get: function() {
+      return this._command;
+    }
+  },
+  /**
+   * Gets or sets the the duration of the camera flight in seconds.
+   * A value of zero causes the camera to instantly switch to home view.
+   * The duration will be computed based on the distance when undefined.
+   * @memberof HomeButtonViewModel.prototype
+   *
+   * @type {number|undefined}
+   */
+  duration: {
+    get: function() {
+      return this._duration;
+    },
+    set: function(value) {
+      if (defined15(value) && value < 0) {
+        throw new DeveloperError13("value must be positive.");
+      }
+      this._duration = value;
+    }
+  }
+});
+var HomeButtonViewModel_default = HomeButtonViewModel;
+
+// packages/widgets/Source/HomeButton/HomeButton.js
+function HomeButton(container, scene, duration) {
+  if (!defined16(container)) {
+    throw new DeveloperError14("container is required.");
+  }
+  container = getElement7(container);
+  const viewModel = new HomeButtonViewModel_default(scene, duration);
+  viewModel._svgPath = "M14,4l-10,8.75h20l-4.25-3.7188v-4.6562h-2.812v2.1875l-2.938-2.5625zm-7.0938,9.906v10.094h14.094v-10.094h-14.094zm2.1876,2.313h3.3122v4.25h-3.3122v-4.25zm5.8442,1.281h3.406v6.438h-3.406v-6.438z";
+  const element = document.createElement("button");
+  element.type = "button";
+  element.className = "cesium-button cesium-toolbar-button cesium-home-button";
+  element.setAttribute(
+    "data-bind",
+    "attr: { title: tooltip },click: command,cesiumSvgPath: { path: _svgPath, width: 28, height: 28 }"
+  );
+  container.appendChild(element);
+  knockout_default.applyBindings(viewModel, element);
+  this._container = container;
+  this._viewModel = viewModel;
+  this._element = element;
+}
+Object.defineProperties(HomeButton.prototype, {
+  /**
+   * Gets the parent container.
+   * @memberof HomeButton.prototype
+   *
+   * @type {Element}
+   */
+  container: {
+    get: function() {
+      return this._container;
+    }
+  },
+  /**
+   * Gets the view model.
+   * @memberof HomeButton.prototype
+   *
+   * @type {HomeButtonViewModel}
+   */
+  viewModel: {
+    get: function() {
+      return this._viewModel;
+    }
+  }
+});
+HomeButton.prototype.isDestroyed = function() {
+  return false;
+};
+HomeButton.prototype.destroy = function() {
+  knockout_default.cleanNode(this._element);
+  this._container.removeChild(this._element);
+  return destroyObject10(this);
+};
+var HomeButton_default = HomeButton;
+
 // packages/widgets/Source/Geocoder/Geocoder.js
-import { DeveloperError as DeveloperError14, defined as defined16, destroyObject as destroyObject11 } from "@cesium/core";
-import { FeatureDetection as FeatureDetection2, getElement as getElement8 } from "@cesium/engine";
+import { DeveloperError as DeveloperError16, defined as defined18, destroyObject as destroyObject12 } from "@cesium/core";
+import { FeatureDetection as FeatureDetection2, getElement as getElement9 } from "@cesium/engine";
 
 // packages/widgets/Source/Geocoder/GeocoderViewModel.js
 import {
-  DeveloperError as DeveloperError13,
+  DeveloperError as DeveloperError15,
   Event as Event2,
   Math as CesiumMath,
   Matrix4,
   Rectangle as Rectangle2,
-  defined as defined15,
-  destroyObject as destroyObject10
+  defined as defined17,
+  destroyObject as destroyObject11
 } from "@cesium/core";
 import {
   computeFlyToLocationForRectangle,
   GeocoderService,
   GeocodeType,
-  getElement as getElement7,
+  getElement as getElement8,
   IonGeocoderService,
   sampleTerrainMostDetailed
 } from "@cesium/engine";
 var DEFAULT_HEIGHT = 1e3;
 function GeocoderViewModel(options) {
-  if (!defined15(options) || !defined15(options.scene)) {
-    throw new DeveloperError13("options.scene is required.");
+  if (!defined17(options) || !defined17(options.scene)) {
+    throw new DeveloperError15("options.scene is required.");
   }
-  if (defined15(options.geocoderServices)) {
+  if (defined17(options.geocoderServices)) {
     this._geocoderServices = options.geocoderServices;
   } else {
     this._geocoderServices = [new IonGeocoderService({ scene: options.scene })];
@@ -8556,7 +8675,7 @@ function GeocoderViewModel(options) {
   this._searchCommand = createCommand_default(function(geocodeType) {
     geocodeType = geocodeType ?? GeocodeType.SEARCH;
     that._focusTextbox = false;
-    if (defined15(that._selectedSuggestion)) {
+    if (defined17(that._selectedSuggestion)) {
       that.activateSuggestion(that._selectedSuggestion);
       return false;
     }
@@ -8644,7 +8763,7 @@ function GeocoderViewModel(options) {
     },
     set: function(value) {
       if (typeof value !== "string") {
-        throw new DeveloperError13("value must be a valid string.");
+        throw new DeveloperError15("value must be a valid string.");
       }
       this._searchText = value;
     }
@@ -8655,8 +8774,8 @@ function GeocoderViewModel(options) {
       return this._flightDuration;
     },
     set: function(value) {
-      if (defined15(value) && value < 0) {
-        throw new DeveloperError13("value must be positive.");
+      if (defined17(value) && value < 0) {
+        throw new DeveloperError15("value must be positive.");
       }
       this._flightDuration = value;
     }
@@ -8747,8 +8866,8 @@ function handleArrowDown(viewModel) {
   GeocoderViewModel._adjustSuggestionsScroll(viewModel, next);
 }
 function computeFlyToLocationForCartographic(cartographic, terrainProvider) {
-  const availability = defined15(terrainProvider) ? terrainProvider.availability : void 0;
-  if (!defined15(availability)) {
+  const availability = defined17(terrainProvider) ? terrainProvider.availability : void 0;
+  if (!defined17(availability)) {
     cartographic.height += DEFAULT_HEIGHT;
     return Promise.resolve(cartographic);
   }
@@ -8784,7 +8903,7 @@ function flyToDestination(viewModel, destination) {
   } else {
     destination = ellipsoid.cartesianToCartographic(destination);
   }
-  if (!defined15(promise)) {
+  if (!defined17(promise)) {
     promise = computeFlyToLocationForCartographic(destination, terrainProvider);
   }
   return promise.then(function(result) {
@@ -8827,7 +8946,7 @@ async function geocode(viewModel, geocoderServices, geocodeType) {
       return;
     }
     result = await attemptGeocode(geocoderServices[i], query, geocodeType);
-    if (defined15(result) && result.state === "fulfilled" && result.value.length > 0) {
+    if (defined17(result) && result.state === "fulfilled" && result.value.length > 0) {
       break;
     }
   }
@@ -8837,14 +8956,14 @@ async function geocode(viewModel, geocoderServices, geocodeType) {
   viewModel._isSearchInProgress = false;
   clearCredits(viewModel);
   const geocoderResults = result.value;
-  if (result.state === "fulfilled" && defined15(geocoderResults) && geocoderResults.length > 0) {
+  if (result.state === "fulfilled" && defined17(geocoderResults) && geocoderResults.length > 0) {
     viewModel._searchText = geocoderResults[0].displayName;
     viewModel.destinationFound(viewModel, geocoderResults[0].destination);
     const credits = updateCredits(
       viewModel,
       GeocoderService.getCreditsFromResult(geocoderResults[0])
     );
-    if (!defined15(credits)) {
+    if (!defined17(credits)) {
       updateCredit(viewModel, geocoderServices[i].credit);
     }
     return;
@@ -8852,13 +8971,13 @@ async function geocode(viewModel, geocoderServices, geocodeType) {
   viewModel._searchText = `${query} (not found)`;
 }
 function updateCredit(viewModel, credit) {
-  if (defined15(credit) && !viewModel._scene.isDestroyed() && !viewModel._scene.frameState.creditDisplay.isDestroyed()) {
+  if (defined17(credit) && !viewModel._scene.isDestroyed() && !viewModel._scene.frameState.creditDisplay.isDestroyed()) {
     viewModel._scene.frameState.creditDisplay.addStaticCredit(credit);
     viewModel._previousCredits.push(credit);
   }
 }
 function updateCredits(viewModel, credits) {
-  if (defined15(credits)) {
+  if (defined17(credits)) {
     credits.forEach((credit) => updateCredit(viewModel, credit));
   }
   return credits;
@@ -8872,7 +8991,7 @@ function clearCredits(viewModel) {
   viewModel._previousCredits.length = 0;
 }
 function adjustSuggestionsScroll(viewModel, focusedItemIndex) {
-  const container = getElement7(viewModel._viewContainer);
+  const container = getElement8(viewModel._viewContainer);
   const searchResults = container.getElementsByClassName("search-results")[0];
   const listItems = container.getElementsByTagName("li");
   const element = listItems[focusedItemIndex];
@@ -8916,7 +9035,7 @@ async function updateSearchSuggestions(viewModel) {
       let useDefaultCredit = true;
       newResults.forEach((result) => {
         const credits = GeocoderService.getCreditsFromResult(result);
-        useDefaultCredit = useDefaultCredit && !defined15(credits);
+        useDefaultCredit = useDefaultCredit && !defined17(credits);
         updateCredits(viewModel, credits);
       });
       if (useDefaultCredit) {
@@ -8937,7 +9056,7 @@ GeocoderViewModel.prototype.isDestroyed = function() {
 GeocoderViewModel.prototype.destroy = function() {
   this._suggestionSubscription.dispose();
   clearCredits(this);
-  return destroyObject10(this);
+  return destroyObject11(this);
 };
 var GeocoderViewModel_default = GeocoderViewModel;
 
@@ -8945,13 +9064,13 @@ var GeocoderViewModel_default = GeocoderViewModel;
 var startSearchPath = "M29.772,26.433l-7.126-7.126c0.96-1.583,1.523-3.435,1.524-5.421C24.169,8.093,19.478,3.401,13.688,3.399C7.897,3.401,3.204,8.093,3.204,13.885c0,5.789,4.693,10.481,10.484,10.481c1.987,0,3.839-0.563,5.422-1.523l7.128,7.127L29.772,26.433zM7.203,13.885c0.006-3.582,2.903-6.478,6.484-6.486c3.579,0.008,6.478,2.904,6.484,6.486c-0.007,3.58-2.905,6.476-6.484,6.484C10.106,20.361,7.209,17.465,7.203,13.885z";
 var stopSearchPath = "M24.778,21.419 19.276,15.917 24.777,10.415 21.949,7.585 16.447,13.087 10.945,7.585 8.117,10.415 13.618,15.917 8.116,21.419 10.946,24.248 16.447,18.746 21.948,24.248z";
 function Geocoder(options) {
-  if (!defined16(options) || !defined16(options.container)) {
-    throw new DeveloperError14("options.container is required.");
+  if (!defined18(options) || !defined18(options.container)) {
+    throw new DeveloperError16("options.container is required.");
   }
-  if (!defined16(options.scene)) {
-    throw new DeveloperError14("options.scene is required.");
+  if (!defined18(options.scene)) {
+    throw new DeveloperError16("options.scene is required.");
   }
-  const container = getElement8(options.container);
+  const container = getElement9(options.container);
   const viewModel = new GeocoderViewModel_default(options);
   viewModel._startSearchPath = startSearchPath;
   viewModel._stopSearchPath = stopSearchPath;
@@ -9084,128 +9203,9 @@ Geocoder.prototype.destroy = function() {
   container.removeChild(this._form);
   container.removeChild(this._searchSuggestionsContainer);
   this._textBox.removeEventListener("focus", this._onTextBoxFocus, false);
-  return destroyObject11(this);
-};
-var Geocoder_default = Geocoder;
-
-// packages/widgets/Source/HomeButton/HomeButton.js
-import { DeveloperError as DeveloperError16, defined as defined18, destroyObject as destroyObject12 } from "@cesium/core";
-import { getElement as getElement9 } from "@cesium/engine";
-
-// packages/widgets/Source/HomeButton/HomeButtonViewModel.js
-import { DeveloperError as DeveloperError15, defined as defined17 } from "@cesium/core";
-function HomeButtonViewModel(scene, duration) {
-  if (!defined17(scene)) {
-    throw new DeveloperError15("scene is required.");
-  }
-  this._scene = scene;
-  this._duration = duration;
-  const that = this;
-  this._command = createCommand_default(function() {
-    that._scene.camera.flyHome(that._duration);
-  });
-  this.tooltip = "View Home";
-  knockout_default.track(this, ["tooltip"]);
-}
-Object.defineProperties(HomeButtonViewModel.prototype, {
-  /**
-   * Gets the scene to control.
-   * @memberof HomeButtonViewModel.prototype
-   *
-   * @type {Scene}
-   */
-  scene: {
-    get: function() {
-      return this._scene;
-    }
-  },
-  /**
-   * Gets the Command that is executed when the button is clicked.
-   * @memberof HomeButtonViewModel.prototype
-   *
-   * @type {Command}
-   */
-  command: {
-    get: function() {
-      return this._command;
-    }
-  },
-  /**
-   * Gets or sets the the duration of the camera flight in seconds.
-   * A value of zero causes the camera to instantly switch to home view.
-   * The duration will be computed based on the distance when undefined.
-   * @memberof HomeButtonViewModel.prototype
-   *
-   * @type {number|undefined}
-   */
-  duration: {
-    get: function() {
-      return this._duration;
-    },
-    set: function(value) {
-      if (defined17(value) && value < 0) {
-        throw new DeveloperError15("value must be positive.");
-      }
-      this._duration = value;
-    }
-  }
-});
-var HomeButtonViewModel_default = HomeButtonViewModel;
-
-// packages/widgets/Source/HomeButton/HomeButton.js
-function HomeButton(container, scene, duration) {
-  if (!defined18(container)) {
-    throw new DeveloperError16("container is required.");
-  }
-  container = getElement9(container);
-  const viewModel = new HomeButtonViewModel_default(scene, duration);
-  viewModel._svgPath = "M14,4l-10,8.75h20l-4.25-3.7188v-4.6562h-2.812v2.1875l-2.938-2.5625zm-7.0938,9.906v10.094h14.094v-10.094h-14.094zm2.1876,2.313h3.3122v4.25h-3.3122v-4.25zm5.8442,1.281h3.406v6.438h-3.406v-6.438z";
-  const element = document.createElement("button");
-  element.type = "button";
-  element.className = "cesium-button cesium-toolbar-button cesium-home-button";
-  element.setAttribute(
-    "data-bind",
-    "attr: { title: tooltip },click: command,cesiumSvgPath: { path: _svgPath, width: 28, height: 28 }"
-  );
-  container.appendChild(element);
-  knockout_default.applyBindings(viewModel, element);
-  this._container = container;
-  this._viewModel = viewModel;
-  this._element = element;
-}
-Object.defineProperties(HomeButton.prototype, {
-  /**
-   * Gets the parent container.
-   * @memberof HomeButton.prototype
-   *
-   * @type {Element}
-   */
-  container: {
-    get: function() {
-      return this._container;
-    }
-  },
-  /**
-   * Gets the view model.
-   * @memberof HomeButton.prototype
-   *
-   * @type {HomeButtonViewModel}
-   */
-  viewModel: {
-    get: function() {
-      return this._viewModel;
-    }
-  }
-});
-HomeButton.prototype.isDestroyed = function() {
-  return false;
-};
-HomeButton.prototype.destroy = function() {
-  knockout_default.cleanNode(this._element);
-  this._container.removeChild(this._element);
   return destroyObject12(this);
 };
-var HomeButton_default = HomeButton;
+var Geocoder_default = Geocoder;
 
 // packages/widgets/Source/I3SBuildingSceneLayerExplorer/I3SBuildingSceneLayerExplorer.js
 import { Check as Check4, defined as defined20 } from "@cesium/core";

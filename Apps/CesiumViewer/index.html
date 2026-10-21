@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="zhCN">
   <head>
     <!-- Use correct character set. -->
     <meta charset="utf-8" />
@@ -12,6 +12,17 @@
     />
     <title>Cesium Viewer</title>
     <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
+    <script>
+      (function () {
+        var isLocal =
+          window.location.hostname === "localhost" ||
+          window.location.hostname === "127.0.0.1";
+        if (!isLocal) {
+          window.CESIUM_BASE_URL =
+            "https://cdn.jsdelivr.net/gh/gisnotes/cesium@gh-pages/Build/CesiumUnminified/";
+        }
+      })();
+    </script>
     <link rel="stylesheet" href="CesiumViewer.css" media="screen" />
   </head>
   <body style="background: #000">
