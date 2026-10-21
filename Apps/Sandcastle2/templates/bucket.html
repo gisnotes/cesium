@@ -23,16 +23,23 @@
         }
       }
     </script>
-    <link
-      rel="stylesheet"
-      href="../../../Build/CesiumUnminified/Widgets/widgets.css"
-      
-    />
-    <link
-      rel="stylesheet"
-      href="../../../Build/CesiumUnminified/Widgets/lighter.css"
-      
-    />
+    <script>
+      (function () {
+        var isLocal =
+          window.location.hostname === "localhost" ||
+          window.location.hostname === "127.0.0.1";
+        var base = isLocal
+          ? "../../../Build/CesiumUnminified"
+          : "https://cdn.jsdelivr.net/gh/gisnotes/cesium@gh-pages/Build/CesiumUnminified";
+        window.CESIUM_BASE_URL = base;
+        document.write(
+          '<link rel="stylesheet" href="' + base + '/Widgets/widgets.css" vite-ignore>'
+        );
+        document.write(
+          '<link rel="stylesheet" href="' + base + '/Widgets/lighter.css" vite-ignore>'
+        );
+      })();
+    </script>
     <style>
       /*
       * Minimal styles copied from the bucket.css stylesheet to avoid FOUC and reflow
@@ -104,9 +111,6 @@
       }
     </style>
     <link rel="stylesheet" href="../styles/stratakit-mimic/styles.css" />
-    <script>
-      window.CESIUM_BASE_URL = "../../../Build/CesiumUnminified";
-    </script>
     <script type="importmap">{
   "imports": {
     "Sandcastle": "../templates/Sandcastle.js",

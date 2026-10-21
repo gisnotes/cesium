@@ -12948,1696 +12948,6 @@ function createBaseMatchers(debug) {
   };
 }
 
-// packages/engine/Source/Renderer/BufferUsage.js
-var BufferUsage = {
-  STREAM_DRAW: WebGLConstants_default.STREAM_DRAW,
-  STATIC_DRAW: WebGLConstants_default.STATIC_DRAW,
-  DYNAMIC_DRAW: WebGLConstants_default.DYNAMIC_DRAW,
-  DYNAMIC_READ: WebGLConstants_default.DYNAMIC_READ
-};
-BufferUsage.validate = function(bufferUsage) {
-  return bufferUsage === BufferUsage.STREAM_DRAW || bufferUsage === BufferUsage.STATIC_DRAW || bufferUsage === BufferUsage.DYNAMIC_DRAW || bufferUsage === BufferUsage.DYNAMIC_READ;
-};
-Object.freeze(BufferUsage);
-var BufferUsage_default = BufferUsage;
-
-// packages/engine/Source/Renderer/ContextLimits.js
-var ContextLimits = {
-  _maximumCombinedTextureImageUnits: 0,
-  _maximumCubeMapSize: 0,
-  _maximumFragmentUniformVectors: 0,
-  _maximumTextureImageUnits: 0,
-  _maximumRenderbufferSize: 0,
-  _maximumTextureSize: 0,
-  _maximum3DTextureSize: 0,
-  _maximumVaryingVectors: 0,
-  _maximumVertexAttributes: 0,
-  _maximumVertexTextureImageUnits: 0,
-  _maximumVertexUniformVectors: 0,
-  _minimumAliasedLineWidth: 0,
-  _maximumAliasedLineWidth: 0,
-  _minimumAliasedPointSize: 0,
-  _maximumAliasedPointSize: 0,
-  _maximumViewportWidth: 0,
-  _maximumViewportHeight: 0,
-  _maximumTextureFilterAnisotropy: 0,
-  _maximumDrawBuffers: 0,
-  _maximumColorAttachments: 0,
-  _maximumSamples: 0,
-  _highpFloatSupported: false,
-  _highpIntSupported: false
-};
-Object.defineProperties(ContextLimits, {
-  /**
-   * The maximum number of texture units that can be used from the vertex and fragment
-   * shader with this WebGL implementation.
-   * If both shaders access the same texture unit, this counts as two texture units.
-   * The minimum in WebGL2 contexts is 32, or 8 in WebGL1 contexts.
-   * @memberof ContextLimits
-   * @type {number}
-   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es3.0/html/glGet.xhtml|glGet in OpenGL ES 3.0} with <code>MAX_COMBINED_TEXTURE_IMAGE_UNITS</code>.
-   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es2.0/xhtml/glGet.xml|glGet in OpenGL ES 2.0} for WebGL1 contexts.
-   */
-  maximumCombinedTextureImageUnits: {
-    get: function() {
-      return ContextLimits._maximumCombinedTextureImageUnits;
-    }
-  },
-  /**
-   * The approximate maximum cube map width and height supported by this WebGL implementation.
-   * The minimum in WebGL2 contexts is 2048, but most desktop and laptop implementations will support much larger sizes like 8192.
-   * The minimum in WebGL1 contexts is 16.
-   * @memberof ContextLimits
-   * @type {number}
-   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es3.0/html/glGet.xhtml|glGet in OpenGL ES 3.0} with <code>MAX_CUBE_MAP_TEXTURE_SIZE</code>.
-   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es2.0/xhtml/glGet.xml|glGet in OpenGL ES 2.0} for WebGL1 contexts.
-   */
-  maximumCubeMapSize: {
-    get: function() {
-      return ContextLimits._maximumCubeMapSize;
-    }
-  },
-  /**
-   * The maximum number of <code>vec4</code>, <code>ivec4</code>, and <code>bvec4</code>
-   * uniforms that can be used by a fragment shader with this WebGL implementation.
-   * The minimum in WebGL2 contexts is 224, or 16 in WebGL1 contexts.
-   * @memberof ContextLimits
-   * @type {number}
-   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es3.0/html/glGet.xhtml|glGet in OpenGL ES 3.0} with <code>MAX_FRAGMENT_UNIFORM_VECTORS</code>.
-   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es2.0/xhtml/glGet.xml|glGet in OpenGL ES 2.0} for WebGL1 contexts.
-   */
-  maximumFragmentUniformVectors: {
-    get: function() {
-      return ContextLimits._maximumFragmentUniformVectors;
-    }
-  },
-  /**
-   * The maximum number of texture units that can be used from the fragment shader with this WebGL implementation.
-   * The minimum in WebGL2 contexts is 16, or 8 in WebGL1 contexts.
-   * @memberof ContextLimits
-   * @type {number}
-   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es3.0/html/glGet.xhtml|glGet in OpenGL ES 3.0} with <code>MAX_TEXTURE_IMAGE_UNITS</code>.
-   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es2.0/xhtml/glGet.xml|glGet in OpenGL ES 2.0} for WebGL1 contexts.
-   */
-  maximumTextureImageUnits: {
-    get: function() {
-      return ContextLimits._maximumTextureImageUnits;
-    }
-  },
-  /**
-   * The maximum renderbuffer width and height supported by this WebGL implementation.
-   * The minimum in WebGL2 contexts is 2048, but most desktop and laptop implementations will support much larger sizes like 8192.
-   * The minimum in WebGL1 contexts is 1.
-   * @memberof ContextLimits
-   * @type {number}
-   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es3.0/html/glGet.xhtml|glGet in OpenGL ES 3.0} with <code>MAX_RENDERBUFFER_SIZE</code>.
-   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es2.0/xhtml/glGet.xml|glGet in OpenGL ES 2.0} for WebGL1 contexts.
-   */
-  maximumRenderbufferSize: {
-    get: function() {
-      return ContextLimits._maximumRenderbufferSize;
-    }
-  },
-  /**
-   * The approximate maximum texture width and height supported by this WebGL implementation.
-   * The minimum in WebGL2 contexts is 2048, but most desktop and laptop implementations will support much larger sizes like 8192.
-   * The minimum in WebGL1 contexts is 64.
-   * @memberof ContextLimits
-   * @type {number}
-   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es3.0/html/glGet.xhtml|glGet in OpenGL ES 3.0} with <code>MAX_TEXTURE_SIZE</code>.
-   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es2.0/xhtml/glGet.xml|glGet in OpenGL ES 2.0} for WebGL1 contexts.
-   */
-  maximumTextureSize: {
-    get: function() {
-      return ContextLimits._maximumTextureSize;
-    }
-  },
-  /**
-   * The approximate maximum texture width, height, and depth supported by this WebGL2 implementation.
-   * The minimum is 256, but most desktop and laptop implementations will support much larger sizes like 2048.
-   * 3D textures are not supported in WebGL1 contexts.
-   * @memberof ContextLimits
-   * @type {number}
-   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es3.0/html/glGet.xhtml|glGet in OpenGL ES 3.0} with <code>MAX_3D_TEXTURE_SIZE</code>.
-   */
-  maximum3DTextureSize: {
-    get: function() {
-      return ContextLimits._maximum3DTextureSize;
-    }
-  },
-  /**
-   * The maximum number of <code>vec4</code> varying variables supported by this WebGL implementation.
-   * The minimum is 15 in WebGL2 contexts, or 8 in WebGL1 contexts. Matrices and arrays count as multiple <code>vec4</code>s.
-   * @memberof ContextLimits
-   * @type {number}
-   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es3.0/html/glGet.xhtml|glGet in OpenGL ES 3.0} with <code>MAX_VARYING_VECTORS</code>.
-   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es2.0/xhtml/glGet.xml|glGet in OpenGL ES 2.0} for WebGL1 contexts.
-   */
-  maximumVaryingVectors: {
-    get: function() {
-      return ContextLimits._maximumVaryingVectors;
-    }
-  },
-  /**
-   * The maximum number of <code>vec4</code> vertex attributes supported by this WebGL implementation.
-   * The minimum is 16 in WebGL2 contexts, or 8 in WebGL1 contexts.
-   * @memberof ContextLimits
-   * @type {number}
-   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es3.0/html/glGet.xhtml|glGet in OpenGL ES 3.0} with <code>MAX_VERTEX_ATTRIBS</code>.
-   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es2.0/xhtml/glGet.xml|glGet in OpenGL ES 2.0} for WebGL1 contexts.
-   */
-  maximumVertexAttributes: {
-    get: function() {
-      return ContextLimits._maximumVertexAttributes;
-    }
-  },
-  /**
-   * The maximum number of texture units that can be used from the vertex shader with this WebGL implementation.
-   * The minimum is 16 in WebGL2 contexts, or 0 in WebGL1 contexts.
-   * @memberof ContextLimits
-   * @type {number}
-   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es3.0/html/glGet.xhtml|glGet in OpenGL ES 3.0} with <code>MAX_VERTEX_TEXTURE_IMAGE_UNITS</code>.
-   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es2.0/xhtml/glGet.xml|glGet in OpenGL ES 2.0} for WebGL1 contexts.
-   */
-  maximumVertexTextureImageUnits: {
-    get: function() {
-      return ContextLimits._maximumVertexTextureImageUnits;
-    }
-  },
-  /**
-   * The maximum number of <code>vec4</code>, <code>ivec4</code>, and <code>bvec4</code>
-   * uniforms that can be used by a vertex shader with this WebGL implementation.
-   * The minimum is 256 in WebGL2 contexts, or 128 in WebGL1 contexts.
-   * @memberof ContextLimits
-   * @type {number}
-   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es3.0/html/glGet.xhtml|glGet in OpenGL ES 3.0} with <code>MAX_VERTEX_UNIFORM_VECTORS</code>.
-   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es2.0/xhtml/glGet.xml|glGet in OpenGL ES 2.0} for WebGL1 contexts.
-   */
-  maximumVertexUniformVectors: {
-    get: function() {
-      return ContextLimits._maximumVertexUniformVectors;
-    }
-  },
-  /**
-   * The minimum aliased line width, in pixels, supported by this WebGL implementation. It will be at most one.
-   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es3.0/html/glGet.xhtml|glGet in OpenGL ES 3.0} with <code>ALIASED_LINE_WIDTH_RANGE</code>.
-   * @memberof ContextLimits
-   * @type {number}
-   */
-  minimumAliasedLineWidth: {
-    get: function() {
-      return ContextLimits._minimumAliasedLineWidth;
-    }
-  },
-  /**
-   * The maximum aliased line width, in pixels, supported by this WebGL implementation. It will be at least one.
-   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es3.0/html/glGet.xhtml|glGet in OpenGL ES 3.0} with <code>ALIASED_LINE_WIDTH_RANGE</code>.
-   * @memberof ContextLimits
-   * @type {number}
-   */
-  maximumAliasedLineWidth: {
-    get: function() {
-      return ContextLimits._maximumAliasedLineWidth;
-    }
-  },
-  /**
-   * The minimum aliased point size, in pixels, supported by this WebGL implementation. It will be at most one.
-   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es3.0/html/glGet.xhtml|glGet in OpenGL ES 3.0} with <code>ALIASED_POINT_SIZE_RANGE</code>.
-   * @memberof ContextLimits
-   * @type {number}
-   */
-  minimumAliasedPointSize: {
-    get: function() {
-      return ContextLimits._minimumAliasedPointSize;
-    }
-  },
-  /**
-   * The maximum aliased point size, in pixels, supported by this WebGL implementation. It will be at least one.
-   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es3.0/html/glGet.xhtml|glGet in OpenGL ES 3.0} with <code>ALIASED_POINT_SIZE_RANGE</code>.
-   * @memberof ContextLimits
-   * @type {number}
-   */
-  maximumAliasedPointSize: {
-    get: function() {
-      return ContextLimits._maximumAliasedPointSize;
-    }
-  },
-  /**
-   * The maximum supported width of the viewport. It will be at least as large as the visible width of the associated canvas.
-   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es3.0/html/glGet.xhtml|glGet in OpenGL ES 3.0} with <code>MAX_VIEWPORT_DIMS</code>.
-   * @memberof ContextLimits
-   * @type {number}
-   */
-  maximumViewportWidth: {
-    get: function() {
-      return ContextLimits._maximumViewportWidth;
-    }
-  },
-  /**
-   * The maximum supported height of the viewport. It will be at least as large as the visible height of the associated canvas.
-   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es3.0/html/glGet.xhtml|glGet in OpenGL ES 3.0} with <code>MAX_VIEWPORT_DIMS</code>.
-   * @memberof ContextLimits
-   * @type {number}
-   */
-  maximumViewportHeight: {
-    get: function() {
-      return ContextLimits._maximumViewportHeight;
-    }
-  },
-  /**
-   * The maximum degree of anisotropy for texture filtering
-   * @memberof ContextLimits
-   * @type {number}
-   */
-  maximumTextureFilterAnisotropy: {
-    get: function() {
-      return ContextLimits._maximumTextureFilterAnisotropy;
-    }
-  },
-  /**
-   * The maximum number of simultaneous outputs that may be written in a fragment shader.
-   * @memberof ContextLimits
-   * @type {number}
-   */
-  maximumDrawBuffers: {
-    get: function() {
-      return ContextLimits._maximumDrawBuffers;
-    }
-  },
-  /**
-   * The maximum number of color attachments supported.
-   * @memberof ContextLimits
-   * @type {number}
-   */
-  maximumColorAttachments: {
-    get: function() {
-      return ContextLimits._maximumColorAttachments;
-    }
-  },
-  /**
-   * The maximum number of samples supported for multisampling.
-   * @memberof ContextLimits
-   * @type {number}
-   */
-  maximumSamples: {
-    get: function() {
-      return ContextLimits._maximumSamples;
-    }
-  },
-  /**
-   * High precision float supported (<code>highp</code>) in fragment shaders.
-   * @memberof ContextLimits
-   * @type {boolean}
-   */
-  highpFloatSupported: {
-    get: function() {
-      return ContextLimits._highpFloatSupported;
-    }
-  },
-  /**
-   * High precision int supported (<code>highp</code>) in fragment shaders.
-   * @memberof ContextLimits
-   * @type {boolean}
-   */
-  highpIntSupported: {
-    get: function() {
-      return ContextLimits._highpIntSupported;
-    }
-  }
-});
-var ContextLimits_default = ContextLimits;
-
-// packages/engine/Source/Renderer/Buffer.js
-function Buffer2(options) {
-  options = options ?? Frozen_default.EMPTY_OBJECT;
-  Check_default.defined("options.context", options.context);
-  if (!defined_default(options.typedArray) && !defined_default(options.sizeInBytes)) {
-    throw new DeveloperError_default(
-      "Either options.sizeInBytes or options.typedArray is required."
-    );
-  }
-  if (defined_default(options.typedArray) && defined_default(options.sizeInBytes)) {
-    throw new DeveloperError_default(
-      "Cannot pass in both options.sizeInBytes and options.typedArray."
-    );
-  }
-  if (defined_default(options.typedArray)) {
-    Check_default.typeOf.object("options.typedArray", options.typedArray);
-    Check_default.typeOf.number(
-      "options.typedArray.byteLength",
-      options.typedArray.byteLength
-    );
-  }
-  if (!BufferUsage_default.validate(options.usage)) {
-    throw new DeveloperError_default("usage is invalid.");
-  }
-  const gl = options.context._gl;
-  const bufferTarget = options.bufferTarget;
-  const typedArray = options.typedArray;
-  let sizeInBytes = options.sizeInBytes;
-  const usage = options.usage;
-  const hasArray = defined_default(typedArray);
-  if (hasArray) {
-    sizeInBytes = typedArray.byteLength;
-  }
-  Check_default.typeOf.number.greaterThan("sizeInBytes", sizeInBytes, 0);
-  const buffer = gl.createBuffer();
-  gl.bindBuffer(bufferTarget, buffer);
-  gl.bufferData(bufferTarget, hasArray ? typedArray : sizeInBytes, usage);
-  gl.bindBuffer(bufferTarget, null);
-  this._id = createGuid_default();
-  this._gl = gl;
-  this._webgl2 = options.context._webgl2;
-  this._bufferTarget = bufferTarget;
-  this._sizeInBytes = sizeInBytes;
-  this._usage = usage;
-  this._buffer = buffer;
-  this.vertexArrayDestroyable = true;
-}
-Buffer2.createPixelBuffer = function(options) {
-  Check_default.defined("options.context", options.context);
-  if (!options.context._webgl2) {
-    throw new DeveloperError_default(
-      "A WebGL 2 context is required to create PixelBuffers."
-    );
-  }
-  return new Buffer2({
-    context: options.context,
-    bufferTarget: WebGLConstants_default.PIXEL_PACK_BUFFER,
-    typedArray: options.typedArray,
-    sizeInBytes: options.sizeInBytes,
-    usage: options.usage
-  });
-};
-Buffer2.createVertexBuffer = function(options) {
-  Check_default.defined("options.context", options.context);
-  return new Buffer2({
-    context: options.context,
-    bufferTarget: WebGLConstants_default.ARRAY_BUFFER,
-    typedArray: options.typedArray,
-    sizeInBytes: options.sizeInBytes,
-    usage: options.usage
-  });
-};
-Buffer2.createIndexBuffer = function(options) {
-  Check_default.defined("options.context", options.context);
-  if (!IndexDatatype_default.validate(options.indexDatatype)) {
-    throw new DeveloperError_default("Invalid indexDatatype.");
-  }
-  if (options.indexDatatype === IndexDatatype_default.UNSIGNED_INT && !options.context.elementIndexUint) {
-    throw new DeveloperError_default(
-      "IndexDatatype.UNSIGNED_INT requires OES_element_index_uint, which is not supported on this system.  Check context.elementIndexUint."
-    );
-  }
-  const context = options.context;
-  const indexDatatype = options.indexDatatype;
-  const bytesPerIndex = IndexDatatype_default.getSizeInBytes(indexDatatype);
-  const buffer = new Buffer2({
-    context,
-    bufferTarget: WebGLConstants_default.ELEMENT_ARRAY_BUFFER,
-    typedArray: options.typedArray,
-    sizeInBytes: options.sizeInBytes,
-    usage: options.usage
-  });
-  const numberOfIndices = buffer.sizeInBytes / bytesPerIndex;
-  Object.defineProperties(buffer, {
-    indexDatatype: {
-      get: function() {
-        return indexDatatype;
-      }
-    },
-    bytesPerIndex: {
-      get: function() {
-        return bytesPerIndex;
-      }
-    },
-    numberOfIndices: {
-      get: function() {
-        return numberOfIndices;
-      }
-    }
-  });
-  return buffer;
-};
-Object.defineProperties(Buffer2.prototype, {
-  sizeInBytes: {
-    get: function() {
-      return this._sizeInBytes;
-    }
-  },
-  usage: {
-    get: function() {
-      return this._usage;
-    }
-  }
-});
-Buffer2.prototype._getBuffer = function() {
-  return this._buffer;
-};
-Buffer2.prototype._bind = function() {
-  const gl = this._gl;
-  const target = this._bufferTarget;
-  gl.bindBuffer(target, this._buffer);
-};
-Buffer2.prototype._unBind = function() {
-  const gl = this._gl;
-  const target = this._bufferTarget;
-  gl.bindBuffer(target, null);
-};
-Buffer2.prototype.copyFromArrayView = function(arrayView, offsetInBytes) {
-  offsetInBytes = offsetInBytes ?? 0;
-  Check_default.defined("arrayView", arrayView);
-  Check_default.typeOf.number.lessThanOrEquals(
-    "offsetInBytes + arrayView.byteLength",
-    offsetInBytes + arrayView.byteLength,
-    this._sizeInBytes
-  );
-  const gl = this._gl;
-  const target = this._bufferTarget;
-  gl.bindBuffer(target, this._buffer);
-  gl.bufferSubData(target, offsetInBytes, arrayView);
-  gl.bindBuffer(target, null);
-};
-Buffer2.prototype.copyFromBuffer = function(readBuffer, readOffset, writeOffset, sizeInBytes) {
-  if (!this._webgl2) {
-    throw new DeveloperError_default("A WebGL 2 context is required.");
-  }
-  if (!defined_default(readBuffer)) {
-    throw new DeveloperError_default("readBuffer must be defined.");
-  }
-  if (!defined_default(sizeInBytes) || sizeInBytes <= 0) {
-    throw new DeveloperError_default(
-      "sizeInBytes must be defined and be greater than zero."
-    );
-  }
-  if (!defined_default(readOffset) || readOffset < 0 || readOffset + sizeInBytes > readBuffer._sizeInBytes) {
-    throw new DeveloperError_default(
-      "readOffset must be greater than or equal to zero and readOffset + sizeInBytes must be less than of equal to readBuffer.sizeInBytes."
-    );
-  }
-  if (!defined_default(writeOffset) || writeOffset < 0 || writeOffset + sizeInBytes > this._sizeInBytes) {
-    throw new DeveloperError_default(
-      "writeOffset must be greater than or equal to zero and writeOffset + sizeInBytes must be less than of equal to this.sizeInBytes."
-    );
-  }
-  if (this._buffer === readBuffer._buffer && (writeOffset >= readOffset && writeOffset < readOffset + sizeInBytes || readOffset > writeOffset && readOffset < writeOffset + sizeInBytes)) {
-    throw new DeveloperError_default(
-      "When readBuffer is equal to this, the ranges [readOffset + sizeInBytes) and [writeOffset, writeOffset + sizeInBytes) must not overlap."
-    );
-  }
-  if (this._bufferTarget === WebGLConstants_default.ELEMENT_ARRAY_BUFFER && readBuffer._bufferTarget !== WebGLConstants_default.ELEMENT_ARRAY_BUFFER || this._bufferTarget !== WebGLConstants_default.ELEMENT_ARRAY_BUFFER && readBuffer._bufferTarget === WebGLConstants_default.ELEMENT_ARRAY_BUFFER) {
-    throw new DeveloperError_default(
-      "Can not copy an index buffer into another buffer type."
-    );
-  }
-  const readTarget = WebGLConstants_default.COPY_READ_BUFFER;
-  const writeTarget = WebGLConstants_default.COPY_WRITE_BUFFER;
-  const gl = this._gl;
-  gl.bindBuffer(writeTarget, this._buffer);
-  gl.bindBuffer(readTarget, readBuffer._buffer);
-  gl.copyBufferSubData(
-    readTarget,
-    writeTarget,
-    readOffset,
-    writeOffset,
-    sizeInBytes
-  );
-  gl.bindBuffer(writeTarget, null);
-  gl.bindBuffer(readTarget, null);
-};
-Buffer2.prototype.getBufferData = function(arrayView, sourceOffset, destinationOffset, length) {
-  sourceOffset = sourceOffset ?? 0;
-  destinationOffset = destinationOffset ?? 0;
-  if (!this._webgl2) {
-    throw new DeveloperError_default("A WebGL 2 context is required.");
-  }
-  if (!defined_default(arrayView)) {
-    throw new DeveloperError_default("arrayView is required.");
-  }
-  let copyLength;
-  let elementSize;
-  let arrayLength = arrayView.byteLength;
-  if (!defined_default(length)) {
-    if (defined_default(arrayLength)) {
-      copyLength = arrayLength - destinationOffset;
-      elementSize = 1;
-    } else {
-      arrayLength = arrayView.length;
-      copyLength = arrayLength - destinationOffset;
-      elementSize = arrayView.BYTES_PER_ELEMENT;
-    }
-  } else {
-    copyLength = length;
-    if (defined_default(arrayLength)) {
-      elementSize = 1;
-    } else {
-      arrayLength = arrayView.length;
-      elementSize = arrayView.BYTES_PER_ELEMENT;
-    }
-  }
-  if (destinationOffset < 0 || destinationOffset > arrayLength) {
-    throw new DeveloperError_default(
-      "destinationOffset must be greater than zero and less than the arrayView length."
-    );
-  }
-  if (destinationOffset + copyLength > arrayLength) {
-    throw new DeveloperError_default(
-      "destinationOffset + length must be less than or equal to the arrayViewLength."
-    );
-  }
-  if (sourceOffset < 0 || sourceOffset > this._sizeInBytes) {
-    throw new DeveloperError_default(
-      "sourceOffset must be greater than zero and less than the buffers size."
-    );
-  }
-  if (sourceOffset + copyLength * elementSize > this._sizeInBytes) {
-    throw new DeveloperError_default(
-      "sourceOffset + length must be less than the buffers size."
-    );
-  }
-  const gl = this._gl;
-  const target = WebGLConstants_default.COPY_READ_BUFFER;
-  gl.bindBuffer(target, this._buffer);
-  gl.getBufferSubData(
-    target,
-    sourceOffset,
-    arrayView,
-    destinationOffset,
-    length
-  );
-  gl.bindBuffer(target, null);
-};
-Buffer2.prototype.isDestroyed = function() {
-  return false;
-};
-Buffer2.prototype.destroy = function() {
-  this._gl.deleteBuffer(this._buffer);
-  return destroyObject_default(this);
-};
-var Buffer_default = Buffer2;
-
-// packages/engine/Source/Renderer/VertexArray.js
-function addAttribute(attributes, attribute, index, context) {
-  const hasVertexBuffer = defined_default(attribute.vertexBuffer);
-  const hasValue = defined_default(attribute.value);
-  const componentsPerAttribute = attribute.value ? attribute.value.length : attribute.componentsPerAttribute;
-  if (!hasVertexBuffer && !hasValue) {
-    throw new DeveloperError_default("attribute must have a vertexBuffer or a value.");
-  }
-  if (hasVertexBuffer && hasValue) {
-    throw new DeveloperError_default(
-      "attribute cannot have both a vertexBuffer and a value.  It must have either a vertexBuffer property defining per-vertex data or a value property defining data for all vertices."
-    );
-  }
-  if (componentsPerAttribute !== 1 && componentsPerAttribute !== 2 && componentsPerAttribute !== 3 && componentsPerAttribute !== 4) {
-    if (hasValue) {
-      throw new DeveloperError_default(
-        "attribute.value.length must be in the range [1, 4]."
-      );
-    }
-    throw new DeveloperError_default(
-      "attribute.componentsPerAttribute must be in the range [1, 4]."
-    );
-  }
-  if (defined_default(attribute.componentDatatype) && !ComponentDatatype_default.validate(attribute.componentDatatype)) {
-    throw new DeveloperError_default(
-      "attribute must have a valid componentDatatype or not specify it."
-    );
-  }
-  if (defined_default(attribute.strideInBytes) && attribute.strideInBytes > 255) {
-    throw new DeveloperError_default(
-      "attribute must have a strideInBytes less than or equal to 255 or not specify it."
-    );
-  }
-  if (defined_default(attribute.instanceDivisor) && attribute.instanceDivisor > 0 && !context.instancedArrays) {
-    throw new DeveloperError_default("instanced arrays is not supported");
-  }
-  if (defined_default(attribute.instanceDivisor) && attribute.instanceDivisor < 0) {
-    throw new DeveloperError_default(
-      "attribute must have an instanceDivisor greater than or equal to zero"
-    );
-  }
-  if (defined_default(attribute.instanceDivisor) && hasValue) {
-    throw new DeveloperError_default(
-      "attribute cannot have have an instanceDivisor if it is not backed by a buffer"
-    );
-  }
-  if (defined_default(attribute.instanceDivisor) && attribute.instanceDivisor > 0 && attribute.index === 0) {
-    throw new DeveloperError_default(
-      "attribute zero cannot have an instanceDivisor greater than 0"
-    );
-  }
-  const attr = {
-    index: attribute.index ?? index,
-    enabled: attribute.enabled ?? true,
-    vertexBuffer: attribute.vertexBuffer,
-    value: hasValue ? attribute.value.slice(0) : void 0,
-    componentsPerAttribute,
-    componentDatatype: attribute.componentDatatype ?? ComponentDatatype_default.FLOAT,
-    normalize: attribute.normalize ?? false,
-    offsetInBytes: attribute.offsetInBytes ?? 0,
-    strideInBytes: attribute.strideInBytes ?? 0,
-    instanceDivisor: attribute.instanceDivisor ?? 0
-  };
-  if (hasVertexBuffer) {
-    attr.vertexAttrib = function(gl) {
-      const index2 = this.index;
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer._getBuffer());
-      gl.vertexAttribPointer(
-        index2,
-        this.componentsPerAttribute,
-        this.componentDatatype,
-        this.normalize,
-        this.strideInBytes,
-        this.offsetInBytes
-      );
-      gl.enableVertexAttribArray(index2);
-      if (this.instanceDivisor > 0) {
-        context.glVertexAttribDivisor(index2, this.instanceDivisor);
-        context._vertexAttribDivisors[index2] = this.instanceDivisor;
-        context._previousDrawInstanced = true;
-      }
-    };
-    attr.disableVertexAttribArray = function(gl) {
-      gl.disableVertexAttribArray(this.index);
-      if (this.instanceDivisor > 0) {
-        context.glVertexAttribDivisor(index, 0);
-      }
-    };
-  } else {
-    switch (attr.componentsPerAttribute) {
-      case 1:
-        attr.vertexAttrib = function(gl) {
-          gl.vertexAttrib1fv(this.index, this.value);
-        };
-        break;
-      case 2:
-        attr.vertexAttrib = function(gl) {
-          gl.vertexAttrib2fv(this.index, this.value);
-        };
-        break;
-      case 3:
-        attr.vertexAttrib = function(gl) {
-          gl.vertexAttrib3fv(this.index, this.value);
-        };
-        break;
-      case 4:
-        attr.vertexAttrib = function(gl) {
-          gl.vertexAttrib4fv(this.index, this.value);
-        };
-        break;
-    }
-    attr.disableVertexAttribArray = function(gl) {
-    };
-  }
-  attributes.push(attr);
-}
-function bind(gl, attributes, indexBuffer) {
-  for (let i = 0; i < attributes.length; ++i) {
-    const attribute = attributes[i];
-    if (attribute.enabled) {
-      attribute.vertexAttrib(gl);
-    }
-  }
-  if (defined_default(indexBuffer)) {
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer._getBuffer());
-  }
-}
-function VertexArray(options) {
-  options = options ?? Frozen_default.EMPTY_OBJECT;
-  Check_default.defined("options.context", options.context);
-  Check_default.defined("options.attributes", options.attributes);
-  const context = options.context;
-  const gl = context._gl;
-  const attributes = options.attributes;
-  const indexBuffer = options.indexBuffer;
-  let i;
-  const vaAttributes = [];
-  let numberOfVertices = 1;
-  let hasInstancedAttributes = false;
-  let hasConstantAttributes = false;
-  let length = attributes.length;
-  for (i = 0; i < length; ++i) {
-    addAttribute(vaAttributes, attributes[i], i, context);
-  }
-  length = vaAttributes.length;
-  for (i = 0; i < length; ++i) {
-    const attribute = vaAttributes[i];
-    if (defined_default(attribute.vertexBuffer) && attribute.instanceDivisor === 0) {
-      const bytes = attribute.strideInBytes || attribute.componentsPerAttribute * ComponentDatatype_default.getSizeInBytes(attribute.componentDatatype);
-      numberOfVertices = attribute.vertexBuffer.sizeInBytes / bytes;
-      break;
-    }
-  }
-  for (i = 0; i < length; ++i) {
-    if (vaAttributes[i].instanceDivisor > 0) {
-      hasInstancedAttributes = true;
-    }
-    if (defined_default(vaAttributes[i].value)) {
-      hasConstantAttributes = true;
-    }
-  }
-  const uniqueIndices = {};
-  for (i = 0; i < length; ++i) {
-    const index = vaAttributes[i].index;
-    if (uniqueIndices[index]) {
-      throw new DeveloperError_default(
-        `Index ${index} is used by more than one attribute.`
-      );
-    }
-    uniqueIndices[index] = true;
-  }
-  let vao;
-  if (context.vertexArrayObject) {
-    vao = context.glCreateVertexArray();
-    context.glBindVertexArray(vao);
-    bind(gl, vaAttributes, indexBuffer);
-    context.glBindVertexArray(null);
-  }
-  this._numberOfVertices = numberOfVertices;
-  this._hasInstancedAttributes = hasInstancedAttributes;
-  this._hasConstantAttributes = hasConstantAttributes;
-  this._context = context;
-  this._gl = gl;
-  this._vao = vao;
-  this._attributes = vaAttributes;
-  this._indexBuffer = indexBuffer;
-}
-function computeNumberOfVertices(attribute) {
-  return attribute.values.length / attribute.componentsPerAttribute;
-}
-function computeAttributeSizeInBytes(attribute) {
-  return ComponentDatatype_default.getSizeInBytes(attribute.componentDatatype) * attribute.componentsPerAttribute;
-}
-function interleaveAttributes(attributes) {
-  let j;
-  let name;
-  let attribute;
-  const names = [];
-  for (name in attributes) {
-    if (attributes.hasOwnProperty(name) && defined_default(attributes[name]) && defined_default(attributes[name].values)) {
-      names.push(name);
-      if (attributes[name].componentDatatype === ComponentDatatype_default.DOUBLE) {
-        attributes[name].componentDatatype = ComponentDatatype_default.FLOAT;
-        attributes[name].values = ComponentDatatype_default.createTypedArray(
-          ComponentDatatype_default.FLOAT,
-          attributes[name].values
-        );
-      }
-    }
-  }
-  let numberOfVertices;
-  const namesLength = names.length;
-  if (namesLength > 0) {
-    numberOfVertices = computeNumberOfVertices(attributes[names[0]]);
-    for (j = 1; j < namesLength; ++j) {
-      const currentNumberOfVertices = computeNumberOfVertices(
-        attributes[names[j]]
-      );
-      if (currentNumberOfVertices !== numberOfVertices) {
-        throw new RuntimeError_default(
-          `${"Each attribute list must have the same number of vertices.  Attribute "}${names[j]} has a different number of vertices (${currentNumberOfVertices.toString()}) than attribute ${names[0]} (${numberOfVertices.toString()}).`
-        );
-      }
-    }
-  }
-  names.sort(function(left, right) {
-    return ComponentDatatype_default.getSizeInBytes(attributes[right].componentDatatype) - ComponentDatatype_default.getSizeInBytes(attributes[left].componentDatatype);
-  });
-  let vertexSizeInBytes = 0;
-  const offsetsInBytes = {};
-  for (j = 0; j < namesLength; ++j) {
-    name = names[j];
-    attribute = attributes[name];
-    offsetsInBytes[name] = vertexSizeInBytes;
-    vertexSizeInBytes += computeAttributeSizeInBytes(attribute);
-  }
-  if (vertexSizeInBytes > 0) {
-    const maxComponentSizeInBytes = ComponentDatatype_default.getSizeInBytes(
-      attributes[names[0]].componentDatatype
-    );
-    const remainder = vertexSizeInBytes % maxComponentSizeInBytes;
-    if (remainder !== 0) {
-      vertexSizeInBytes += maxComponentSizeInBytes - remainder;
-    }
-    const vertexBufferSizeInBytes = numberOfVertices * vertexSizeInBytes;
-    const buffer = new ArrayBuffer(vertexBufferSizeInBytes);
-    const views = {};
-    for (j = 0; j < namesLength; ++j) {
-      name = names[j];
-      const sizeInBytes = ComponentDatatype_default.getSizeInBytes(
-        attributes[name].componentDatatype
-      );
-      views[name] = {
-        pointer: ComponentDatatype_default.createTypedArray(
-          attributes[name].componentDatatype,
-          buffer
-        ),
-        index: offsetsInBytes[name] / sizeInBytes,
-        // Offset in ComponentType
-        strideInComponentType: vertexSizeInBytes / sizeInBytes
-      };
-    }
-    for (j = 0; j < numberOfVertices; ++j) {
-      for (let n = 0; n < namesLength; ++n) {
-        name = names[n];
-        attribute = attributes[name];
-        const values = attribute.values;
-        const view = views[name];
-        const pointer = view.pointer;
-        const numberOfComponents = attribute.componentsPerAttribute;
-        for (let k = 0; k < numberOfComponents; ++k) {
-          pointer[view.index + k] = values[j * numberOfComponents + k];
-        }
-        view.index += view.strideInComponentType;
-      }
-    }
-    return {
-      buffer,
-      offsetsInBytes,
-      vertexSizeInBytes
-    };
-  }
-  return void 0;
-}
-VertexArray.fromGeometry = function(options) {
-  options = options ?? Frozen_default.EMPTY_OBJECT;
-  Check_default.defined("options.context", options.context);
-  const context = options.context;
-  const geometry = options.geometry ?? Frozen_default.EMPTY_OBJECT;
-  const bufferUsage = options.bufferUsage ?? BufferUsage_default.DYNAMIC_DRAW;
-  const attributeLocations = options.attributeLocations ?? Frozen_default.EMPTY_OBJECT;
-  const interleave = options.interleave ?? false;
-  const createdVAAttributes = options.vertexArrayAttributes;
-  let name;
-  let attribute;
-  let vertexBuffer;
-  const vaAttributes = defined_default(createdVAAttributes) ? createdVAAttributes : [];
-  const attributes = geometry.attributes;
-  if (interleave) {
-    const interleavedAttributes = interleaveAttributes(attributes);
-    if (defined_default(interleavedAttributes)) {
-      vertexBuffer = Buffer_default.createVertexBuffer({
-        context,
-        typedArray: interleavedAttributes.buffer,
-        usage: bufferUsage
-      });
-      const offsetsInBytes = interleavedAttributes.offsetsInBytes;
-      const strideInBytes = interleavedAttributes.vertexSizeInBytes;
-      for (name in attributes) {
-        if (attributes.hasOwnProperty(name) && defined_default(attributes[name])) {
-          attribute = attributes[name];
-          if (defined_default(attribute.values)) {
-            vaAttributes.push({
-              index: attributeLocations[name],
-              vertexBuffer,
-              componentDatatype: attribute.componentDatatype,
-              componentsPerAttribute: attribute.componentsPerAttribute,
-              normalize: attribute.normalize,
-              offsetInBytes: offsetsInBytes[name],
-              strideInBytes
-            });
-          } else {
-            vaAttributes.push({
-              index: attributeLocations[name],
-              value: attribute.value,
-              componentDatatype: attribute.componentDatatype,
-              normalize: attribute.normalize
-            });
-          }
-        }
-      }
-    }
-  } else {
-    for (name in attributes) {
-      if (attributes.hasOwnProperty(name) && defined_default(attributes[name])) {
-        attribute = attributes[name];
-        let componentDatatype = attribute.componentDatatype;
-        if (componentDatatype === ComponentDatatype_default.DOUBLE) {
-          componentDatatype = ComponentDatatype_default.FLOAT;
-        }
-        let attrProps = {};
-        if (defined_default(attribute.values)) {
-          vertexBuffer = Buffer_default.createVertexBuffer({
-            context,
-            typedArray: ComponentDatatype_default.createTypedArray(
-              componentDatatype,
-              attribute.values
-            ),
-            usage: bufferUsage
-          });
-          attrProps = {
-            index: attributeLocations[name],
-            vertexBuffer,
-            value: attribute.value,
-            componentDatatype,
-            componentsPerAttribute: attribute.componentsPerAttribute,
-            normalize: attribute.normalize
-          };
-        }
-        if (defined_default(attribute.typedArray)) {
-          vertexBuffer = Buffer_default.createVertexBuffer({
-            context,
-            typedArray: attribute.typedArray,
-            usage: bufferUsage
-          });
-          attrProps = {
-            index: attributeLocations[name],
-            vertexBuffer,
-            value: void 0,
-            componentDatatype,
-            componentsPerAttribute: AttributeType_default.getNumberOfComponents(
-              attribute.type
-            ),
-            normalize: attribute.normalized,
-            instanceDivisor: attribute.instanceDivisor
-          };
-        }
-        vaAttributes.push(attrProps);
-      }
-    }
-  }
-  let indexBuffer;
-  const indices = geometry.indices;
-  if (defined_default(indices)) {
-    if (Geometry_default.computeNumberOfVertices(geometry) >= Math_default.SIXTY_FOUR_KILOBYTES && context.elementIndexUint) {
-      indexBuffer = Buffer_default.createIndexBuffer({
-        context,
-        typedArray: new Uint32Array(indices),
-        usage: bufferUsage,
-        indexDatatype: IndexDatatype_default.UNSIGNED_INT
-      });
-    } else {
-      indexBuffer = Buffer_default.createIndexBuffer({
-        context,
-        typedArray: new Uint16Array(indices),
-        usage: bufferUsage,
-        indexDatatype: IndexDatatype_default.UNSIGNED_SHORT
-      });
-    }
-  }
-  return new VertexArray({
-    context,
-    attributes: vaAttributes,
-    indexBuffer
-  });
-};
-Object.defineProperties(VertexArray.prototype, {
-  numberOfAttributes: {
-    get: function() {
-      return this._attributes.length;
-    }
-  },
-  numberOfVertices: {
-    get: function() {
-      return this._numberOfVertices;
-    }
-  },
-  indexBuffer: {
-    get: function() {
-      return this._indexBuffer;
-    }
-  }
-});
-VertexArray.prototype.getAttribute = function(index) {
-  Check_default.defined("index", index);
-  return this._attributes[index];
-};
-function setVertexAttribDivisor(vertexArray) {
-  const context = vertexArray._context;
-  const hasInstancedAttributes = vertexArray._hasInstancedAttributes;
-  if (!hasInstancedAttributes && !context._previousDrawInstanced) {
-    return;
-  }
-  context._previousDrawInstanced = hasInstancedAttributes;
-  const divisors = context._vertexAttribDivisors;
-  const attributes = vertexArray._attributes;
-  const maxAttributes = ContextLimits_default.maximumVertexAttributes;
-  let i;
-  if (hasInstancedAttributes) {
-    const length = attributes.length;
-    for (i = 0; i < length; ++i) {
-      const attribute = attributes[i];
-      if (attribute.enabled) {
-        const divisor = attribute.instanceDivisor;
-        const index = attribute.index;
-        if (divisor !== divisors[index]) {
-          context.glVertexAttribDivisor(index, divisor);
-          divisors[index] = divisor;
-        }
-      }
-    }
-  } else {
-    for (i = 0; i < maxAttributes; ++i) {
-      if (divisors[i] > 0) {
-        context.glVertexAttribDivisor(i, 0);
-        divisors[i] = 0;
-      }
-    }
-  }
-}
-function setConstantAttributes(vertexArray, gl) {
-  const attributes = vertexArray._attributes;
-  const length = attributes.length;
-  for (let i = 0; i < length; ++i) {
-    const attribute = attributes[i];
-    if (attribute.enabled && defined_default(attribute.value)) {
-      attribute.vertexAttrib(gl);
-    }
-  }
-}
-VertexArray.prototype.copyAttributeFromRange = function(attributeIndex, array, vertexOffset, vertexCount) {
-  const attribute = this.getAttribute(attributeIndex);
-  const buffer = (
-    /** @type {Buffer} */
-    attribute.vertexBuffer
-  );
-  const elementsPerVertex = attribute.componentsPerAttribute;
-  assert_default(buffer.sizeInBytes === array.byteLength, "Invalid buffer length");
-  const ArrayConstructor = (
-    /** @type {TypedArrayConstructor} */
-    array.constructor
-  );
-  const byteOffset = vertexOffset * elementsPerVertex * ArrayConstructor.BYTES_PER_ELEMENT;
-  const rangeArrayView = new ArrayConstructor(
-    /** @type {ArrayBuffer} */
-    array.buffer,
-    array.byteOffset + byteOffset,
-    vertexCount * elementsPerVertex
-  );
-  buffer.copyFromArrayView(rangeArrayView, byteOffset);
-};
-VertexArray.prototype.copyIndexFromRange = function(array, indexOffset, indexCount) {
-  const buffer = (
-    /** @type {Buffer} */
-    this._indexBuffer
-  );
-  assert_default(buffer.sizeInBytes === array.byteLength, "Invalid buffer length");
-  const ArrayConstructor = (
-    /** @type {TypedArrayConstructor} */
-    array.constructor
-  );
-  const byteOffset = indexOffset * ArrayConstructor.BYTES_PER_ELEMENT;
-  const rangeArrayView = new ArrayConstructor(
-    /** @type {ArrayBuffer} */
-    array.buffer,
-    array.byteOffset + byteOffset,
-    indexCount
-  );
-  buffer.copyFromArrayView(rangeArrayView, byteOffset);
-};
-VertexArray.prototype._bind = function() {
-  if (defined_default(this._vao)) {
-    this._context.glBindVertexArray(this._vao);
-    if (this._context.instancedArrays) {
-      setVertexAttribDivisor(this);
-    }
-    if (this._hasConstantAttributes) {
-      setConstantAttributes(this, this._gl);
-    }
-  } else {
-    bind(this._gl, this._attributes, this._indexBuffer);
-  }
-};
-VertexArray.prototype._unBind = function() {
-  if (defined_default(this._vao)) {
-    this._context.glBindVertexArray(null);
-  } else {
-    const attributes = this._attributes;
-    const gl = this._gl;
-    for (let i = 0; i < attributes.length; ++i) {
-      const attribute = attributes[i];
-      if (attribute.enabled) {
-        attribute.disableVertexAttribArray(gl);
-      }
-    }
-    if (this._indexBuffer) {
-      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
-    }
-  }
-};
-VertexArray.prototype.isDestroyed = function() {
-  return false;
-};
-VertexArray.prototype.destroy = function() {
-  const attributes = this._attributes;
-  for (let i = 0; i < attributes.length; ++i) {
-    const vertexBuffer = attributes[i].vertexBuffer;
-    if (defined_default(vertexBuffer) && !vertexBuffer.isDestroyed() && vertexBuffer.vertexArrayDestroyable) {
-      vertexBuffer.destroy();
-    }
-  }
-  const indexBuffer = this._indexBuffer;
-  if (defined_default(indexBuffer) && !indexBuffer.isDestroyed() && indexBuffer.vertexArrayDestroyable) {
-    indexBuffer.destroy();
-  }
-  if (defined_default(this._vao)) {
-    this._context.glDeleteVertexArray(this._vao);
-  }
-  return destroyObject_default(this);
-};
-var VertexArray_default = VertexArray;
-
-// packages/engine/Source/Renderer/DrawCommand.js
-var Flags = {
-  CULL: 1,
-  OCCLUDE: 2,
-  EXECUTE_IN_CLOSEST_FRUSTUM: 4,
-  DEBUG_SHOW_BOUNDING_VOLUME: 8,
-  CAST_SHADOWS: 16,
-  RECEIVE_SHADOWS: 32,
-  PICK_ONLY: 64,
-  DEPTH_FOR_TRANSLUCENT_CLASSIFICATION: 128
-};
-var DrawCommand = class _DrawCommand {
-  /**
-   * @param {DrawCommandOptions} [options]
-   */
-  constructor(options = Frozen_default.EMPTY_OBJECT) {
-    this._boundingVolume = options.boundingVolume;
-    this._orientedBoundingBox = options.orientedBoundingBox;
-    this._modelMatrix = options.modelMatrix;
-    this._primitiveType = options.primitiveType ?? PrimitiveType_default.TRIANGLES;
-    this._vertexArray = options.vertexArray;
-    this._count = options.count;
-    this._offset = options.offset ?? 0;
-    this._instanceCount = options.instanceCount ?? 0;
-    this._shaderProgram = options.shaderProgram;
-    this._uniformMap = options.uniformMap;
-    this._renderState = options.renderState;
-    this._framebuffer = options.framebuffer;
-    this._pass = options.pass;
-    this._owner = options.owner;
-    this._debugOverlappingFrustums = 0;
-    this._pickId = options.pickId;
-    this._snapId = options.snapId;
-    this._pickMetadataAllowed = options.pickMetadataAllowed === true;
-    this._pickedMetadataInfo = void 0;
-    this._flags = 0;
-    this.cull = options.cull ?? true;
-    this.occlude = options.occlude ?? true;
-    this.executeInClosestFrustum = options.executeInClosestFrustum ?? false;
-    this.debugShowBoundingVolume = options.debugShowBoundingVolume ?? false;
-    this.castShadows = options.castShadows ?? false;
-    this.receiveShadows = options.receiveShadows ?? false;
-    this.pickOnly = options.pickOnly ?? false;
-    this.depthForTranslucentClassification = options.depthForTranslucentClassification ?? false;
-    this.dirty = true;
-    this.lastDirtyTime = 0;
-    this.derivedCommands = {};
-  }
-  /**
-   * The bounding volume of the geometry in world space.  This is used for culling and frustum selection.
-   * <p>
-   * For best rendering performance, use the tightest possible bounding volume.  Although
-   * <code>undefined</code> is allowed, always try to provide a bounding volume to
-   * allow the tightest possible near and far planes to be computed for the scene, and
-   * minimize the number of frustums needed.
-   * </p>
-   *
-   * @type {object}
-   * @default undefined
-   *
-   * @see DrawCommand#debugShowBoundingVolume
-   */
-  get boundingVolume() {
-    return this._boundingVolume;
-  }
-  set boundingVolume(value) {
-    if (this._boundingVolume !== value) {
-      this._boundingVolume = value;
-      this.dirty = true;
-    }
-  }
-  /**
-   * The oriented bounding box of the geometry in world space. If this is defined, it is used instead of
-   * {@link DrawCommand#boundingVolume} for plane intersection testing.
-   *
-   * @type {OrientedBoundingBox}
-   * @default undefined
-   *
-   * @see DrawCommand#debugShowBoundingVolume
-   */
-  get orientedBoundingBox() {
-    return this._orientedBoundingBox;
-  }
-  set orientedBoundingBox(value) {
-    if (this._orientedBoundingBox !== value) {
-      this._orientedBoundingBox = value;
-      this.dirty = true;
-    }
-  }
-  /**
-   * When <code>true</code>, the renderer frustum and horizon culls the command based on its {@link DrawCommand#boundingVolume}.
-   * If the command was already culled, set this to <code>false</code> for a performance improvement.
-   *
-   * @type {boolean}
-   * @default true
-   */
-  get cull() {
-    return hasFlag(this, Flags.CULL);
-  }
-  set cull(value) {
-    if (hasFlag(this, Flags.CULL) !== value) {
-      setFlag(this, Flags.CULL, value);
-      this.dirty = true;
-    }
-  }
-  /**
-   * When <code>true</code>, the horizon culls the command based on its {@link DrawCommand#boundingVolume}.
-   * {@link DrawCommand#cull} must also be <code>true</code> in order for the command to be culled.
-   *
-   * @type {boolean}
-   * @default true
-   */
-  get occlude() {
-    return hasFlag(this, Flags.OCCLUDE);
-  }
-  set occlude(value) {
-    if (hasFlag(this, Flags.OCCLUDE) !== value) {
-      setFlag(this, Flags.OCCLUDE, value);
-      this.dirty = true;
-    }
-  }
-  /**
-   * The transformation from the geometry in model space to world space.
-   * <p>
-   * When <code>undefined</code>, the geometry is assumed to be defined in world space.
-   * </p>
-   *
-   * @type {Matrix4}
-   * @default undefined
-   */
-  get modelMatrix() {
-    return this._modelMatrix;
-  }
-  set modelMatrix(value) {
-    if (this._modelMatrix !== value) {
-      this._modelMatrix = value;
-      this.dirty = true;
-    }
-  }
-  /**
-   * The type of geometry in the vertex array.
-   *
-   * @type {PrimitiveType}
-   * @default PrimitiveType.TRIANGLES
-   */
-  get primitiveType() {
-    return this._primitiveType;
-  }
-  set primitiveType(value) {
-    if (this._primitiveType !== value) {
-      this._primitiveType = value;
-      this.dirty = true;
-    }
-  }
-  /**
-   * The vertex array.
-   *
-   * @type {VertexArray}
-   * @default undefined
-   */
-  get vertexArray() {
-    return this._vertexArray;
-  }
-  set vertexArray(value) {
-    if (this._vertexArray !== value) {
-      this._vertexArray = value;
-      this.dirty = true;
-    }
-  }
-  /**
-   * The number of vertices to draw in the vertex array.
-   *
-   * @type {number}
-   * @default undefined
-   */
-  get count() {
-    return this._count;
-  }
-  set count(value) {
-    if (this._count !== value) {
-      this._count = value;
-      this.dirty = true;
-    }
-  }
-  /**
-   * The offset to start drawing in the vertex array.
-   *
-   * @type {number}
-   * @default 0
-   */
-  get offset() {
-    return this._offset;
-  }
-  set offset(value) {
-    if (this._offset !== value) {
-      this._offset = value;
-      this.dirty = true;
-    }
-  }
-  /**
-   * The number of instances to draw.
-   *
-   * @type {number}
-   * @default 0
-   */
-  get instanceCount() {
-    return this._instanceCount;
-  }
-  set instanceCount(value) {
-    if (this._instanceCount !== value) {
-      this._instanceCount = value;
-      this.dirty = true;
-    }
-  }
-  /**
-   * The shader program to apply.
-   *
-   * @type {ShaderProgram}
-   * @default undefined
-   */
-  get shaderProgram() {
-    return this._shaderProgram;
-  }
-  set shaderProgram(value) {
-    if (this._shaderProgram !== value) {
-      this._shaderProgram = value;
-      this.dirty = true;
-    }
-  }
-  /**
-   * Whether this command should cast shadows when shadowing is enabled.
-   *
-   * @type {boolean}
-   * @default false
-   */
-  get castShadows() {
-    return hasFlag(this, Flags.CAST_SHADOWS);
-  }
-  set castShadows(value) {
-    if (hasFlag(this, Flags.CAST_SHADOWS) !== value) {
-      setFlag(this, Flags.CAST_SHADOWS, value);
-      this.dirty = true;
-    }
-  }
-  /**
-   * Whether this command should receive shadows when shadowing is enabled.
-   *
-   * @type {boolean}
-   * @default false
-   */
-  get receiveShadows() {
-    return hasFlag(this, Flags.RECEIVE_SHADOWS);
-  }
-  set receiveShadows(value) {
-    if (hasFlag(this, Flags.RECEIVE_SHADOWS) !== value) {
-      setFlag(this, Flags.RECEIVE_SHADOWS, value);
-      this.dirty = true;
-    }
-  }
-  /**
-   * An object with functions whose names match the uniforms in the shader program
-   * and return values to set those uniforms.
-   *
-   * @type {object}
-   * @default undefined
-   */
-  get uniformMap() {
-    return this._uniformMap;
-  }
-  set uniformMap(value) {
-    if (this._uniformMap !== value) {
-      this._uniformMap = value;
-      this.dirty = true;
-    }
-  }
-  /**
-   * The render state.
-   *
-   * @type {RenderState}
-   * @default undefined
-   */
-  get renderState() {
-    return this._renderState;
-  }
-  set renderState(value) {
-    if (this._renderState !== value) {
-      this._renderState = value;
-      this.dirty = true;
-    }
-  }
-  /**
-   * The framebuffer to draw to.
-   *
-   * @type {Framebuffer}
-   * @default undefined
-   */
-  get framebuffer() {
-    return this._framebuffer;
-  }
-  set framebuffer(value) {
-    if (this._framebuffer !== value) {
-      this._framebuffer = value;
-      this.dirty = true;
-    }
-  }
-  /**
-   * The pass when to render.
-   *
-   * @type {Pass}
-   * @default undefined
-   */
-  get pass() {
-    return this._pass;
-  }
-  set pass(value) {
-    if (this._pass !== value) {
-      this._pass = value;
-      this.dirty = true;
-    }
-  }
-  /**
-   * Specifies if this command is only to be executed in the frustum closest
-   * to the eye containing the bounding volume. Defaults to <code>false</code>.
-   *
-   * @type {boolean}
-   * @default false
-   */
-  get executeInClosestFrustum() {
-    return hasFlag(this, Flags.EXECUTE_IN_CLOSEST_FRUSTUM);
-  }
-  set executeInClosestFrustum(value) {
-    if (hasFlag(this, Flags.EXECUTE_IN_CLOSEST_FRUSTUM) !== value) {
-      setFlag(this, Flags.EXECUTE_IN_CLOSEST_FRUSTUM, value);
-      this.dirty = true;
-    }
-  }
-  /**
-   * The object who created this command.  This is useful for debugging command
-   * execution; it allows us to see who created a command when we only have a
-   * reference to the command, and can be used to selectively execute commands
-   * with {@link Scene#debugCommandFilter}.
-   *
-   * @type {object}
-   * @default undefined
-   *
-   * @see Scene#debugCommandFilter
-   */
-  get owner() {
-    return this._owner;
-  }
-  set owner(value) {
-    if (this._owner !== value) {
-      this._owner = value;
-      this.dirty = true;
-    }
-  }
-  /**
-   * This property is for debugging only; it is not for production use nor is it optimized.
-   * <p>
-   * Draws the {@link DrawCommand#boundingVolume} for this command, assuming it is a sphere, when the command executes.
-   * </p>
-   *
-   * @type {boolean}
-   * @default false
-   *
-   * @see DrawCommand#boundingVolume
-   */
-  get debugShowBoundingVolume() {
-    return hasFlag(this, Flags.DEBUG_SHOW_BOUNDING_VOLUME);
-  }
-  set debugShowBoundingVolume(value) {
-    if (hasFlag(this, Flags.DEBUG_SHOW_BOUNDING_VOLUME) !== value) {
-      setFlag(this, Flags.DEBUG_SHOW_BOUNDING_VOLUME, value);
-      this.dirty = true;
-    }
-  }
-  /**
-   * Used to implement Scene.debugShowFrustums.
-   * @ignore
-   */
-  get debugOverlappingFrustums() {
-    return this._debugOverlappingFrustums;
-  }
-  set debugOverlappingFrustums(value) {
-    if (this._debugOverlappingFrustums !== value) {
-      this._debugOverlappingFrustums = value;
-      this.dirty = true;
-    }
-  }
-  /**
-   * A GLSL string that will evaluate to a pick id. When <code>undefined</code>, the command will only draw depth
-   * during the pick pass.
-   *
-   * @type {string|undefined}
-   * @default undefined
-   */
-  get pickId() {
-    return this._pickId;
-  }
-  set pickId(value) {
-    if (this._pickId !== value) {
-      this._pickId = value;
-      this.dirty = true;
-    }
-  }
-  /**
-   * A GLSL string that will evaluate to the float snap payload written during
-   * a snapping pass (see {@link Scene#snap}). When <code>undefined</code>, the
-   * command does not render during a snapping pass.
-   *
-   * @type {string|undefined}
-   * @default undefined
-   */
-  get snapId() {
-    return this._snapId;
-  }
-  set snapId(value) {
-    if (this._snapId !== value) {
-      this._snapId = value;
-      this.dirty = true;
-    }
-  }
-  /**
-   * Whether metadata picking is allowed.
-   *
-   * This is essentially only set to `true` for draw commands that are
-   * part of a `ModelDrawCommand`, to check whether a derived command
-   * for metadata picking has to be created.
-   *
-   * @type {boolean}
-   * @default undefined
-   * @private
-   */
-  get pickMetadataAllowed() {
-    return this._pickMetadataAllowed;
-  }
-  /**
-   * Information about picked metadata.
-   *
-   * @type {PickedMetadataInfo|undefined}
-   * @default undefined
-   */
-  get pickedMetadataInfo() {
-    return this._pickedMetadataInfo;
-  }
-  set pickedMetadataInfo(value) {
-    if (this._pickedMetadataInfo !== value) {
-      this._pickedMetadataInfo = value;
-      this.dirty = true;
-    }
-  }
-  /**
-   * Whether this command should be executed in the pick pass only.
-   *
-   * @type {boolean}
-   * @default false
-   */
-  get pickOnly() {
-    return hasFlag(this, Flags.PICK_ONLY);
-  }
-  set pickOnly(value) {
-    if (hasFlag(this, Flags.PICK_ONLY) !== value) {
-      setFlag(this, Flags.PICK_ONLY, value);
-      this.dirty = true;
-    }
-  }
-  /**
-   * Whether this command should be derived to draw depth for classification of translucent primitives.
-   *
-   * @type {boolean}
-   * @default false
-   */
-  get depthForTranslucentClassification() {
-    return hasFlag(this, Flags.DEPTH_FOR_TRANSLUCENT_CLASSIFICATION);
-  }
-  set depthForTranslucentClassification(value) {
-    if (hasFlag(this, Flags.DEPTH_FOR_TRANSLUCENT_CLASSIFICATION) !== value) {
-      setFlag(this, Flags.DEPTH_FOR_TRANSLUCENT_CLASSIFICATION, value);
-      this.dirty = true;
-    }
-  }
-  /**
-   * @param {DrawCommand} command
-   * @param {DrawCommand} result
-   * @returns {DrawCommand}
-   * @private
-   */
-  static shallowClone(command, result) {
-    if (!defined_default(command)) {
-      return void 0;
-    }
-    if (!defined_default(result)) {
-      result = new _DrawCommand();
-    }
-    result._boundingVolume = command._boundingVolume;
-    result._orientedBoundingBox = command._orientedBoundingBox;
-    result._modelMatrix = command._modelMatrix;
-    result._primitiveType = command._primitiveType;
-    result._vertexArray = command._vertexArray;
-    result._count = command._count;
-    result._offset = command._offset;
-    result._instanceCount = command._instanceCount;
-    result._shaderProgram = command._shaderProgram;
-    result._uniformMap = command._uniformMap;
-    result._renderState = command._renderState;
-    result._framebuffer = command._framebuffer;
-    result._pass = command._pass;
-    result._owner = command._owner;
-    result._debugOverlappingFrustums = command._debugOverlappingFrustums;
-    result._pickId = command._pickId;
-    result._snapId = command._snapId;
-    result._pickMetadataAllowed = command._pickMetadataAllowed;
-    result._pickedMetadataInfo = command._pickedMetadataInfo;
-    result._flags = command._flags;
-    result.dirty = true;
-    result.lastDirtyTime = 0;
-    return result;
-  }
-  /**
-   * Executes the draw command.
-   *
-   * @param {Context} context The renderer context in which to draw.
-   * @param {PassState} [passState] The state for the current render pass.
-   */
-  execute(context, passState) {
-    context.draw(this, passState);
-  }
-};
-function hasFlag(command, flag) {
-  return (command._flags & flag) === flag;
-}
-function setFlag(command, flag, value) {
-  if (value) {
-    command._flags |= flag;
-  } else {
-    command._flags &= ~flag;
-  }
-}
-var DrawCommand_default = DrawCommand;
-
 // packages/engine/Source/Renderer/AutomaticUniforms.js
 var viewerPositionWCScratch = new Cartesian3_default();
 function AutomaticUniform(options) {
@@ -16463,6 +14773,1157 @@ var AutomaticUniforms = {
 };
 var AutomaticUniforms_default = AutomaticUniforms;
 
+// packages/engine/Source/Renderer/BufferUsage.js
+var BufferUsage = {
+  STREAM_DRAW: WebGLConstants_default.STREAM_DRAW,
+  STATIC_DRAW: WebGLConstants_default.STATIC_DRAW,
+  DYNAMIC_DRAW: WebGLConstants_default.DYNAMIC_DRAW,
+  DYNAMIC_READ: WebGLConstants_default.DYNAMIC_READ
+};
+BufferUsage.validate = function(bufferUsage) {
+  return bufferUsage === BufferUsage.STREAM_DRAW || bufferUsage === BufferUsage.STATIC_DRAW || bufferUsage === BufferUsage.DYNAMIC_DRAW || bufferUsage === BufferUsage.DYNAMIC_READ;
+};
+Object.freeze(BufferUsage);
+var BufferUsage_default = BufferUsage;
+
+// packages/engine/Source/Renderer/Buffer.js
+function Buffer2(options) {
+  options = options ?? Frozen_default.EMPTY_OBJECT;
+  Check_default.defined("options.context", options.context);
+  if (!defined_default(options.typedArray) && !defined_default(options.sizeInBytes)) {
+    throw new DeveloperError_default(
+      "Either options.sizeInBytes or options.typedArray is required."
+    );
+  }
+  if (defined_default(options.typedArray) && defined_default(options.sizeInBytes)) {
+    throw new DeveloperError_default(
+      "Cannot pass in both options.sizeInBytes and options.typedArray."
+    );
+  }
+  if (defined_default(options.typedArray)) {
+    Check_default.typeOf.object("options.typedArray", options.typedArray);
+    Check_default.typeOf.number(
+      "options.typedArray.byteLength",
+      options.typedArray.byteLength
+    );
+  }
+  if (!BufferUsage_default.validate(options.usage)) {
+    throw new DeveloperError_default("usage is invalid.");
+  }
+  const gl = options.context._gl;
+  const bufferTarget = options.bufferTarget;
+  const typedArray = options.typedArray;
+  let sizeInBytes = options.sizeInBytes;
+  const usage = options.usage;
+  const hasArray = defined_default(typedArray);
+  if (hasArray) {
+    sizeInBytes = typedArray.byteLength;
+  }
+  Check_default.typeOf.number.greaterThan("sizeInBytes", sizeInBytes, 0);
+  const buffer = gl.createBuffer();
+  gl.bindBuffer(bufferTarget, buffer);
+  gl.bufferData(bufferTarget, hasArray ? typedArray : sizeInBytes, usage);
+  gl.bindBuffer(bufferTarget, null);
+  this._id = createGuid_default();
+  this._gl = gl;
+  this._webgl2 = options.context._webgl2;
+  this._bufferTarget = bufferTarget;
+  this._sizeInBytes = sizeInBytes;
+  this._usage = usage;
+  this._buffer = buffer;
+  this.vertexArrayDestroyable = true;
+}
+Buffer2.createPixelBuffer = function(options) {
+  Check_default.defined("options.context", options.context);
+  if (!options.context._webgl2) {
+    throw new DeveloperError_default(
+      "A WebGL 2 context is required to create PixelBuffers."
+    );
+  }
+  return new Buffer2({
+    context: options.context,
+    bufferTarget: WebGLConstants_default.PIXEL_PACK_BUFFER,
+    typedArray: options.typedArray,
+    sizeInBytes: options.sizeInBytes,
+    usage: options.usage
+  });
+};
+Buffer2.createVertexBuffer = function(options) {
+  Check_default.defined("options.context", options.context);
+  return new Buffer2({
+    context: options.context,
+    bufferTarget: WebGLConstants_default.ARRAY_BUFFER,
+    typedArray: options.typedArray,
+    sizeInBytes: options.sizeInBytes,
+    usage: options.usage
+  });
+};
+Buffer2.createIndexBuffer = function(options) {
+  Check_default.defined("options.context", options.context);
+  if (!IndexDatatype_default.validate(options.indexDatatype)) {
+    throw new DeveloperError_default("Invalid indexDatatype.");
+  }
+  if (options.indexDatatype === IndexDatatype_default.UNSIGNED_INT && !options.context.elementIndexUint) {
+    throw new DeveloperError_default(
+      "IndexDatatype.UNSIGNED_INT requires OES_element_index_uint, which is not supported on this system.  Check context.elementIndexUint."
+    );
+  }
+  const context = options.context;
+  const indexDatatype = options.indexDatatype;
+  const bytesPerIndex = IndexDatatype_default.getSizeInBytes(indexDatatype);
+  const buffer = new Buffer2({
+    context,
+    bufferTarget: WebGLConstants_default.ELEMENT_ARRAY_BUFFER,
+    typedArray: options.typedArray,
+    sizeInBytes: options.sizeInBytes,
+    usage: options.usage
+  });
+  const numberOfIndices = buffer.sizeInBytes / bytesPerIndex;
+  Object.defineProperties(buffer, {
+    indexDatatype: {
+      get: function() {
+        return indexDatatype;
+      }
+    },
+    bytesPerIndex: {
+      get: function() {
+        return bytesPerIndex;
+      }
+    },
+    numberOfIndices: {
+      get: function() {
+        return numberOfIndices;
+      }
+    }
+  });
+  return buffer;
+};
+Object.defineProperties(Buffer2.prototype, {
+  sizeInBytes: {
+    get: function() {
+      return this._sizeInBytes;
+    }
+  },
+  usage: {
+    get: function() {
+      return this._usage;
+    }
+  }
+});
+Buffer2.prototype._getBuffer = function() {
+  return this._buffer;
+};
+Buffer2.prototype._bind = function() {
+  const gl = this._gl;
+  const target = this._bufferTarget;
+  gl.bindBuffer(target, this._buffer);
+};
+Buffer2.prototype._unBind = function() {
+  const gl = this._gl;
+  const target = this._bufferTarget;
+  gl.bindBuffer(target, null);
+};
+Buffer2.prototype.copyFromArrayView = function(arrayView, offsetInBytes) {
+  offsetInBytes = offsetInBytes ?? 0;
+  Check_default.defined("arrayView", arrayView);
+  Check_default.typeOf.number.lessThanOrEquals(
+    "offsetInBytes + arrayView.byteLength",
+    offsetInBytes + arrayView.byteLength,
+    this._sizeInBytes
+  );
+  const gl = this._gl;
+  const target = this._bufferTarget;
+  gl.bindBuffer(target, this._buffer);
+  gl.bufferSubData(target, offsetInBytes, arrayView);
+  gl.bindBuffer(target, null);
+};
+Buffer2.prototype.copyFromBuffer = function(readBuffer, readOffset, writeOffset, sizeInBytes) {
+  if (!this._webgl2) {
+    throw new DeveloperError_default("A WebGL 2 context is required.");
+  }
+  if (!defined_default(readBuffer)) {
+    throw new DeveloperError_default("readBuffer must be defined.");
+  }
+  if (!defined_default(sizeInBytes) || sizeInBytes <= 0) {
+    throw new DeveloperError_default(
+      "sizeInBytes must be defined and be greater than zero."
+    );
+  }
+  if (!defined_default(readOffset) || readOffset < 0 || readOffset + sizeInBytes > readBuffer._sizeInBytes) {
+    throw new DeveloperError_default(
+      "readOffset must be greater than or equal to zero and readOffset + sizeInBytes must be less than of equal to readBuffer.sizeInBytes."
+    );
+  }
+  if (!defined_default(writeOffset) || writeOffset < 0 || writeOffset + sizeInBytes > this._sizeInBytes) {
+    throw new DeveloperError_default(
+      "writeOffset must be greater than or equal to zero and writeOffset + sizeInBytes must be less than of equal to this.sizeInBytes."
+    );
+  }
+  if (this._buffer === readBuffer._buffer && (writeOffset >= readOffset && writeOffset < readOffset + sizeInBytes || readOffset > writeOffset && readOffset < writeOffset + sizeInBytes)) {
+    throw new DeveloperError_default(
+      "When readBuffer is equal to this, the ranges [readOffset + sizeInBytes) and [writeOffset, writeOffset + sizeInBytes) must not overlap."
+    );
+  }
+  if (this._bufferTarget === WebGLConstants_default.ELEMENT_ARRAY_BUFFER && readBuffer._bufferTarget !== WebGLConstants_default.ELEMENT_ARRAY_BUFFER || this._bufferTarget !== WebGLConstants_default.ELEMENT_ARRAY_BUFFER && readBuffer._bufferTarget === WebGLConstants_default.ELEMENT_ARRAY_BUFFER) {
+    throw new DeveloperError_default(
+      "Can not copy an index buffer into another buffer type."
+    );
+  }
+  const readTarget = WebGLConstants_default.COPY_READ_BUFFER;
+  const writeTarget = WebGLConstants_default.COPY_WRITE_BUFFER;
+  const gl = this._gl;
+  gl.bindBuffer(writeTarget, this._buffer);
+  gl.bindBuffer(readTarget, readBuffer._buffer);
+  gl.copyBufferSubData(
+    readTarget,
+    writeTarget,
+    readOffset,
+    writeOffset,
+    sizeInBytes
+  );
+  gl.bindBuffer(writeTarget, null);
+  gl.bindBuffer(readTarget, null);
+};
+Buffer2.prototype.getBufferData = function(arrayView, sourceOffset, destinationOffset, length) {
+  sourceOffset = sourceOffset ?? 0;
+  destinationOffset = destinationOffset ?? 0;
+  if (!this._webgl2) {
+    throw new DeveloperError_default("A WebGL 2 context is required.");
+  }
+  if (!defined_default(arrayView)) {
+    throw new DeveloperError_default("arrayView is required.");
+  }
+  let copyLength;
+  let elementSize;
+  let arrayLength = arrayView.byteLength;
+  if (!defined_default(length)) {
+    if (defined_default(arrayLength)) {
+      copyLength = arrayLength - destinationOffset;
+      elementSize = 1;
+    } else {
+      arrayLength = arrayView.length;
+      copyLength = arrayLength - destinationOffset;
+      elementSize = arrayView.BYTES_PER_ELEMENT;
+    }
+  } else {
+    copyLength = length;
+    if (defined_default(arrayLength)) {
+      elementSize = 1;
+    } else {
+      arrayLength = arrayView.length;
+      elementSize = arrayView.BYTES_PER_ELEMENT;
+    }
+  }
+  if (destinationOffset < 0 || destinationOffset > arrayLength) {
+    throw new DeveloperError_default(
+      "destinationOffset must be greater than zero and less than the arrayView length."
+    );
+  }
+  if (destinationOffset + copyLength > arrayLength) {
+    throw new DeveloperError_default(
+      "destinationOffset + length must be less than or equal to the arrayViewLength."
+    );
+  }
+  if (sourceOffset < 0 || sourceOffset > this._sizeInBytes) {
+    throw new DeveloperError_default(
+      "sourceOffset must be greater than zero and less than the buffers size."
+    );
+  }
+  if (sourceOffset + copyLength * elementSize > this._sizeInBytes) {
+    throw new DeveloperError_default(
+      "sourceOffset + length must be less than the buffers size."
+    );
+  }
+  const gl = this._gl;
+  const target = WebGLConstants_default.COPY_READ_BUFFER;
+  gl.bindBuffer(target, this._buffer);
+  gl.getBufferSubData(
+    target,
+    sourceOffset,
+    arrayView,
+    destinationOffset,
+    length
+  );
+  gl.bindBuffer(target, null);
+};
+Buffer2.prototype.isDestroyed = function() {
+  return false;
+};
+Buffer2.prototype.destroy = function() {
+  this._gl.deleteBuffer(this._buffer);
+  return destroyObject_default(this);
+};
+var Buffer_default = Buffer2;
+
+// packages/engine/Source/Renderer/ClearCommand.js
+function ClearCommand(options) {
+  options = options ?? Frozen_default.EMPTY_OBJECT;
+  this.color = options.color;
+  this.depth = options.depth;
+  this.stencil = options.stencil;
+  this.renderState = options.renderState;
+  this.framebuffer = options.framebuffer;
+  this.owner = options.owner;
+  this.pass = options.pass;
+}
+ClearCommand.ALL = Object.freeze(
+  new ClearCommand({
+    color: new Color_default(0, 0, 0, 0),
+    depth: 1,
+    stencil: 0
+  })
+);
+ClearCommand.prototype.execute = function(context, passState) {
+  context.clear(this, passState);
+};
+var ClearCommand_default = ClearCommand;
+
+// packages/engine/Source/Renderer/DrawCommand.js
+var Flags = {
+  CULL: 1,
+  OCCLUDE: 2,
+  EXECUTE_IN_CLOSEST_FRUSTUM: 4,
+  DEBUG_SHOW_BOUNDING_VOLUME: 8,
+  CAST_SHADOWS: 16,
+  RECEIVE_SHADOWS: 32,
+  PICK_ONLY: 64,
+  DEPTH_FOR_TRANSLUCENT_CLASSIFICATION: 128
+};
+var DrawCommand = class _DrawCommand {
+  /**
+   * @param {DrawCommandOptions} [options]
+   */
+  constructor(options = Frozen_default.EMPTY_OBJECT) {
+    this._boundingVolume = options.boundingVolume;
+    this._orientedBoundingBox = options.orientedBoundingBox;
+    this._modelMatrix = options.modelMatrix;
+    this._primitiveType = options.primitiveType ?? PrimitiveType_default.TRIANGLES;
+    this._vertexArray = options.vertexArray;
+    this._count = options.count;
+    this._offset = options.offset ?? 0;
+    this._instanceCount = options.instanceCount ?? 0;
+    this._shaderProgram = options.shaderProgram;
+    this._uniformMap = options.uniformMap;
+    this._renderState = options.renderState;
+    this._framebuffer = options.framebuffer;
+    this._pass = options.pass;
+    this._owner = options.owner;
+    this._debugOverlappingFrustums = 0;
+    this._pickId = options.pickId;
+    this._snapId = options.snapId;
+    this._pickMetadataAllowed = options.pickMetadataAllowed === true;
+    this._pickedMetadataInfo = void 0;
+    this._flags = 0;
+    this.cull = options.cull ?? true;
+    this.occlude = options.occlude ?? true;
+    this.executeInClosestFrustum = options.executeInClosestFrustum ?? false;
+    this.debugShowBoundingVolume = options.debugShowBoundingVolume ?? false;
+    this.castShadows = options.castShadows ?? false;
+    this.receiveShadows = options.receiveShadows ?? false;
+    this.pickOnly = options.pickOnly ?? false;
+    this.depthForTranslucentClassification = options.depthForTranslucentClassification ?? false;
+    this.dirty = true;
+    this.lastDirtyTime = 0;
+    this.derivedCommands = {};
+  }
+  /**
+   * The bounding volume of the geometry in world space.  This is used for culling and frustum selection.
+   * <p>
+   * For best rendering performance, use the tightest possible bounding volume.  Although
+   * <code>undefined</code> is allowed, always try to provide a bounding volume to
+   * allow the tightest possible near and far planes to be computed for the scene, and
+   * minimize the number of frustums needed.
+   * </p>
+   *
+   * @type {object}
+   * @default undefined
+   *
+   * @see DrawCommand#debugShowBoundingVolume
+   */
+  get boundingVolume() {
+    return this._boundingVolume;
+  }
+  set boundingVolume(value) {
+    if (this._boundingVolume !== value) {
+      this._boundingVolume = value;
+      this.dirty = true;
+    }
+  }
+  /**
+   * The oriented bounding box of the geometry in world space. If this is defined, it is used instead of
+   * {@link DrawCommand#boundingVolume} for plane intersection testing.
+   *
+   * @type {OrientedBoundingBox}
+   * @default undefined
+   *
+   * @see DrawCommand#debugShowBoundingVolume
+   */
+  get orientedBoundingBox() {
+    return this._orientedBoundingBox;
+  }
+  set orientedBoundingBox(value) {
+    if (this._orientedBoundingBox !== value) {
+      this._orientedBoundingBox = value;
+      this.dirty = true;
+    }
+  }
+  /**
+   * When <code>true</code>, the renderer frustum and horizon culls the command based on its {@link DrawCommand#boundingVolume}.
+   * If the command was already culled, set this to <code>false</code> for a performance improvement.
+   *
+   * @type {boolean}
+   * @default true
+   */
+  get cull() {
+    return hasFlag(this, Flags.CULL);
+  }
+  set cull(value) {
+    if (hasFlag(this, Flags.CULL) !== value) {
+      setFlag(this, Flags.CULL, value);
+      this.dirty = true;
+    }
+  }
+  /**
+   * When <code>true</code>, the horizon culls the command based on its {@link DrawCommand#boundingVolume}.
+   * {@link DrawCommand#cull} must also be <code>true</code> in order for the command to be culled.
+   *
+   * @type {boolean}
+   * @default true
+   */
+  get occlude() {
+    return hasFlag(this, Flags.OCCLUDE);
+  }
+  set occlude(value) {
+    if (hasFlag(this, Flags.OCCLUDE) !== value) {
+      setFlag(this, Flags.OCCLUDE, value);
+      this.dirty = true;
+    }
+  }
+  /**
+   * The transformation from the geometry in model space to world space.
+   * <p>
+   * When <code>undefined</code>, the geometry is assumed to be defined in world space.
+   * </p>
+   *
+   * @type {Matrix4}
+   * @default undefined
+   */
+  get modelMatrix() {
+    return this._modelMatrix;
+  }
+  set modelMatrix(value) {
+    if (this._modelMatrix !== value) {
+      this._modelMatrix = value;
+      this.dirty = true;
+    }
+  }
+  /**
+   * The type of geometry in the vertex array.
+   *
+   * @type {PrimitiveType}
+   * @default PrimitiveType.TRIANGLES
+   */
+  get primitiveType() {
+    return this._primitiveType;
+  }
+  set primitiveType(value) {
+    if (this._primitiveType !== value) {
+      this._primitiveType = value;
+      this.dirty = true;
+    }
+  }
+  /**
+   * The vertex array.
+   *
+   * @type {VertexArray}
+   * @default undefined
+   */
+  get vertexArray() {
+    return this._vertexArray;
+  }
+  set vertexArray(value) {
+    if (this._vertexArray !== value) {
+      this._vertexArray = value;
+      this.dirty = true;
+    }
+  }
+  /**
+   * The number of vertices to draw in the vertex array.
+   *
+   * @type {number}
+   * @default undefined
+   */
+  get count() {
+    return this._count;
+  }
+  set count(value) {
+    if (this._count !== value) {
+      this._count = value;
+      this.dirty = true;
+    }
+  }
+  /**
+   * The offset to start drawing in the vertex array.
+   *
+   * @type {number}
+   * @default 0
+   */
+  get offset() {
+    return this._offset;
+  }
+  set offset(value) {
+    if (this._offset !== value) {
+      this._offset = value;
+      this.dirty = true;
+    }
+  }
+  /**
+   * The number of instances to draw.
+   *
+   * @type {number}
+   * @default 0
+   */
+  get instanceCount() {
+    return this._instanceCount;
+  }
+  set instanceCount(value) {
+    if (this._instanceCount !== value) {
+      this._instanceCount = value;
+      this.dirty = true;
+    }
+  }
+  /**
+   * The shader program to apply.
+   *
+   * @type {ShaderProgram}
+   * @default undefined
+   */
+  get shaderProgram() {
+    return this._shaderProgram;
+  }
+  set shaderProgram(value) {
+    if (this._shaderProgram !== value) {
+      this._shaderProgram = value;
+      this.dirty = true;
+    }
+  }
+  /**
+   * Whether this command should cast shadows when shadowing is enabled.
+   *
+   * @type {boolean}
+   * @default false
+   */
+  get castShadows() {
+    return hasFlag(this, Flags.CAST_SHADOWS);
+  }
+  set castShadows(value) {
+    if (hasFlag(this, Flags.CAST_SHADOWS) !== value) {
+      setFlag(this, Flags.CAST_SHADOWS, value);
+      this.dirty = true;
+    }
+  }
+  /**
+   * Whether this command should receive shadows when shadowing is enabled.
+   *
+   * @type {boolean}
+   * @default false
+   */
+  get receiveShadows() {
+    return hasFlag(this, Flags.RECEIVE_SHADOWS);
+  }
+  set receiveShadows(value) {
+    if (hasFlag(this, Flags.RECEIVE_SHADOWS) !== value) {
+      setFlag(this, Flags.RECEIVE_SHADOWS, value);
+      this.dirty = true;
+    }
+  }
+  /**
+   * An object with functions whose names match the uniforms in the shader program
+   * and return values to set those uniforms.
+   *
+   * @type {object}
+   * @default undefined
+   */
+  get uniformMap() {
+    return this._uniformMap;
+  }
+  set uniformMap(value) {
+    if (this._uniformMap !== value) {
+      this._uniformMap = value;
+      this.dirty = true;
+    }
+  }
+  /**
+   * The render state.
+   *
+   * @type {RenderState}
+   * @default undefined
+   */
+  get renderState() {
+    return this._renderState;
+  }
+  set renderState(value) {
+    if (this._renderState !== value) {
+      this._renderState = value;
+      this.dirty = true;
+    }
+  }
+  /**
+   * The framebuffer to draw to.
+   *
+   * @type {Framebuffer}
+   * @default undefined
+   */
+  get framebuffer() {
+    return this._framebuffer;
+  }
+  set framebuffer(value) {
+    if (this._framebuffer !== value) {
+      this._framebuffer = value;
+      this.dirty = true;
+    }
+  }
+  /**
+   * The pass when to render.
+   *
+   * @type {Pass}
+   * @default undefined
+   */
+  get pass() {
+    return this._pass;
+  }
+  set pass(value) {
+    if (this._pass !== value) {
+      this._pass = value;
+      this.dirty = true;
+    }
+  }
+  /**
+   * Specifies if this command is only to be executed in the frustum closest
+   * to the eye containing the bounding volume. Defaults to <code>false</code>.
+   *
+   * @type {boolean}
+   * @default false
+   */
+  get executeInClosestFrustum() {
+    return hasFlag(this, Flags.EXECUTE_IN_CLOSEST_FRUSTUM);
+  }
+  set executeInClosestFrustum(value) {
+    if (hasFlag(this, Flags.EXECUTE_IN_CLOSEST_FRUSTUM) !== value) {
+      setFlag(this, Flags.EXECUTE_IN_CLOSEST_FRUSTUM, value);
+      this.dirty = true;
+    }
+  }
+  /**
+   * The object who created this command.  This is useful for debugging command
+   * execution; it allows us to see who created a command when we only have a
+   * reference to the command, and can be used to selectively execute commands
+   * with {@link Scene#debugCommandFilter}.
+   *
+   * @type {object}
+   * @default undefined
+   *
+   * @see Scene#debugCommandFilter
+   */
+  get owner() {
+    return this._owner;
+  }
+  set owner(value) {
+    if (this._owner !== value) {
+      this._owner = value;
+      this.dirty = true;
+    }
+  }
+  /**
+   * This property is for debugging only; it is not for production use nor is it optimized.
+   * <p>
+   * Draws the {@link DrawCommand#boundingVolume} for this command, assuming it is a sphere, when the command executes.
+   * </p>
+   *
+   * @type {boolean}
+   * @default false
+   *
+   * @see DrawCommand#boundingVolume
+   */
+  get debugShowBoundingVolume() {
+    return hasFlag(this, Flags.DEBUG_SHOW_BOUNDING_VOLUME);
+  }
+  set debugShowBoundingVolume(value) {
+    if (hasFlag(this, Flags.DEBUG_SHOW_BOUNDING_VOLUME) !== value) {
+      setFlag(this, Flags.DEBUG_SHOW_BOUNDING_VOLUME, value);
+      this.dirty = true;
+    }
+  }
+  /**
+   * Used to implement Scene.debugShowFrustums.
+   * @ignore
+   */
+  get debugOverlappingFrustums() {
+    return this._debugOverlappingFrustums;
+  }
+  set debugOverlappingFrustums(value) {
+    if (this._debugOverlappingFrustums !== value) {
+      this._debugOverlappingFrustums = value;
+      this.dirty = true;
+    }
+  }
+  /**
+   * A GLSL string that will evaluate to a pick id. When <code>undefined</code>, the command will only draw depth
+   * during the pick pass.
+   *
+   * @type {string|undefined}
+   * @default undefined
+   */
+  get pickId() {
+    return this._pickId;
+  }
+  set pickId(value) {
+    if (this._pickId !== value) {
+      this._pickId = value;
+      this.dirty = true;
+    }
+  }
+  /**
+   * A GLSL string that will evaluate to the float snap payload written during
+   * a snapping pass (see {@link Scene#snap}). When <code>undefined</code>, the
+   * command does not render during a snapping pass.
+   *
+   * @type {string|undefined}
+   * @default undefined
+   */
+  get snapId() {
+    return this._snapId;
+  }
+  set snapId(value) {
+    if (this._snapId !== value) {
+      this._snapId = value;
+      this.dirty = true;
+    }
+  }
+  /**
+   * Whether metadata picking is allowed.
+   *
+   * This is essentially only set to `true` for draw commands that are
+   * part of a `ModelDrawCommand`, to check whether a derived command
+   * for metadata picking has to be created.
+   *
+   * @type {boolean}
+   * @default undefined
+   * @private
+   */
+  get pickMetadataAllowed() {
+    return this._pickMetadataAllowed;
+  }
+  /**
+   * Information about picked metadata.
+   *
+   * @type {PickedMetadataInfo|undefined}
+   * @default undefined
+   */
+  get pickedMetadataInfo() {
+    return this._pickedMetadataInfo;
+  }
+  set pickedMetadataInfo(value) {
+    if (this._pickedMetadataInfo !== value) {
+      this._pickedMetadataInfo = value;
+      this.dirty = true;
+    }
+  }
+  /**
+   * Whether this command should be executed in the pick pass only.
+   *
+   * @type {boolean}
+   * @default false
+   */
+  get pickOnly() {
+    return hasFlag(this, Flags.PICK_ONLY);
+  }
+  set pickOnly(value) {
+    if (hasFlag(this, Flags.PICK_ONLY) !== value) {
+      setFlag(this, Flags.PICK_ONLY, value);
+      this.dirty = true;
+    }
+  }
+  /**
+   * Whether this command should be derived to draw depth for classification of translucent primitives.
+   *
+   * @type {boolean}
+   * @default false
+   */
+  get depthForTranslucentClassification() {
+    return hasFlag(this, Flags.DEPTH_FOR_TRANSLUCENT_CLASSIFICATION);
+  }
+  set depthForTranslucentClassification(value) {
+    if (hasFlag(this, Flags.DEPTH_FOR_TRANSLUCENT_CLASSIFICATION) !== value) {
+      setFlag(this, Flags.DEPTH_FOR_TRANSLUCENT_CLASSIFICATION, value);
+      this.dirty = true;
+    }
+  }
+  /**
+   * @param {DrawCommand} command
+   * @param {DrawCommand} result
+   * @returns {DrawCommand}
+   * @private
+   */
+  static shallowClone(command, result) {
+    if (!defined_default(command)) {
+      return void 0;
+    }
+    if (!defined_default(result)) {
+      result = new _DrawCommand();
+    }
+    result._boundingVolume = command._boundingVolume;
+    result._orientedBoundingBox = command._orientedBoundingBox;
+    result._modelMatrix = command._modelMatrix;
+    result._primitiveType = command._primitiveType;
+    result._vertexArray = command._vertexArray;
+    result._count = command._count;
+    result._offset = command._offset;
+    result._instanceCount = command._instanceCount;
+    result._shaderProgram = command._shaderProgram;
+    result._uniformMap = command._uniformMap;
+    result._renderState = command._renderState;
+    result._framebuffer = command._framebuffer;
+    result._pass = command._pass;
+    result._owner = command._owner;
+    result._debugOverlappingFrustums = command._debugOverlappingFrustums;
+    result._pickId = command._pickId;
+    result._snapId = command._snapId;
+    result._pickMetadataAllowed = command._pickMetadataAllowed;
+    result._pickedMetadataInfo = command._pickedMetadataInfo;
+    result._flags = command._flags;
+    result.dirty = true;
+    result.lastDirtyTime = 0;
+    return result;
+  }
+  /**
+   * Executes the draw command.
+   *
+   * @param {Context} context The renderer context in which to draw.
+   * @param {PassState} [passState] The state for the current render pass.
+   */
+  execute(context, passState) {
+    context.draw(this, passState);
+  }
+};
+function hasFlag(command, flag) {
+  return (command._flags & flag) === flag;
+}
+function setFlag(command, flag, value) {
+  if (value) {
+    command._flags |= flag;
+  } else {
+    command._flags &= ~flag;
+  }
+}
+var DrawCommand_default = DrawCommand;
+
+// packages/engine/Source/Renderer/ContextLimits.js
+var ContextLimits = {
+  _maximumCombinedTextureImageUnits: 0,
+  _maximumCubeMapSize: 0,
+  _maximumFragmentUniformVectors: 0,
+  _maximumTextureImageUnits: 0,
+  _maximumRenderbufferSize: 0,
+  _maximumTextureSize: 0,
+  _maximum3DTextureSize: 0,
+  _maximumVaryingVectors: 0,
+  _maximumVertexAttributes: 0,
+  _maximumVertexTextureImageUnits: 0,
+  _maximumVertexUniformVectors: 0,
+  _minimumAliasedLineWidth: 0,
+  _maximumAliasedLineWidth: 0,
+  _minimumAliasedPointSize: 0,
+  _maximumAliasedPointSize: 0,
+  _maximumViewportWidth: 0,
+  _maximumViewportHeight: 0,
+  _maximumTextureFilterAnisotropy: 0,
+  _maximumDrawBuffers: 0,
+  _maximumColorAttachments: 0,
+  _maximumSamples: 0,
+  _highpFloatSupported: false,
+  _highpIntSupported: false
+};
+Object.defineProperties(ContextLimits, {
+  /**
+   * The maximum number of texture units that can be used from the vertex and fragment
+   * shader with this WebGL implementation.
+   * If both shaders access the same texture unit, this counts as two texture units.
+   * The minimum in WebGL2 contexts is 32, or 8 in WebGL1 contexts.
+   * @memberof ContextLimits
+   * @type {number}
+   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es3.0/html/glGet.xhtml|glGet in OpenGL ES 3.0} with <code>MAX_COMBINED_TEXTURE_IMAGE_UNITS</code>.
+   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es2.0/xhtml/glGet.xml|glGet in OpenGL ES 2.0} for WebGL1 contexts.
+   */
+  maximumCombinedTextureImageUnits: {
+    get: function() {
+      return ContextLimits._maximumCombinedTextureImageUnits;
+    }
+  },
+  /**
+   * The approximate maximum cube map width and height supported by this WebGL implementation.
+   * The minimum in WebGL2 contexts is 2048, but most desktop and laptop implementations will support much larger sizes like 8192.
+   * The minimum in WebGL1 contexts is 16.
+   * @memberof ContextLimits
+   * @type {number}
+   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es3.0/html/glGet.xhtml|glGet in OpenGL ES 3.0} with <code>MAX_CUBE_MAP_TEXTURE_SIZE</code>.
+   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es2.0/xhtml/glGet.xml|glGet in OpenGL ES 2.0} for WebGL1 contexts.
+   */
+  maximumCubeMapSize: {
+    get: function() {
+      return ContextLimits._maximumCubeMapSize;
+    }
+  },
+  /**
+   * The maximum number of <code>vec4</code>, <code>ivec4</code>, and <code>bvec4</code>
+   * uniforms that can be used by a fragment shader with this WebGL implementation.
+   * The minimum in WebGL2 contexts is 224, or 16 in WebGL1 contexts.
+   * @memberof ContextLimits
+   * @type {number}
+   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es3.0/html/glGet.xhtml|glGet in OpenGL ES 3.0} with <code>MAX_FRAGMENT_UNIFORM_VECTORS</code>.
+   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es2.0/xhtml/glGet.xml|glGet in OpenGL ES 2.0} for WebGL1 contexts.
+   */
+  maximumFragmentUniformVectors: {
+    get: function() {
+      return ContextLimits._maximumFragmentUniformVectors;
+    }
+  },
+  /**
+   * The maximum number of texture units that can be used from the fragment shader with this WebGL implementation.
+   * The minimum in WebGL2 contexts is 16, or 8 in WebGL1 contexts.
+   * @memberof ContextLimits
+   * @type {number}
+   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es3.0/html/glGet.xhtml|glGet in OpenGL ES 3.0} with <code>MAX_TEXTURE_IMAGE_UNITS</code>.
+   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es2.0/xhtml/glGet.xml|glGet in OpenGL ES 2.0} for WebGL1 contexts.
+   */
+  maximumTextureImageUnits: {
+    get: function() {
+      return ContextLimits._maximumTextureImageUnits;
+    }
+  },
+  /**
+   * The maximum renderbuffer width and height supported by this WebGL implementation.
+   * The minimum in WebGL2 contexts is 2048, but most desktop and laptop implementations will support much larger sizes like 8192.
+   * The minimum in WebGL1 contexts is 1.
+   * @memberof ContextLimits
+   * @type {number}
+   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es3.0/html/glGet.xhtml|glGet in OpenGL ES 3.0} with <code>MAX_RENDERBUFFER_SIZE</code>.
+   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es2.0/xhtml/glGet.xml|glGet in OpenGL ES 2.0} for WebGL1 contexts.
+   */
+  maximumRenderbufferSize: {
+    get: function() {
+      return ContextLimits._maximumRenderbufferSize;
+    }
+  },
+  /**
+   * The approximate maximum texture width and height supported by this WebGL implementation.
+   * The minimum in WebGL2 contexts is 2048, but most desktop and laptop implementations will support much larger sizes like 8192.
+   * The minimum in WebGL1 contexts is 64.
+   * @memberof ContextLimits
+   * @type {number}
+   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es3.0/html/glGet.xhtml|glGet in OpenGL ES 3.0} with <code>MAX_TEXTURE_SIZE</code>.
+   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es2.0/xhtml/glGet.xml|glGet in OpenGL ES 2.0} for WebGL1 contexts.
+   */
+  maximumTextureSize: {
+    get: function() {
+      return ContextLimits._maximumTextureSize;
+    }
+  },
+  /**
+   * The approximate maximum texture width, height, and depth supported by this WebGL2 implementation.
+   * The minimum is 256, but most desktop and laptop implementations will support much larger sizes like 2048.
+   * 3D textures are not supported in WebGL1 contexts.
+   * @memberof ContextLimits
+   * @type {number}
+   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es3.0/html/glGet.xhtml|glGet in OpenGL ES 3.0} with <code>MAX_3D_TEXTURE_SIZE</code>.
+   */
+  maximum3DTextureSize: {
+    get: function() {
+      return ContextLimits._maximum3DTextureSize;
+    }
+  },
+  /**
+   * The maximum number of <code>vec4</code> varying variables supported by this WebGL implementation.
+   * The minimum is 15 in WebGL2 contexts, or 8 in WebGL1 contexts. Matrices and arrays count as multiple <code>vec4</code>s.
+   * @memberof ContextLimits
+   * @type {number}
+   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es3.0/html/glGet.xhtml|glGet in OpenGL ES 3.0} with <code>MAX_VARYING_VECTORS</code>.
+   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es2.0/xhtml/glGet.xml|glGet in OpenGL ES 2.0} for WebGL1 contexts.
+   */
+  maximumVaryingVectors: {
+    get: function() {
+      return ContextLimits._maximumVaryingVectors;
+    }
+  },
+  /**
+   * The maximum number of <code>vec4</code> vertex attributes supported by this WebGL implementation.
+   * The minimum is 16 in WebGL2 contexts, or 8 in WebGL1 contexts.
+   * @memberof ContextLimits
+   * @type {number}
+   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es3.0/html/glGet.xhtml|glGet in OpenGL ES 3.0} with <code>MAX_VERTEX_ATTRIBS</code>.
+   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es2.0/xhtml/glGet.xml|glGet in OpenGL ES 2.0} for WebGL1 contexts.
+   */
+  maximumVertexAttributes: {
+    get: function() {
+      return ContextLimits._maximumVertexAttributes;
+    }
+  },
+  /**
+   * The maximum number of texture units that can be used from the vertex shader with this WebGL implementation.
+   * The minimum is 16 in WebGL2 contexts, or 0 in WebGL1 contexts.
+   * @memberof ContextLimits
+   * @type {number}
+   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es3.0/html/glGet.xhtml|glGet in OpenGL ES 3.0} with <code>MAX_VERTEX_TEXTURE_IMAGE_UNITS</code>.
+   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es2.0/xhtml/glGet.xml|glGet in OpenGL ES 2.0} for WebGL1 contexts.
+   */
+  maximumVertexTextureImageUnits: {
+    get: function() {
+      return ContextLimits._maximumVertexTextureImageUnits;
+    }
+  },
+  /**
+   * The maximum number of <code>vec4</code>, <code>ivec4</code>, and <code>bvec4</code>
+   * uniforms that can be used by a vertex shader with this WebGL implementation.
+   * The minimum is 256 in WebGL2 contexts, or 128 in WebGL1 contexts.
+   * @memberof ContextLimits
+   * @type {number}
+   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es3.0/html/glGet.xhtml|glGet in OpenGL ES 3.0} with <code>MAX_VERTEX_UNIFORM_VECTORS</code>.
+   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es2.0/xhtml/glGet.xml|glGet in OpenGL ES 2.0} for WebGL1 contexts.
+   */
+  maximumVertexUniformVectors: {
+    get: function() {
+      return ContextLimits._maximumVertexUniformVectors;
+    }
+  },
+  /**
+   * The minimum aliased line width, in pixels, supported by this WebGL implementation. It will be at most one.
+   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es3.0/html/glGet.xhtml|glGet in OpenGL ES 3.0} with <code>ALIASED_LINE_WIDTH_RANGE</code>.
+   * @memberof ContextLimits
+   * @type {number}
+   */
+  minimumAliasedLineWidth: {
+    get: function() {
+      return ContextLimits._minimumAliasedLineWidth;
+    }
+  },
+  /**
+   * The maximum aliased line width, in pixels, supported by this WebGL implementation. It will be at least one.
+   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es3.0/html/glGet.xhtml|glGet in OpenGL ES 3.0} with <code>ALIASED_LINE_WIDTH_RANGE</code>.
+   * @memberof ContextLimits
+   * @type {number}
+   */
+  maximumAliasedLineWidth: {
+    get: function() {
+      return ContextLimits._maximumAliasedLineWidth;
+    }
+  },
+  /**
+   * The minimum aliased point size, in pixels, supported by this WebGL implementation. It will be at most one.
+   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es3.0/html/glGet.xhtml|glGet in OpenGL ES 3.0} with <code>ALIASED_POINT_SIZE_RANGE</code>.
+   * @memberof ContextLimits
+   * @type {number}
+   */
+  minimumAliasedPointSize: {
+    get: function() {
+      return ContextLimits._minimumAliasedPointSize;
+    }
+  },
+  /**
+   * The maximum aliased point size, in pixels, supported by this WebGL implementation. It will be at least one.
+   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es3.0/html/glGet.xhtml|glGet in OpenGL ES 3.0} with <code>ALIASED_POINT_SIZE_RANGE</code>.
+   * @memberof ContextLimits
+   * @type {number}
+   */
+  maximumAliasedPointSize: {
+    get: function() {
+      return ContextLimits._maximumAliasedPointSize;
+    }
+  },
+  /**
+   * The maximum supported width of the viewport. It will be at least as large as the visible width of the associated canvas.
+   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es3.0/html/glGet.xhtml|glGet in OpenGL ES 3.0} with <code>MAX_VIEWPORT_DIMS</code>.
+   * @memberof ContextLimits
+   * @type {number}
+   */
+  maximumViewportWidth: {
+    get: function() {
+      return ContextLimits._maximumViewportWidth;
+    }
+  },
+  /**
+   * The maximum supported height of the viewport. It will be at least as large as the visible height of the associated canvas.
+   * @see {@link https://registry.khronos.org/OpenGL-Refpages/es3.0/html/glGet.xhtml|glGet in OpenGL ES 3.0} with <code>MAX_VIEWPORT_DIMS</code>.
+   * @memberof ContextLimits
+   * @type {number}
+   */
+  maximumViewportHeight: {
+    get: function() {
+      return ContextLimits._maximumViewportHeight;
+    }
+  },
+  /**
+   * The maximum degree of anisotropy for texture filtering
+   * @memberof ContextLimits
+   * @type {number}
+   */
+  maximumTextureFilterAnisotropy: {
+    get: function() {
+      return ContextLimits._maximumTextureFilterAnisotropy;
+    }
+  },
+  /**
+   * The maximum number of simultaneous outputs that may be written in a fragment shader.
+   * @memberof ContextLimits
+   * @type {number}
+   */
+  maximumDrawBuffers: {
+    get: function() {
+      return ContextLimits._maximumDrawBuffers;
+    }
+  },
+  /**
+   * The maximum number of color attachments supported.
+   * @memberof ContextLimits
+   * @type {number}
+   */
+  maximumColorAttachments: {
+    get: function() {
+      return ContextLimits._maximumColorAttachments;
+    }
+  },
+  /**
+   * The maximum number of samples supported for multisampling.
+   * @memberof ContextLimits
+   * @type {number}
+   */
+  maximumSamples: {
+    get: function() {
+      return ContextLimits._maximumSamples;
+    }
+  },
+  /**
+   * High precision float supported (<code>highp</code>) in fragment shaders.
+   * @memberof ContextLimits
+   * @type {boolean}
+   */
+  highpFloatSupported: {
+    get: function() {
+      return ContextLimits._highpFloatSupported;
+    }
+  },
+  /**
+   * High precision int supported (<code>highp</code>) in fragment shaders.
+   * @memberof ContextLimits
+   * @type {boolean}
+   */
+  highpIntSupported: {
+    get: function() {
+      return ContextLimits._highpIntSupported;
+    }
+  }
+});
+var ContextLimits_default = ContextLimits;
+
 // packages/engine/Source/Renderer/createUniform.js
 function createUniform(gl, activeUniform, uniformName, location) {
   switch (activeUniform.type) {
@@ -17747,28 +17208,567 @@ ShaderProgram.prototype.finalDestroy = function() {
 };
 var ShaderProgram_default = ShaderProgram;
 
-// packages/engine/Source/Renderer/ClearCommand.js
-function ClearCommand(options) {
-  options = options ?? Frozen_default.EMPTY_OBJECT;
-  this.color = options.color;
-  this.depth = options.depth;
-  this.stencil = options.stencil;
-  this.renderState = options.renderState;
-  this.framebuffer = options.framebuffer;
-  this.owner = options.owner;
-  this.pass = options.pass;
+// packages/engine/Source/Renderer/VertexArray.js
+function addAttribute(attributes, attribute, index, context) {
+  const hasVertexBuffer = defined_default(attribute.vertexBuffer);
+  const hasValue = defined_default(attribute.value);
+  const componentsPerAttribute = attribute.value ? attribute.value.length : attribute.componentsPerAttribute;
+  if (!hasVertexBuffer && !hasValue) {
+    throw new DeveloperError_default("attribute must have a vertexBuffer or a value.");
+  }
+  if (hasVertexBuffer && hasValue) {
+    throw new DeveloperError_default(
+      "attribute cannot have both a vertexBuffer and a value.  It must have either a vertexBuffer property defining per-vertex data or a value property defining data for all vertices."
+    );
+  }
+  if (componentsPerAttribute !== 1 && componentsPerAttribute !== 2 && componentsPerAttribute !== 3 && componentsPerAttribute !== 4) {
+    if (hasValue) {
+      throw new DeveloperError_default(
+        "attribute.value.length must be in the range [1, 4]."
+      );
+    }
+    throw new DeveloperError_default(
+      "attribute.componentsPerAttribute must be in the range [1, 4]."
+    );
+  }
+  if (defined_default(attribute.componentDatatype) && !ComponentDatatype_default.validate(attribute.componentDatatype)) {
+    throw new DeveloperError_default(
+      "attribute must have a valid componentDatatype or not specify it."
+    );
+  }
+  if (defined_default(attribute.strideInBytes) && attribute.strideInBytes > 255) {
+    throw new DeveloperError_default(
+      "attribute must have a strideInBytes less than or equal to 255 or not specify it."
+    );
+  }
+  if (defined_default(attribute.instanceDivisor) && attribute.instanceDivisor > 0 && !context.instancedArrays) {
+    throw new DeveloperError_default("instanced arrays is not supported");
+  }
+  if (defined_default(attribute.instanceDivisor) && attribute.instanceDivisor < 0) {
+    throw new DeveloperError_default(
+      "attribute must have an instanceDivisor greater than or equal to zero"
+    );
+  }
+  if (defined_default(attribute.instanceDivisor) && hasValue) {
+    throw new DeveloperError_default(
+      "attribute cannot have have an instanceDivisor if it is not backed by a buffer"
+    );
+  }
+  if (defined_default(attribute.instanceDivisor) && attribute.instanceDivisor > 0 && attribute.index === 0) {
+    throw new DeveloperError_default(
+      "attribute zero cannot have an instanceDivisor greater than 0"
+    );
+  }
+  const attr = {
+    index: attribute.index ?? index,
+    enabled: attribute.enabled ?? true,
+    vertexBuffer: attribute.vertexBuffer,
+    value: hasValue ? attribute.value.slice(0) : void 0,
+    componentsPerAttribute,
+    componentDatatype: attribute.componentDatatype ?? ComponentDatatype_default.FLOAT,
+    normalize: attribute.normalize ?? false,
+    offsetInBytes: attribute.offsetInBytes ?? 0,
+    strideInBytes: attribute.strideInBytes ?? 0,
+    instanceDivisor: attribute.instanceDivisor ?? 0
+  };
+  if (hasVertexBuffer) {
+    attr.vertexAttrib = function(gl) {
+      const index2 = this.index;
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer._getBuffer());
+      gl.vertexAttribPointer(
+        index2,
+        this.componentsPerAttribute,
+        this.componentDatatype,
+        this.normalize,
+        this.strideInBytes,
+        this.offsetInBytes
+      );
+      gl.enableVertexAttribArray(index2);
+      if (this.instanceDivisor > 0) {
+        context.glVertexAttribDivisor(index2, this.instanceDivisor);
+        context._vertexAttribDivisors[index2] = this.instanceDivisor;
+        context._previousDrawInstanced = true;
+      }
+    };
+    attr.disableVertexAttribArray = function(gl) {
+      gl.disableVertexAttribArray(this.index);
+      if (this.instanceDivisor > 0) {
+        context.glVertexAttribDivisor(index, 0);
+      }
+    };
+  } else {
+    switch (attr.componentsPerAttribute) {
+      case 1:
+        attr.vertexAttrib = function(gl) {
+          gl.vertexAttrib1fv(this.index, this.value);
+        };
+        break;
+      case 2:
+        attr.vertexAttrib = function(gl) {
+          gl.vertexAttrib2fv(this.index, this.value);
+        };
+        break;
+      case 3:
+        attr.vertexAttrib = function(gl) {
+          gl.vertexAttrib3fv(this.index, this.value);
+        };
+        break;
+      case 4:
+        attr.vertexAttrib = function(gl) {
+          gl.vertexAttrib4fv(this.index, this.value);
+        };
+        break;
+    }
+    attr.disableVertexAttribArray = function(gl) {
+    };
+  }
+  attributes.push(attr);
 }
-ClearCommand.ALL = Object.freeze(
-  new ClearCommand({
-    color: new Color_default(0, 0, 0, 0),
-    depth: 1,
-    stencil: 0
-  })
-);
-ClearCommand.prototype.execute = function(context, passState) {
-  context.clear(this, passState);
+function bind(gl, attributes, indexBuffer) {
+  for (let i = 0; i < attributes.length; ++i) {
+    const attribute = attributes[i];
+    if (attribute.enabled) {
+      attribute.vertexAttrib(gl);
+    }
+  }
+  if (defined_default(indexBuffer)) {
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer._getBuffer());
+  }
+}
+function VertexArray(options) {
+  options = options ?? Frozen_default.EMPTY_OBJECT;
+  Check_default.defined("options.context", options.context);
+  Check_default.defined("options.attributes", options.attributes);
+  const context = options.context;
+  const gl = context._gl;
+  const attributes = options.attributes;
+  const indexBuffer = options.indexBuffer;
+  let i;
+  const vaAttributes = [];
+  let numberOfVertices = 1;
+  let hasInstancedAttributes = false;
+  let hasConstantAttributes = false;
+  let length = attributes.length;
+  for (i = 0; i < length; ++i) {
+    addAttribute(vaAttributes, attributes[i], i, context);
+  }
+  length = vaAttributes.length;
+  for (i = 0; i < length; ++i) {
+    const attribute = vaAttributes[i];
+    if (defined_default(attribute.vertexBuffer) && attribute.instanceDivisor === 0) {
+      const bytes = attribute.strideInBytes || attribute.componentsPerAttribute * ComponentDatatype_default.getSizeInBytes(attribute.componentDatatype);
+      numberOfVertices = attribute.vertexBuffer.sizeInBytes / bytes;
+      break;
+    }
+  }
+  for (i = 0; i < length; ++i) {
+    if (vaAttributes[i].instanceDivisor > 0) {
+      hasInstancedAttributes = true;
+    }
+    if (defined_default(vaAttributes[i].value)) {
+      hasConstantAttributes = true;
+    }
+  }
+  const uniqueIndices = {};
+  for (i = 0; i < length; ++i) {
+    const index = vaAttributes[i].index;
+    if (uniqueIndices[index]) {
+      throw new DeveloperError_default(
+        `Index ${index} is used by more than one attribute.`
+      );
+    }
+    uniqueIndices[index] = true;
+  }
+  let vao;
+  if (context.vertexArrayObject) {
+    vao = context.glCreateVertexArray();
+    context.glBindVertexArray(vao);
+    bind(gl, vaAttributes, indexBuffer);
+    context.glBindVertexArray(null);
+  }
+  this._numberOfVertices = numberOfVertices;
+  this._hasInstancedAttributes = hasInstancedAttributes;
+  this._hasConstantAttributes = hasConstantAttributes;
+  this._context = context;
+  this._gl = gl;
+  this._vao = vao;
+  this._attributes = vaAttributes;
+  this._indexBuffer = indexBuffer;
+}
+function computeNumberOfVertices(attribute) {
+  return attribute.values.length / attribute.componentsPerAttribute;
+}
+function computeAttributeSizeInBytes(attribute) {
+  return ComponentDatatype_default.getSizeInBytes(attribute.componentDatatype) * attribute.componentsPerAttribute;
+}
+function interleaveAttributes(attributes) {
+  let j;
+  let name;
+  let attribute;
+  const names = [];
+  for (name in attributes) {
+    if (attributes.hasOwnProperty(name) && defined_default(attributes[name]) && defined_default(attributes[name].values)) {
+      names.push(name);
+      if (attributes[name].componentDatatype === ComponentDatatype_default.DOUBLE) {
+        attributes[name].componentDatatype = ComponentDatatype_default.FLOAT;
+        attributes[name].values = ComponentDatatype_default.createTypedArray(
+          ComponentDatatype_default.FLOAT,
+          attributes[name].values
+        );
+      }
+    }
+  }
+  let numberOfVertices;
+  const namesLength = names.length;
+  if (namesLength > 0) {
+    numberOfVertices = computeNumberOfVertices(attributes[names[0]]);
+    for (j = 1; j < namesLength; ++j) {
+      const currentNumberOfVertices = computeNumberOfVertices(
+        attributes[names[j]]
+      );
+      if (currentNumberOfVertices !== numberOfVertices) {
+        throw new RuntimeError_default(
+          `${"Each attribute list must have the same number of vertices.  Attribute "}${names[j]} has a different number of vertices (${currentNumberOfVertices.toString()}) than attribute ${names[0]} (${numberOfVertices.toString()}).`
+        );
+      }
+    }
+  }
+  names.sort(function(left, right) {
+    return ComponentDatatype_default.getSizeInBytes(attributes[right].componentDatatype) - ComponentDatatype_default.getSizeInBytes(attributes[left].componentDatatype);
+  });
+  let vertexSizeInBytes = 0;
+  const offsetsInBytes = {};
+  for (j = 0; j < namesLength; ++j) {
+    name = names[j];
+    attribute = attributes[name];
+    offsetsInBytes[name] = vertexSizeInBytes;
+    vertexSizeInBytes += computeAttributeSizeInBytes(attribute);
+  }
+  if (vertexSizeInBytes > 0) {
+    const maxComponentSizeInBytes = ComponentDatatype_default.getSizeInBytes(
+      attributes[names[0]].componentDatatype
+    );
+    const remainder = vertexSizeInBytes % maxComponentSizeInBytes;
+    if (remainder !== 0) {
+      vertexSizeInBytes += maxComponentSizeInBytes - remainder;
+    }
+    const vertexBufferSizeInBytes = numberOfVertices * vertexSizeInBytes;
+    const buffer = new ArrayBuffer(vertexBufferSizeInBytes);
+    const views = {};
+    for (j = 0; j < namesLength; ++j) {
+      name = names[j];
+      const sizeInBytes = ComponentDatatype_default.getSizeInBytes(
+        attributes[name].componentDatatype
+      );
+      views[name] = {
+        pointer: ComponentDatatype_default.createTypedArray(
+          attributes[name].componentDatatype,
+          buffer
+        ),
+        index: offsetsInBytes[name] / sizeInBytes,
+        // Offset in ComponentType
+        strideInComponentType: vertexSizeInBytes / sizeInBytes
+      };
+    }
+    for (j = 0; j < numberOfVertices; ++j) {
+      for (let n = 0; n < namesLength; ++n) {
+        name = names[n];
+        attribute = attributes[name];
+        const values = attribute.values;
+        const view = views[name];
+        const pointer = view.pointer;
+        const numberOfComponents = attribute.componentsPerAttribute;
+        for (let k = 0; k < numberOfComponents; ++k) {
+          pointer[view.index + k] = values[j * numberOfComponents + k];
+        }
+        view.index += view.strideInComponentType;
+      }
+    }
+    return {
+      buffer,
+      offsetsInBytes,
+      vertexSizeInBytes
+    };
+  }
+  return void 0;
+}
+VertexArray.fromGeometry = function(options) {
+  options = options ?? Frozen_default.EMPTY_OBJECT;
+  Check_default.defined("options.context", options.context);
+  const context = options.context;
+  const geometry = options.geometry ?? Frozen_default.EMPTY_OBJECT;
+  const bufferUsage = options.bufferUsage ?? BufferUsage_default.DYNAMIC_DRAW;
+  const attributeLocations = options.attributeLocations ?? Frozen_default.EMPTY_OBJECT;
+  const interleave = options.interleave ?? false;
+  const createdVAAttributes = options.vertexArrayAttributes;
+  let name;
+  let attribute;
+  let vertexBuffer;
+  const vaAttributes = defined_default(createdVAAttributes) ? createdVAAttributes : [];
+  const attributes = geometry.attributes;
+  if (interleave) {
+    const interleavedAttributes = interleaveAttributes(attributes);
+    if (defined_default(interleavedAttributes)) {
+      vertexBuffer = Buffer_default.createVertexBuffer({
+        context,
+        typedArray: interleavedAttributes.buffer,
+        usage: bufferUsage
+      });
+      const offsetsInBytes = interleavedAttributes.offsetsInBytes;
+      const strideInBytes = interleavedAttributes.vertexSizeInBytes;
+      for (name in attributes) {
+        if (attributes.hasOwnProperty(name) && defined_default(attributes[name])) {
+          attribute = attributes[name];
+          if (defined_default(attribute.values)) {
+            vaAttributes.push({
+              index: attributeLocations[name],
+              vertexBuffer,
+              componentDatatype: attribute.componentDatatype,
+              componentsPerAttribute: attribute.componentsPerAttribute,
+              normalize: attribute.normalize,
+              offsetInBytes: offsetsInBytes[name],
+              strideInBytes
+            });
+          } else {
+            vaAttributes.push({
+              index: attributeLocations[name],
+              value: attribute.value,
+              componentDatatype: attribute.componentDatatype,
+              normalize: attribute.normalize
+            });
+          }
+        }
+      }
+    }
+  } else {
+    for (name in attributes) {
+      if (attributes.hasOwnProperty(name) && defined_default(attributes[name])) {
+        attribute = attributes[name];
+        let componentDatatype = attribute.componentDatatype;
+        if (componentDatatype === ComponentDatatype_default.DOUBLE) {
+          componentDatatype = ComponentDatatype_default.FLOAT;
+        }
+        let attrProps = {};
+        if (defined_default(attribute.values)) {
+          vertexBuffer = Buffer_default.createVertexBuffer({
+            context,
+            typedArray: ComponentDatatype_default.createTypedArray(
+              componentDatatype,
+              attribute.values
+            ),
+            usage: bufferUsage
+          });
+          attrProps = {
+            index: attributeLocations[name],
+            vertexBuffer,
+            value: attribute.value,
+            componentDatatype,
+            componentsPerAttribute: attribute.componentsPerAttribute,
+            normalize: attribute.normalize
+          };
+        }
+        if (defined_default(attribute.typedArray)) {
+          vertexBuffer = Buffer_default.createVertexBuffer({
+            context,
+            typedArray: attribute.typedArray,
+            usage: bufferUsage
+          });
+          attrProps = {
+            index: attributeLocations[name],
+            vertexBuffer,
+            value: void 0,
+            componentDatatype,
+            componentsPerAttribute: AttributeType_default.getNumberOfComponents(
+              attribute.type
+            ),
+            normalize: attribute.normalized,
+            instanceDivisor: attribute.instanceDivisor
+          };
+        }
+        vaAttributes.push(attrProps);
+      }
+    }
+  }
+  let indexBuffer;
+  const indices = geometry.indices;
+  if (defined_default(indices)) {
+    if (Geometry_default.computeNumberOfVertices(geometry) >= Math_default.SIXTY_FOUR_KILOBYTES && context.elementIndexUint) {
+      indexBuffer = Buffer_default.createIndexBuffer({
+        context,
+        typedArray: new Uint32Array(indices),
+        usage: bufferUsage,
+        indexDatatype: IndexDatatype_default.UNSIGNED_INT
+      });
+    } else {
+      indexBuffer = Buffer_default.createIndexBuffer({
+        context,
+        typedArray: new Uint16Array(indices),
+        usage: bufferUsage,
+        indexDatatype: IndexDatatype_default.UNSIGNED_SHORT
+      });
+    }
+  }
+  return new VertexArray({
+    context,
+    attributes: vaAttributes,
+    indexBuffer
+  });
 };
-var ClearCommand_default = ClearCommand;
+Object.defineProperties(VertexArray.prototype, {
+  numberOfAttributes: {
+    get: function() {
+      return this._attributes.length;
+    }
+  },
+  numberOfVertices: {
+    get: function() {
+      return this._numberOfVertices;
+    }
+  },
+  indexBuffer: {
+    get: function() {
+      return this._indexBuffer;
+    }
+  }
+});
+VertexArray.prototype.getAttribute = function(index) {
+  Check_default.defined("index", index);
+  return this._attributes[index];
+};
+function setVertexAttribDivisor(vertexArray) {
+  const context = vertexArray._context;
+  const hasInstancedAttributes = vertexArray._hasInstancedAttributes;
+  if (!hasInstancedAttributes && !context._previousDrawInstanced) {
+    return;
+  }
+  context._previousDrawInstanced = hasInstancedAttributes;
+  const divisors = context._vertexAttribDivisors;
+  const attributes = vertexArray._attributes;
+  const maxAttributes = ContextLimits_default.maximumVertexAttributes;
+  let i;
+  if (hasInstancedAttributes) {
+    const length = attributes.length;
+    for (i = 0; i < length; ++i) {
+      const attribute = attributes[i];
+      if (attribute.enabled) {
+        const divisor = attribute.instanceDivisor;
+        const index = attribute.index;
+        if (divisor !== divisors[index]) {
+          context.glVertexAttribDivisor(index, divisor);
+          divisors[index] = divisor;
+        }
+      }
+    }
+  } else {
+    for (i = 0; i < maxAttributes; ++i) {
+      if (divisors[i] > 0) {
+        context.glVertexAttribDivisor(i, 0);
+        divisors[i] = 0;
+      }
+    }
+  }
+}
+function setConstantAttributes(vertexArray, gl) {
+  const attributes = vertexArray._attributes;
+  const length = attributes.length;
+  for (let i = 0; i < length; ++i) {
+    const attribute = attributes[i];
+    if (attribute.enabled && defined_default(attribute.value)) {
+      attribute.vertexAttrib(gl);
+    }
+  }
+}
+VertexArray.prototype.copyAttributeFromRange = function(attributeIndex, array, vertexOffset, vertexCount) {
+  const attribute = this.getAttribute(attributeIndex);
+  const buffer = (
+    /** @type {Buffer} */
+    attribute.vertexBuffer
+  );
+  const elementsPerVertex = attribute.componentsPerAttribute;
+  assert_default(buffer.sizeInBytes === array.byteLength, "Invalid buffer length");
+  const ArrayConstructor = (
+    /** @type {TypedArrayConstructor} */
+    array.constructor
+  );
+  const byteOffset = vertexOffset * elementsPerVertex * ArrayConstructor.BYTES_PER_ELEMENT;
+  const rangeArrayView = new ArrayConstructor(
+    /** @type {ArrayBuffer} */
+    array.buffer,
+    array.byteOffset + byteOffset,
+    vertexCount * elementsPerVertex
+  );
+  buffer.copyFromArrayView(rangeArrayView, byteOffset);
+};
+VertexArray.prototype.copyIndexFromRange = function(array, indexOffset, indexCount) {
+  const buffer = (
+    /** @type {Buffer} */
+    this._indexBuffer
+  );
+  assert_default(buffer.sizeInBytes === array.byteLength, "Invalid buffer length");
+  const ArrayConstructor = (
+    /** @type {TypedArrayConstructor} */
+    array.constructor
+  );
+  const byteOffset = indexOffset * ArrayConstructor.BYTES_PER_ELEMENT;
+  const rangeArrayView = new ArrayConstructor(
+    /** @type {ArrayBuffer} */
+    array.buffer,
+    array.byteOffset + byteOffset,
+    indexCount
+  );
+  buffer.copyFromArrayView(rangeArrayView, byteOffset);
+};
+VertexArray.prototype._bind = function() {
+  if (defined_default(this._vao)) {
+    this._context.glBindVertexArray(this._vao);
+    if (this._context.instancedArrays) {
+      setVertexAttribDivisor(this);
+    }
+    if (this._hasConstantAttributes) {
+      setConstantAttributes(this, this._gl);
+    }
+  } else {
+    bind(this._gl, this._attributes, this._indexBuffer);
+  }
+};
+VertexArray.prototype._unBind = function() {
+  if (defined_default(this._vao)) {
+    this._context.glBindVertexArray(null);
+  } else {
+    const attributes = this._attributes;
+    const gl = this._gl;
+    for (let i = 0; i < attributes.length; ++i) {
+      const attribute = attributes[i];
+      if (attribute.enabled) {
+        attribute.disableVertexAttribArray(gl);
+      }
+    }
+    if (this._indexBuffer) {
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+    }
+  }
+};
+VertexArray.prototype.isDestroyed = function() {
+  return false;
+};
+VertexArray.prototype.destroy = function() {
+  const attributes = this._attributes;
+  for (let i = 0; i < attributes.length; ++i) {
+    const vertexBuffer = attributes[i].vertexBuffer;
+    if (defined_default(vertexBuffer) && !vertexBuffer.isDestroyed() && vertexBuffer.vertexArrayDestroyable) {
+      vertexBuffer.destroy();
+    }
+  }
+  const indexBuffer = this._indexBuffer;
+  if (defined_default(indexBuffer) && !indexBuffer.isDestroyed() && indexBuffer.vertexArrayDestroyable) {
+    indexBuffer.destroy();
+  }
+  if (defined_default(this._vao)) {
+    this._context.glDeleteVertexArray(this._vao);
+  }
+  return destroyObject_default(this);
+};
+var VertexArray_default = VertexArray;
 
 // packages/engine/index.js
 globalThis.CESIUM_VERSION = "1.146.0";

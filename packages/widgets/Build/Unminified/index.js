@@ -5142,1431 +5142,12 @@ AnimationViewModel._maxShuttleRingAngle = maxShuttleRingAngle;
 AnimationViewModel._realtimeShuttleRingAngle = realtimeShuttleRingAngle;
 var AnimationViewModel_default = AnimationViewModel;
 
-// packages/widgets/Source/Cesium3DTilesInspector/Cesium3DTilesInspector.js
-import { Check as Check3, destroyObject as destroyObject4 } from "@cesium/core";
-import { getElement as getElement2 } from "@cesium/engine";
-
-// packages/widgets/Source/Cesium3DTilesInspector/Cesium3DTilesInspectorViewModel.js
-import { Check as Check2, Color as Color2, defined as defined7, destroyObject as destroyObject3 } from "@cesium/core";
-import {
-  Cesium3DTileColorBlendMode,
-  Cesium3DTileFeature,
-  Cesium3DTilePass,
-  Cesium3DTileset,
-  Cesium3DTileStyle,
-  PerformanceDisplay,
-  ResourceCache,
-  ScreenSpaceEventHandler,
-  ScreenSpaceEventType
-} from "@cesium/engine";
-function getPickTileset(viewModel) {
-  return function(e) {
-    const pick = viewModel._scene.pick(e.position);
-    if (defined7(pick) && pick.primitive instanceof Cesium3DTileset) {
-      viewModel.tileset = pick.primitive;
-    }
-    viewModel.pickActive = false;
-  };
-}
-function selectTilesetOnHover(viewModel, value) {
-  if (value) {
-    viewModel._eventHandler.setInputAction(function(e) {
-      const pick = viewModel._scene.pick(e.endPosition);
-      if (defined7(pick) && pick.primitive instanceof Cesium3DTileset) {
-        viewModel.tileset = pick.primitive;
-      }
-    }, ScreenSpaceEventType.MOUSE_MOVE);
-  } else {
-    viewModel._eventHandler.removeInputAction(ScreenSpaceEventType.MOUSE_MOVE);
-    viewModel.picking = viewModel.picking;
-  }
-}
-var stringOptions = {
-  maximumFractionDigits: 3
-};
-function formatMemoryString(memorySizeInBytes) {
-  const memoryInMegabytes = memorySizeInBytes / 1048576;
-  if (memoryInMegabytes < 1) {
-    return memoryInMegabytes.toLocaleString(void 0, stringOptions);
-  }
-  return Math.round(memoryInMegabytes).toLocaleString();
-}
-function getStatistics(tileset, isPick) {
-  if (!defined7(tileset)) {
-    return "";
-  }
-  const statistics = isPick ? tileset._statisticsPerPass[Cesium3DTilePass.PICK] : tileset._statisticsPerPass[Cesium3DTilePass.RENDER];
-  let s = '<ul class="cesium-cesiumInspector-statistics">';
-  s += // --- Rendering statistics
-  `<li><strong>Visited: </strong>${statistics.visited.toLocaleString()}</li><li><strong>Selected: </strong>${statistics.selected.toLocaleString()}</li><li><strong>Commands: </strong>${statistics.numberOfCommands.toLocaleString()}</li>`;
-  s += "</ul>";
-  if (!isPick) {
-    s += '<ul class="cesium-cesiumInspector-statistics">';
-    s += // --- Cache/loading statistics
-    `<li><strong>Requests: </strong>${statistics.numberOfPendingRequests.toLocaleString()}</li><li><strong>Attempted: </strong>${statistics.numberOfAttemptedRequests.toLocaleString()}</li><li><strong>Processing: </strong>${statistics.numberOfTilesProcessing.toLocaleString()}</li><li><strong>Content Ready: </strong>${statistics.numberOfTilesWithContentReady.toLocaleString()}</li><li><strong>Total: </strong>${statistics.numberOfTilesTotal.toLocaleString()}</li>`;
-    s += "</ul>";
-    s += '<ul class="cesium-cesiumInspector-statistics">';
-    s += // --- Features statistics
-    `<li><strong>Features Selected: </strong>${statistics.numberOfFeaturesSelected.toLocaleString()}</li><li><strong>Features Loaded: </strong>${statistics.numberOfFeaturesLoaded.toLocaleString()}</li><li><strong>Points Selected: </strong>${statistics.numberOfPointsSelected.toLocaleString()}</li><li><strong>Points Loaded: </strong>${statistics.numberOfPointsLoaded.toLocaleString()}</li><li><strong>Triangles Selected: </strong>${statistics.numberOfTrianglesSelected.toLocaleString()}</li>`;
-    s += "</ul>";
-    s += '<ul class="cesium-cesiumInspector-statistics">';
-    s += // --- Styling statistics
-    `<li><strong>Tiles styled: </strong>${statistics.numberOfTilesStyled.toLocaleString()}</li><li><strong>Features styled: </strong>${statistics.numberOfFeaturesStyled.toLocaleString()}</li>`;
-    s += "</ul>";
-    s += '<ul class="cesium-cesiumInspector-statistics">';
-    s += // --- Optimization statistics
-    `<li><strong>Children Union Culled: </strong>${statistics.numberOfTilesCulledWithChildrenUnion.toLocaleString()}</li>`;
-    s += "</ul>";
-    s += '<ul class="cesium-cesiumInspector-statistics">';
-    s += // --- Memory statistics
-    `<li><strong>Geometry Memory (MB): </strong>${formatMemoryString(
-      statistics.geometryByteLength
-    )}</li><li><strong>Texture Memory (MB): </strong>${formatMemoryString(
-      statistics.texturesByteLength
-    )}</li><li><strong>Batch Table Memory (MB): </strong>${formatMemoryString(
-      statistics.batchTableByteLength
-    )}</li>`;
-    s += "</ul>";
-  }
-  return s;
-}
-function getResourceCacheStatistics() {
-  const statistics = ResourceCache.statistics;
-  return `
-  <ul class="cesium-cesiumInspector-statistics">
-    <li><strong>Geometry Memory (MB): </strong>${formatMemoryString(
-    statistics.geometryByteLength
-  )}</li>
-    <li><strong>Texture Memory (MB): </strong>${formatMemoryString(
-    statistics.texturesByteLength
-  )}</li>
-  </ul>
-  `;
-}
-var colorBlendModes = [
-  {
-    text: "Highlight",
-    value: Cesium3DTileColorBlendMode.HIGHLIGHT
-  },
-  {
-    text: "Replace",
-    value: Cesium3DTileColorBlendMode.REPLACE
-  },
-  {
-    text: "Mix",
-    value: Cesium3DTileColorBlendMode.MIX
-  }
-];
-var highlightColor = new Color2(1, 1, 0, 0.4);
-var scratchColor = new Color2();
-var oldColor = new Color2();
-function Cesium3DTilesInspectorViewModel(scene, performanceContainer) {
-  Check2.typeOf.object("scene", scene);
-  Check2.typeOf.object("performanceContainer", performanceContainer);
-  const that = this;
-  const canvas = scene.canvas;
-  this._eventHandler = new ScreenSpaceEventHandler(canvas);
-  this._scene = scene;
-  this._performanceContainer = performanceContainer;
-  this._canvas = canvas;
-  this._performanceDisplay = new PerformanceDisplay({
-    container: performanceContainer
-  });
-  this._statisticsText = "";
-  this._pickStatisticsText = "";
-  this._resourceCacheStatisticsText = "";
-  this._editorError = "";
-  this.performance = false;
-  this.showStatistics = true;
-  this.showPickStatistics = true;
-  this.showResourceCacheStatistics = false;
-  this.inspectorVisible = true;
-  this.tilesetVisible = false;
-  this.displayVisible = false;
-  this.updateVisible = false;
-  this.loggingVisible = false;
-  this.styleVisible = false;
-  this.tileDebugLabelsVisible = false;
-  this.optimizationVisible = false;
-  this.styleString = "{}";
-  this.hasEnabledWireframe = false;
-  this._tileset = void 0;
-  this._feature = void 0;
-  this._tile = void 0;
-  knockout_default.track(this, [
-    "performance",
-    "inspectorVisible",
-    "_statisticsText",
-    "_pickStatisticsText",
-    "_resourceCacheStatisticsText",
-    "_editorError",
-    "showPickStatistics",
-    "showStatistics",
-    "showResourceCacheStatistics",
-    "tilesetVisible",
-    "displayVisible",
-    "updateVisible",
-    "loggingVisible",
-    "styleVisible",
-    "optimizationVisible",
-    "tileDebugLabelsVisible",
-    "styleString",
-    "_feature",
-    "_tile",
-    "_tileset",
-    "hasEnabledWireframe"
-  ]);
-  this._properties = knockout_default.observable({});
-  this.properties = [];
-  knockout_default.defineProperty(this, "properties", function() {
-    const names = [];
-    const properties = that._properties();
-    for (const prop in properties) {
-      if (properties.hasOwnProperty(prop)) {
-        names.push(prop);
-      }
-    }
-    return names;
-  });
-  const dynamicScreenSpaceError = knockout_default.observable();
-  knockout_default.defineProperty(this, "dynamicScreenSpaceError", {
-    get: function() {
-      return dynamicScreenSpaceError();
-    },
-    set: function(value) {
-      dynamicScreenSpaceError(value);
-      if (defined7(that._tileset)) {
-        that._tileset.dynamicScreenSpaceError = value;
-      }
-    }
-  });
-  this.dynamicScreenSpaceError = false;
-  const colorBlendMode = knockout_default.observable();
-  knockout_default.defineProperty(this, "colorBlendMode", {
-    get: function() {
-      return colorBlendMode();
-    },
-    set: function(value) {
-      colorBlendMode(value);
-      if (defined7(that._tileset)) {
-        that._tileset.colorBlendMode = value;
-        that._scene.requestRender();
-      }
-    }
-  });
-  this.colorBlendMode = Cesium3DTileColorBlendMode.HIGHLIGHT;
-  const showOnlyPickedTileDebugLabel = knockout_default.observable();
-  const picking = knockout_default.observable();
-  knockout_default.defineProperty(this, "picking", {
-    get: function() {
-      return picking();
-    },
-    set: function(value) {
-      picking(value);
-      if (value) {
-        that._eventHandler.setInputAction(function(e) {
-          const picked = scene.pick(e.endPosition);
-          if (picked instanceof Cesium3DTileFeature) {
-            that.feature = picked;
-            that.tile = picked.content.tile;
-          } else if (defined7(picked) && defined7(picked.content)) {
-            that.feature = void 0;
-            that.tile = picked.content.tile;
-          } else {
-            that.feature = void 0;
-            that.tile = void 0;
-          }
-          if (!defined7(that._tileset)) {
-            return;
-          }
-          if (showOnlyPickedTileDebugLabel && defined7(picked) && defined7(picked.content)) {
-            let position;
-            if (scene.pickPositionSupported) {
-              position = scene.pickPosition(e.endPosition);
-              if (defined7(position)) {
-                that._tileset.debugPickPosition = position;
-              }
-            }
-            that._tileset.debugPickedTile = picked.content.tile;
-          } else {
-            that._tileset.debugPickedTile = void 0;
-          }
-          that._scene.requestRender();
-        }, ScreenSpaceEventType.MOUSE_MOVE);
-      } else {
-        that.feature = void 0;
-        that.tile = void 0;
-        that._eventHandler.removeInputAction(ScreenSpaceEventType.MOUSE_MOVE);
-      }
-    }
-  });
-  this.picking = true;
-  const colorize = knockout_default.observable();
-  knockout_default.defineProperty(this, "colorize", {
-    get: function() {
-      return colorize();
-    },
-    set: function(value) {
-      colorize(value);
-      if (defined7(that._tileset)) {
-        that._tileset.debugColorizeTiles = value;
-        that._scene.requestRender();
-      }
-    }
-  });
-  this.colorize = false;
-  const wireframe = knockout_default.observable();
-  knockout_default.defineProperty(this, "wireframe", {
-    get: function() {
-      return wireframe();
-    },
-    set: function(value) {
-      wireframe(value);
-      if (defined7(that._tileset)) {
-        that._tileset.debugWireframe = value;
-        that._scene.requestRender();
-      }
-    }
-  });
-  this.wireframe = false;
-  const showBoundingVolumes = knockout_default.observable();
-  knockout_default.defineProperty(this, "showBoundingVolumes", {
-    get: function() {
-      return showBoundingVolumes();
-    },
-    set: function(value) {
-      showBoundingVolumes(value);
-      if (defined7(that._tileset)) {
-        that._tileset.debugShowBoundingVolume = value;
-        that._scene.requestRender();
-      }
-    }
-  });
-  this.showBoundingVolumes = false;
-  const showContentBoundingVolumes = knockout_default.observable();
-  knockout_default.defineProperty(this, "showContentBoundingVolumes", {
-    get: function() {
-      return showContentBoundingVolumes();
-    },
-    set: function(value) {
-      showContentBoundingVolumes(value);
-      if (defined7(that._tileset)) {
-        that._tileset.debugShowContentBoundingVolume = value;
-        that._scene.requestRender();
-      }
-    }
-  });
-  this.showContentBoundingVolumes = false;
-  const showRequestVolumes = knockout_default.observable();
-  knockout_default.defineProperty(this, "showRequestVolumes", {
-    get: function() {
-      return showRequestVolumes();
-    },
-    set: function(value) {
-      showRequestVolumes(value);
-      if (defined7(that._tileset)) {
-        that._tileset.debugShowViewerRequestVolume = value;
-        that._scene.requestRender();
-      }
-    }
-  });
-  this.showRequestVolumes = false;
-  const freezeFrame = knockout_default.observable();
-  knockout_default.defineProperty(this, "freezeFrame", {
-    get: function() {
-      return freezeFrame();
-    },
-    set: function(value) {
-      freezeFrame(value);
-      if (defined7(that._tileset)) {
-        that._tileset.debugFreezeFrame = value;
-        that._scene.debugShowFrustumPlanes = value;
-        that._scene.requestRender();
-      }
-    }
-  });
-  this.freezeFrame = false;
-  knockout_default.defineProperty(this, "showOnlyPickedTileDebugLabel", {
-    get: function() {
-      return showOnlyPickedTileDebugLabel();
-    },
-    set: function(value) {
-      showOnlyPickedTileDebugLabel(value);
-      if (defined7(that._tileset)) {
-        that._tileset.debugPickedTileLabelOnly = value;
-        that._scene.requestRender();
-      }
-    }
-  });
-  this.showOnlyPickedTileDebugLabel = false;
-  const showGeometricError = knockout_default.observable();
-  knockout_default.defineProperty(this, "showGeometricError", {
-    get: function() {
-      return showGeometricError();
-    },
-    set: function(value) {
-      showGeometricError(value);
-      if (defined7(that._tileset)) {
-        that._tileset.debugShowGeometricError = value;
-        that._scene.requestRender();
-      }
-    }
-  });
-  this.showGeometricError = false;
-  const showRenderingStatistics = knockout_default.observable();
-  knockout_default.defineProperty(this, "showRenderingStatistics", {
-    get: function() {
-      return showRenderingStatistics();
-    },
-    set: function(value) {
-      showRenderingStatistics(value);
-      if (defined7(that._tileset)) {
-        that._tileset.debugShowRenderingStatistics = value;
-        that._scene.requestRender();
-      }
-    }
-  });
-  this.showRenderingStatistics = false;
-  const showMemoryUsage = knockout_default.observable();
-  knockout_default.defineProperty(this, "showMemoryUsage", {
-    get: function() {
-      return showMemoryUsage();
-    },
-    set: function(value) {
-      showMemoryUsage(value);
-      if (defined7(that._tileset)) {
-        that._tileset.debugShowMemoryUsage = value;
-        that._scene.requestRender();
-      }
-    }
-  });
-  this.showMemoryUsage = false;
-  const showUrl = knockout_default.observable();
-  knockout_default.defineProperty(this, "showUrl", {
-    get: function() {
-      return showUrl();
-    },
-    set: function(value) {
-      showUrl(value);
-      if (defined7(that._tileset)) {
-        that._tileset.debugShowUrl = value;
-        that._scene.requestRender();
-      }
-    }
-  });
-  this.showUrl = false;
-  const maximumScreenSpaceError = knockout_default.observable();
-  knockout_default.defineProperty(this, "maximumScreenSpaceError", {
-    get: function() {
-      return maximumScreenSpaceError();
-    },
-    set: function(value) {
-      value = Number(value);
-      if (!isNaN(value)) {
-        maximumScreenSpaceError(value);
-        if (defined7(that._tileset)) {
-          that._tileset.maximumScreenSpaceError = value;
-        }
-      }
-    }
-  });
-  this.maximumScreenSpaceError = 16;
-  const dynamicScreenSpaceErrorDensity = knockout_default.observable();
-  knockout_default.defineProperty(this, "dynamicScreenSpaceErrorDensity", {
-    get: function() {
-      return dynamicScreenSpaceErrorDensity();
-    },
-    set: function(value) {
-      value = Number(value);
-      if (!isNaN(value)) {
-        dynamicScreenSpaceErrorDensity(value);
-        if (defined7(that._tileset)) {
-          that._tileset.dynamicScreenSpaceErrorDensity = value;
-        }
-      }
-    }
-  });
-  this.dynamicScreenSpaceErrorDensity = 2e-4;
-  this.dynamicScreenSpaceErrorDensitySliderValue = void 0;
-  knockout_default.defineProperty(this, "dynamicScreenSpaceErrorDensitySliderValue", {
-    get: function() {
-      return Math.pow(dynamicScreenSpaceErrorDensity(), 1 / 6);
-    },
-    set: function(value) {
-      const scaledValue = Math.pow(value, 6);
-      dynamicScreenSpaceErrorDensity(scaledValue);
-      if (defined7(that._tileset)) {
-        that._tileset.dynamicScreenSpaceErrorDensity = scaledValue;
-      }
-    }
-  });
-  const dynamicScreenSpaceErrorFactor = knockout_default.observable();
-  knockout_default.defineProperty(this, "dynamicScreenSpaceErrorFactor", {
-    get: function() {
-      return dynamicScreenSpaceErrorFactor();
-    },
-    set: function(value) {
-      value = Number(value);
-      if (!isNaN(value)) {
-        dynamicScreenSpaceErrorFactor(value);
-        if (defined7(that._tileset)) {
-          that._tileset.dynamicScreenSpaceErrorFactor = value;
-        }
-      }
-    }
-  });
-  this.dynamicScreenSpaceErrorFactor = 24;
-  const pickTileset = getPickTileset(this);
-  const pickActive = knockout_default.observable();
-  knockout_default.defineProperty(this, "pickActive", {
-    get: function() {
-      return pickActive();
-    },
-    set: function(value) {
-      pickActive(value);
-      if (value) {
-        that._eventHandler.setInputAction(
-          pickTileset,
-          ScreenSpaceEventType.LEFT_CLICK
-        );
-      } else {
-        that._eventHandler.removeInputAction(ScreenSpaceEventType.LEFT_CLICK);
-      }
-    }
-  });
-  const pointCloudShading = knockout_default.observable();
-  knockout_default.defineProperty(this, "pointCloudShading", {
-    get: function() {
-      return pointCloudShading();
-    },
-    set: function(value) {
-      pointCloudShading(value);
-      if (defined7(that._tileset)) {
-        that._tileset.pointCloudShading.attenuation = value;
-      }
-    }
-  });
-  this.pointCloudShading = false;
-  const geometricErrorScale = knockout_default.observable();
-  knockout_default.defineProperty(this, "geometricErrorScale", {
-    get: function() {
-      return geometricErrorScale();
-    },
-    set: function(value) {
-      value = Number(value);
-      if (!isNaN(value)) {
-        geometricErrorScale(value);
-        if (defined7(that._tileset)) {
-          that._tileset.pointCloudShading.geometricErrorScale = value;
-        }
-      }
-    }
-  });
-  this.geometricErrorScale = 1;
-  const maximumAttenuation = knockout_default.observable();
-  knockout_default.defineProperty(this, "maximumAttenuation", {
-    get: function() {
-      return maximumAttenuation();
-    },
-    set: function(value) {
-      value = Number(value);
-      if (!isNaN(value)) {
-        maximumAttenuation(value);
-        if (defined7(that._tileset)) {
-          that._tileset.pointCloudShading.maximumAttenuation = value === 0 ? void 0 : value;
-        }
-      }
-    }
-  });
-  this.maximumAttenuation = 0;
-  const baseResolution = knockout_default.observable();
-  knockout_default.defineProperty(this, "baseResolution", {
-    get: function() {
-      return baseResolution();
-    },
-    set: function(value) {
-      value = Number(value);
-      if (!isNaN(value)) {
-        baseResolution(value);
-        if (defined7(that._tileset)) {
-          that._tileset.pointCloudShading.baseResolution = value === 0 ? void 0 : value;
-        }
-      }
-    }
-  });
-  this.baseResolution = 0;
-  const eyeDomeLighting = knockout_default.observable();
-  knockout_default.defineProperty(this, "eyeDomeLighting", {
-    get: function() {
-      return eyeDomeLighting();
-    },
-    set: function(value) {
-      eyeDomeLighting(value);
-      if (defined7(that._tileset)) {
-        that._tileset.pointCloudShading.eyeDomeLighting = value;
-      }
-    }
-  });
-  this.eyeDomeLighting = false;
-  const eyeDomeLightingStrength = knockout_default.observable();
-  knockout_default.defineProperty(this, "eyeDomeLightingStrength", {
-    get: function() {
-      return eyeDomeLightingStrength();
-    },
-    set: function(value) {
-      value = Number(value);
-      if (!isNaN(value)) {
-        eyeDomeLightingStrength(value);
-        if (defined7(that._tileset)) {
-          that._tileset.pointCloudShading.eyeDomeLightingStrength = value;
-        }
-      }
-    }
-  });
-  this.eyeDomeLightingStrength = 1;
-  const eyeDomeLightingRadius = knockout_default.observable();
-  knockout_default.defineProperty(this, "eyeDomeLightingRadius", {
-    get: function() {
-      return eyeDomeLightingRadius();
-    },
-    set: function(value) {
-      value = Number(value);
-      if (!isNaN(value)) {
-        eyeDomeLightingRadius(value);
-        if (defined7(that._tileset)) {
-          that._tileset.pointCloudShading.eyeDomeLightingRadius = value;
-        }
-      }
-    }
-  });
-  this.eyeDomeLightingRadius = 1;
-  this.pickActive = false;
-  const skipLevelOfDetail = knockout_default.observable();
-  knockout_default.defineProperty(this, "skipLevelOfDetail", {
-    get: function() {
-      return skipLevelOfDetail();
-    },
-    set: function(value) {
-      skipLevelOfDetail(value);
-      if (defined7(that._tileset)) {
-        that._tileset.skipLevelOfDetail = value;
-      }
-    }
-  });
-  this.skipLevelOfDetail = true;
-  const skipScreenSpaceErrorFactor = knockout_default.observable();
-  knockout_default.defineProperty(this, "skipScreenSpaceErrorFactor", {
-    get: function() {
-      return skipScreenSpaceErrorFactor();
-    },
-    set: function(value) {
-      value = Number(value);
-      if (!isNaN(value)) {
-        skipScreenSpaceErrorFactor(value);
-        if (defined7(that._tileset)) {
-          that._tileset.skipScreenSpaceErrorFactor = value;
-        }
-      }
-    }
-  });
-  this.skipScreenSpaceErrorFactor = 16;
-  const baseScreenSpaceError = knockout_default.observable();
-  knockout_default.defineProperty(this, "baseScreenSpaceError", {
-    get: function() {
-      return baseScreenSpaceError();
-    },
-    set: function(value) {
-      value = Number(value);
-      if (!isNaN(value)) {
-        baseScreenSpaceError(value);
-        if (defined7(that._tileset)) {
-          that._tileset.baseScreenSpaceError = value;
-        }
-      }
-    }
-  });
-  this.baseScreenSpaceError = 1024;
-  const skipLevels = knockout_default.observable();
-  knockout_default.defineProperty(this, "skipLevels", {
-    get: function() {
-      return skipLevels();
-    },
-    set: function(value) {
-      value = Number(value);
-      if (!isNaN(value)) {
-        skipLevels(value);
-        if (defined7(that._tileset)) {
-          that._tileset.skipLevels = value;
-        }
-      }
-    }
-  });
-  this.skipLevels = 1;
-  const immediatelyLoadDesiredLevelOfDetail = knockout_default.observable();
-  knockout_default.defineProperty(this, "immediatelyLoadDesiredLevelOfDetail", {
-    get: function() {
-      return immediatelyLoadDesiredLevelOfDetail();
-    },
-    set: function(value) {
-      immediatelyLoadDesiredLevelOfDetail(value);
-      if (defined7(that._tileset)) {
-        that._tileset.immediatelyLoadDesiredLevelOfDetail = value;
-      }
-    }
-  });
-  this.immediatelyLoadDesiredLevelOfDetail = false;
-  const loadSiblings = knockout_default.observable();
-  knockout_default.defineProperty(this, "loadSiblings", {
-    get: function() {
-      return loadSiblings();
-    },
-    set: function(value) {
-      loadSiblings(value);
-      if (defined7(that._tileset)) {
-        that._tileset.loadSiblings = value;
-      }
-    }
-  });
-  this.loadSiblings = false;
-  this._style = void 0;
-  this._shouldStyle = false;
-  this._definedProperties = [
-    "properties",
-    "dynamicScreenSpaceError",
-    "colorBlendMode",
-    "picking",
-    "colorize",
-    "wireframe",
-    "showBoundingVolumes",
-    "showContentBoundingVolumes",
-    "showRequestVolumes",
-    "freezeFrame",
-    "maximumScreenSpaceError",
-    "dynamicScreenSpaceErrorDensity",
-    "baseScreenSpaceError",
-    "skipScreenSpaceErrorFactor",
-    "skipLevelOfDetail",
-    "skipLevels",
-    "immediatelyLoadDesiredLevelOfDetail",
-    "loadSiblings",
-    "dynamicScreenSpaceErrorDensitySliderValue",
-    "dynamicScreenSpaceErrorFactor",
-    "pickActive",
-    "showOnlyPickedTileDebugLabel",
-    "showGeometricError",
-    "showRenderingStatistics",
-    "showMemoryUsage",
-    "showUrl",
-    "pointCloudShading",
-    "geometricErrorScale",
-    "maximumAttenuation",
-    "baseResolution",
-    "eyeDomeLighting",
-    "eyeDomeLightingStrength",
-    "eyeDomeLightingRadius"
-  ];
-  this._removePostRenderEvent = scene.postRender.addEventListener(function() {
-    that._update();
-  });
-  if (!defined7(this._tileset)) {
-    selectTilesetOnHover(this, true);
-  }
-}
-Object.defineProperties(Cesium3DTilesInspectorViewModel.prototype, {
-  /**
-   * Gets the scene
-   * @memberof Cesium3DTilesInspectorViewModel.prototype
-   * @type {Scene}
-   * @readonly
-   */
-  scene: {
-    get: function() {
-      return this._scene;
-    }
-  },
-  /**
-   * Gets the performance container
-   * @memberof Cesium3DTilesInspectorViewModel.prototype
-   * @type {HTMLElement}
-   * @readonly
-   */
-  performanceContainer: {
-    get: function() {
-      return this._performanceContainer;
-    }
-  },
-  /**
-   * Gets the statistics text.  This property is observable.
-   * @memberof Cesium3DTilesInspectorViewModel.prototype
-   * @type {string}
-   * @readonly
-   */
-  statisticsText: {
-    get: function() {
-      return this._statisticsText;
-    }
-  },
-  /**
-   * Gets the pick statistics text.  This property is observable.
-   * @memberof Cesium3DTilesInspectorViewModel.prototype
-   * @type {string}
-   * @readonly
-   */
-  pickStatisticsText: {
-    get: function() {
-      return this._pickStatisticsText;
-    }
-  },
-  /**
-   * Gets the resource cache statistics text. This property is observable.
-   * @memberof Cesium3DTilesInspectorViewModel.prototype
-   * @type {string}
-   * @readonly
-   */
-  resourceCacheStatisticsText: {
-    get: function() {
-      return this._resourceCacheStatisticsText;
-    }
-  },
-  /**
-   * Gets the available blend modes
-   * @memberof Cesium3DTilesInspectorViewModel.prototype
-   * @type {object[]}
-   * @readonly
-   */
-  colorBlendModes: {
-    get: function() {
-      return colorBlendModes;
-    }
-  },
-  /**
-   * Gets the editor error message
-   * @memberof Cesium3DTilesInspectorViewModel.prototype
-   * @type {string}
-   * @readonly
-   */
-  editorError: {
-    get: function() {
-      return this._editorError;
-    }
-  },
-  /**
-   * Gets or sets the tileset of the view model.
-   * @memberof Cesium3DTilesInspectorViewModel.prototype
-   * @type {Cesium3DTileset}
-   */
-  tileset: {
-    get: function() {
-      return this._tileset;
-    },
-    set: function(tileset) {
-      this._tileset = tileset;
-      this._style = void 0;
-      this.styleString = "{}";
-      this.feature = void 0;
-      this.tile = void 0;
-      if (defined7(tileset)) {
-        this._properties(tileset.properties);
-        const settings = [
-          "colorize",
-          "wireframe",
-          "showBoundingVolumes",
-          "showContentBoundingVolumes",
-          "showRequestVolumes",
-          "freezeFrame",
-          "showOnlyPickedTileDebugLabel",
-          "showGeometricError",
-          "showRenderingStatistics",
-          "showMemoryUsage",
-          "showUrl"
-        ];
-        const length = settings.length;
-        for (let i = 0; i < length; ++i) {
-          const setting = settings[i];
-          this[setting] = this[setting];
-        }
-        this.maximumScreenSpaceError = tileset.maximumScreenSpaceError;
-        this.dynamicScreenSpaceError = tileset.dynamicScreenSpaceError;
-        this.dynamicScreenSpaceErrorDensity = tileset.dynamicScreenSpaceErrorDensity;
-        this.dynamicScreenSpaceErrorFactor = tileset.dynamicScreenSpaceErrorFactor;
-        this.colorBlendMode = tileset.colorBlendMode;
-        this.skipLevelOfDetail = tileset.skipLevelOfDetail;
-        this.skipScreenSpaceErrorFactor = tileset.skipScreenSpaceErrorFactor;
-        this.baseScreenSpaceError = tileset.baseScreenSpaceError;
-        this.skipLevels = tileset.skipLevels;
-        this.immediatelyLoadDesiredLevelOfDetail = tileset.immediatelyLoadDesiredLevelOfDetail;
-        this.loadSiblings = tileset.loadSiblings;
-        this.hasEnabledWireframe = tileset._enableDebugWireframe;
-        const pointCloudShading = tileset.pointCloudShading;
-        this.pointCloudShading = pointCloudShading.attenuation;
-        this.geometricErrorScale = pointCloudShading.geometricErrorScale;
-        this.maximumAttenuation = pointCloudShading.maximumAttenuation ? pointCloudShading.maximumAttenuation : 0;
-        this.baseResolution = pointCloudShading.baseResolution ? pointCloudShading.baseResolution : 0;
-        this.eyeDomeLighting = pointCloudShading.eyeDomeLighting;
-        this.eyeDomeLightingStrength = pointCloudShading.eyeDomeLightingStrength;
-        this.eyeDomeLightingRadius = pointCloudShading.eyeDomeLightingRadius;
-        this._scene.requestRender();
-      } else {
-        this._properties({});
-      }
-      this._statisticsText = getStatistics(tileset, false);
-      this._pickStatisticsText = getStatistics(tileset, true);
-      this._resourceCacheStatisticsText = getResourceCacheStatistics();
-      selectTilesetOnHover(this, false);
-    }
-  },
-  /**
-   * Gets the current feature of the view model.
-   * @memberof Cesium3DTilesInspectorViewModel.prototype
-   * @type {Cesium3DTileFeature}
-   */
-  feature: {
-    get: function() {
-      return this._feature;
-    },
-    set: function(feature) {
-      if (this._feature === feature) {
-        return;
-      }
-      const currentFeature = this._feature;
-      if (defined7(currentFeature) && !currentFeature.content.isDestroyed()) {
-        if (!this.colorize && defined7(this._style)) {
-          currentFeature.color = defined7(this._style.color) ? this._style.color.evaluateColor(currentFeature, scratchColor) : Color2.WHITE;
-        } else {
-          currentFeature.color = oldColor;
-        }
-        this._scene.requestRender();
-      }
-      if (defined7(feature)) {
-        Color2.clone(feature.color, oldColor);
-        feature.color = highlightColor;
-        this._scene.requestRender();
-      }
-      this._feature = feature;
-    }
-  },
-  /**
-   * Gets the current tile of the view model
-   * @memberof Cesium3DTilesInspectorViewModel.prototype
-   * @type {Cesium3DTile}
-   */
-  tile: {
-    get: function() {
-      return this._tile;
-    },
-    set: function(tile) {
-      if (this._tile === tile) {
-        return;
-      }
-      const currentTile = this._tile;
-      if (defined7(currentTile) && !currentTile.isDestroyed() && !hasFeatures(currentTile.content)) {
-        currentTile.color = oldColor;
-        this._scene.requestRender();
-      }
-      if (defined7(tile) && !hasFeatures(tile.content)) {
-        Color2.clone(tile.color, oldColor);
-        tile.color = highlightColor;
-        this._scene.requestRender();
-      }
-      this._tile = tile;
-    }
-  }
-});
-function hasFeatures(content) {
-  if (!defined7(content)) {
-    return false;
-  }
-  if (content.featuresLength > 0) {
-    return true;
-  }
-  const innerContents = content.innerContents;
-  if (defined7(innerContents)) {
-    const length = innerContents.length;
-    for (let i = 0; i < length; ++i) {
-      if (!hasFeatures(innerContents[i])) {
-        return false;
-      }
-    }
-    return true;
-  }
-  return false;
-}
-Cesium3DTilesInspectorViewModel.prototype.togglePickTileset = function() {
-  this.pickActive = !this.pickActive;
-};
-Cesium3DTilesInspectorViewModel.prototype.toggleInspector = function() {
-  this.inspectorVisible = !this.inspectorVisible;
-};
-Cesium3DTilesInspectorViewModel.prototype.toggleTileset = function() {
-  this.tilesetVisible = !this.tilesetVisible;
-};
-Cesium3DTilesInspectorViewModel.prototype.toggleDisplay = function() {
-  this.displayVisible = !this.displayVisible;
-};
-Cesium3DTilesInspectorViewModel.prototype.toggleUpdate = function() {
-  this.updateVisible = !this.updateVisible;
-};
-Cesium3DTilesInspectorViewModel.prototype.toggleLogging = function() {
-  this.loggingVisible = !this.loggingVisible;
-};
-Cesium3DTilesInspectorViewModel.prototype.toggleStyle = function() {
-  this.styleVisible = !this.styleVisible;
-};
-Cesium3DTilesInspectorViewModel.prototype.toggleTileDebugLabels = function() {
-  this.tileDebugLabelsVisible = !this.tileDebugLabelsVisible;
-};
-Cesium3DTilesInspectorViewModel.prototype.toggleOptimization = function() {
-  this.optimizationVisible = !this.optimizationVisible;
-};
-Cesium3DTilesInspectorViewModel.prototype.trimTilesCache = function() {
-  if (defined7(this._tileset)) {
-    this._tileset.trimLoadedTiles();
-  }
-};
-Cesium3DTilesInspectorViewModel.prototype.compileStyle = function() {
-  const tileset = this._tileset;
-  if (!defined7(tileset) || this.styleString === JSON.stringify(tileset.style)) {
-    return;
-  }
-  this._editorError = "";
-  try {
-    if (this.styleString.length === 0) {
-      this.styleString = "{}";
-    }
-    this._style = new Cesium3DTileStyle(JSON.parse(this.styleString));
-    this._shouldStyle = true;
-    this._scene.requestRender();
-  } catch (err) {
-    this._editorError = err.toString();
-  }
-  this.feature = this._feature;
-  this.tile = this._tile;
-};
-Cesium3DTilesInspectorViewModel.prototype.styleEditorKeyPress = function(sender, event) {
-  if (event.keyCode === 9) {
-    event.preventDefault();
-    const textArea = event.target;
-    const start = textArea.selectionStart;
-    const end = textArea.selectionEnd;
-    let newEnd = end;
-    const selected = textArea.value.slice(start, end);
-    const lines = selected.split("\n");
-    const length = lines.length;
-    let i;
-    if (!event.shiftKey) {
-      for (i = 0; i < length; ++i) {
-        lines[i] = `  ${lines[i]}`;
-        newEnd += 2;
-      }
-    } else {
-      for (i = 0; i < length; ++i) {
-        if (lines[i][0] === " ") {
-          if (lines[i][1] === " ") {
-            lines[i] = lines[i].substr(2);
-            newEnd -= 2;
-          } else {
-            lines[i] = lines[i].substr(1);
-            newEnd -= 1;
-          }
-        }
-      }
-    }
-    const newText = lines.join("\n");
-    textArea.value = textArea.value.slice(0, start) + newText + textArea.value.slice(end);
-    textArea.selectionStart = start !== end ? start : newEnd;
-    textArea.selectionEnd = newEnd;
-  } else if (event.ctrlKey && (event.keyCode === 10 || event.keyCode === 13)) {
-    this.compileStyle();
-  }
-  return true;
-};
-Cesium3DTilesInspectorViewModel.prototype._update = function() {
-  const tileset = this._tileset;
-  if (this.performance) {
-    this._performanceDisplay.update();
-  }
-  if (defined7(tileset)) {
-    if (tileset.isDestroyed()) {
-      this.tile = void 0;
-      this.feature = void 0;
-      this.tileset = void 0;
-      return;
-    }
-    const style = tileset.style;
-    if (this._style !== tileset.style) {
-      if (this._shouldStyle) {
-        tileset.style = this._style;
-        this._shouldStyle = false;
-      } else {
-        this._style = style;
-        this.styleString = JSON.stringify(style.style, null, "  ");
-      }
-    }
-  }
-  if (this.showStatistics) {
-    this._statisticsText = getStatistics(tileset, false);
-    this._pickStatisticsText = getStatistics(tileset, true);
-    this._resourceCacheStatisticsText = getResourceCacheStatistics();
-  }
-};
-Cesium3DTilesInspectorViewModel.prototype.isDestroyed = function() {
-  return false;
-};
-Cesium3DTilesInspectorViewModel.prototype.destroy = function() {
-  this._eventHandler.destroy();
-  this._removePostRenderEvent();
-  const that = this;
-  this._definedProperties.forEach(function(property) {
-    knockout_default.getObservable(that, property).dispose();
-  });
-  return destroyObject3(this);
-};
-Cesium3DTilesInspectorViewModel.getStatistics = getStatistics;
-var Cesium3DTilesInspectorViewModel_default = Cesium3DTilesInspectorViewModel;
-
-// packages/widgets/Source/Cesium3DTilesInspector/Cesium3DTilesInspector.js
-function Cesium3DTilesInspector(container, scene) {
-  Check3.defined("container", container);
-  Check3.typeOf.object("scene", scene);
-  container = getElement2(container);
-  const element = document.createElement("div");
-  const performanceContainer = document.createElement("div");
-  performanceContainer.setAttribute("data-bind", "visible: performance");
-  const viewModel = new Cesium3DTilesInspectorViewModel_default(
-    scene,
-    performanceContainer
-  );
-  this._viewModel = viewModel;
-  this._container = container;
-  this._element = element;
-  const text = document.createElement("div");
-  text.textContent = "3D Tiles Inspector";
-  text.className = "cesium-cesiumInspector-button";
-  text.setAttribute("data-bind", "click: toggleInspector");
-  element.appendChild(text);
-  element.className = "cesium-cesiumInspector cesium-3DTilesInspector";
-  element.setAttribute(
-    "data-bind",
-    'css: { "cesium-cesiumInspector-visible" : inspectorVisible, "cesium-cesiumInspector-hidden" : !inspectorVisible}'
-  );
-  container.appendChild(element);
-  const panel = document.createElement("div");
-  panel.className = "cesium-cesiumInspector-dropDown";
-  element.appendChild(panel);
-  const createSection = InspectorShared_default.createSection;
-  const createCheckbox = InspectorShared_default.createCheckbox;
-  const createRangeInput = InspectorShared_default.createRangeInput;
-  const createButton = InspectorShared_default.createButton;
-  const tilesetPanelContents = createSection(
-    panel,
-    "Tileset",
-    "tilesetVisible",
-    "toggleTileset"
-  );
-  const displayPanelContents = createSection(
-    panel,
-    "Display",
-    "displayVisible",
-    "toggleDisplay"
-  );
-  const updatePanelContents = createSection(
-    panel,
-    "Update",
-    "updateVisible",
-    "toggleUpdate"
-  );
-  const loggingPanelContents = createSection(
-    panel,
-    "Logging",
-    "loggingVisible",
-    "toggleLogging"
-  );
-  const tileDebugLabelsPanelContents = createSection(
-    panel,
-    "Tile Debug Labels",
-    "tileDebugLabelsVisible",
-    "toggleTileDebugLabels"
-  );
-  const stylePanelContents = createSection(
-    panel,
-    "Style",
-    "styleVisible",
-    "toggleStyle"
-  );
-  const optimizationPanelContents = createSection(
-    panel,
-    "Optimization",
-    "optimizationVisible",
-    "toggleOptimization"
-  );
-  const properties = document.createElement("div");
-  properties.className = "field-group";
-  const propertiesLabel = document.createElement("label");
-  propertiesLabel.className = "field-label";
-  propertiesLabel.appendChild(document.createTextNode("Properties: "));
-  const propertiesField = document.createElement("div");
-  propertiesField.setAttribute("data-bind", "text: properties");
-  properties.appendChild(propertiesLabel);
-  properties.appendChild(propertiesField);
-  tilesetPanelContents.appendChild(properties);
-  tilesetPanelContents.appendChild(
-    createButton("Pick Tileset", "togglePickTileset", "pickActive")
-  );
-  tilesetPanelContents.appendChild(
-    createButton("Trim Tiles Cache", "trimTilesCache")
-  );
-  tilesetPanelContents.appendChild(createCheckbox("Enable Picking", "picking"));
-  displayPanelContents.appendChild(createCheckbox("Colorize", "colorize"));
-  const wireframeCheckbox = displayPanelContents.appendChild(
-    createCheckbox(
-      "Wireframe",
-      "wireframe",
-      "_tileset === undefined || hasEnabledWireframe"
-    )
-  );
-  const warningText = document.createElement("p");
-  warningText.setAttribute(
-    "data-bind",
-    "visible: _tileset !== undefined && !hasEnabledWireframe"
-  );
-  warningText.setAttribute(
-    "class",
-    "cesium-3DTilesInspector-disabledElementsInfo"
-  );
-  warningText.innerText = "Set enableDebugWireframe to true in the tileset constructor to enable this option.";
-  wireframeCheckbox.appendChild(warningText);
-  displayPanelContents.appendChild(
-    createCheckbox("Bounding Volumes", "showBoundingVolumes")
-  );
-  displayPanelContents.appendChild(
-    createCheckbox("Content Volumes", "showContentBoundingVolumes")
-  );
-  displayPanelContents.appendChild(
-    createCheckbox("Request Volumes", "showRequestVolumes")
-  );
-  displayPanelContents.appendChild(
-    createCheckbox("Point Cloud Shading", "pointCloudShading")
-  );
-  const pointCloudShadingContainer = document.createElement("div");
-  pointCloudShadingContainer.setAttribute(
-    "data-bind",
-    "visible: pointCloudShading"
-  );
-  pointCloudShadingContainer.appendChild(
-    createRangeInput(
-      "Geometric Error Scale",
-      "geometricErrorScale",
-      0,
-      2,
-      0.01
-    )
-  );
-  pointCloudShadingContainer.appendChild(
-    createRangeInput("Maximum Attenuation", "maximumAttenuation", 0, 32, 1)
-  );
-  pointCloudShadingContainer.appendChild(
-    createRangeInput("Base Resolution", "baseResolution", 0, 1, 0.01)
-  );
-  pointCloudShadingContainer.appendChild(
-    createCheckbox("Eye Dome Lighting (EDL)", "eyeDomeLighting")
-  );
-  displayPanelContents.appendChild(pointCloudShadingContainer);
-  const edlContainer = document.createElement("div");
-  edlContainer.setAttribute("data-bind", "visible: eyeDomeLighting");
-  edlContainer.appendChild(
-    createRangeInput("EDL Strength", "eyeDomeLightingStrength", 0, 2, 0.1)
-  );
-  edlContainer.appendChild(
-    createRangeInput("EDL Radius", "eyeDomeLightingRadius", 0, 4, 0.1)
-  );
-  pointCloudShadingContainer.appendChild(edlContainer);
-  updatePanelContents.appendChild(
-    createCheckbox("Freeze Frame", "freezeFrame")
-  );
-  updatePanelContents.appendChild(
-    createCheckbox("Dynamic Screen Space Error", "dynamicScreenSpaceError")
-  );
-  const sseContainer = document.createElement("div");
-  sseContainer.appendChild(
-    createRangeInput(
-      "Maximum Screen Space Error",
-      "maximumScreenSpaceError",
-      0,
-      128,
-      1
-    )
-  );
-  updatePanelContents.appendChild(sseContainer);
-  const dynamicScreenSpaceErrorContainer = document.createElement("div");
-  dynamicScreenSpaceErrorContainer.setAttribute(
-    "data-bind",
-    "visible: dynamicScreenSpaceError"
-  );
-  dynamicScreenSpaceErrorContainer.appendChild(
-    createRangeInput(
-      "Screen Space Error Density",
-      "dynamicScreenSpaceErrorDensitySliderValue",
-      0,
-      1,
-      5e-3,
-      "dynamicScreenSpaceErrorDensity"
-    )
-  );
-  dynamicScreenSpaceErrorContainer.appendChild(
-    createRangeInput(
-      "Screen Space Error Factor",
-      "dynamicScreenSpaceErrorFactor",
-      1,
-      32,
-      0.1
-    )
-  );
-  updatePanelContents.appendChild(dynamicScreenSpaceErrorContainer);
-  loggingPanelContents.appendChild(
-    createCheckbox("Performance", "performance")
-  );
-  loggingPanelContents.appendChild(performanceContainer);
-  loggingPanelContents.appendChild(
-    createCheckbox("Statistics", "showStatistics")
-  );
-  const statistics = document.createElement("div");
-  statistics.className = "cesium-3dTilesInspector-statistics";
-  statistics.setAttribute(
-    "data-bind",
-    "html: statisticsText, visible: showStatistics"
-  );
-  loggingPanelContents.appendChild(statistics);
-  loggingPanelContents.appendChild(
-    createCheckbox("Pick Statistics", "showPickStatistics")
-  );
-  const pickStatistics = document.createElement("div");
-  pickStatistics.className = "cesium-3dTilesInspector-statistics";
-  pickStatistics.setAttribute(
-    "data-bind",
-    "html: pickStatisticsText, visible: showPickStatistics"
-  );
-  loggingPanelContents.appendChild(pickStatistics);
-  loggingPanelContents.appendChild(
-    createCheckbox("Resource Cache Statistics", "showResourceCacheStatistics")
-  );
-  const resourceCacheStatistics = document.createElement("div");
-  resourceCacheStatistics.className = "cesium-3dTilesInspector-statistics";
-  resourceCacheStatistics.setAttribute(
-    "data-bind",
-    "html: resourceCacheStatisticsText, visible: showResourceCacheStatistics"
-  );
-  loggingPanelContents.appendChild(resourceCacheStatistics);
-  const stylePanelEditor = document.createElement("div");
-  stylePanelContents.appendChild(stylePanelEditor);
-  stylePanelEditor.appendChild(document.createTextNode("Color Blend Mode: "));
-  const blendDropdown = document.createElement("select");
-  blendDropdown.setAttribute(
-    "data-bind",
-    'options: colorBlendModes, optionsText: "text", optionsValue: "value", value: colorBlendMode'
-  );
-  stylePanelEditor.appendChild(blendDropdown);
-  const styleEditor = document.createElement("textarea");
-  styleEditor.setAttribute(
-    "data-bind",
-    "textInput: styleString, event: { keydown: styleEditorKeyPress }"
-  );
-  stylePanelEditor.className = "cesium-cesiumInspector-styleEditor";
-  stylePanelEditor.appendChild(styleEditor);
-  const closeStylesBtn = createButton("Compile (Ctrl+Enter)", "compileStyle");
-  stylePanelEditor.appendChild(closeStylesBtn);
-  const errorBox = document.createElement("div");
-  errorBox.className = "cesium-cesiumInspector-error";
-  errorBox.setAttribute("data-bind", "text: editorError");
-  stylePanelEditor.appendChild(errorBox);
-  tileDebugLabelsPanelContents.appendChild(
-    createCheckbox("Show Picked Only", "showOnlyPickedTileDebugLabel")
-  );
-  tileDebugLabelsPanelContents.appendChild(
-    createCheckbox("Geometric Error", "showGeometricError")
-  );
-  tileDebugLabelsPanelContents.appendChild(
-    createCheckbox("Rendering Statistics", "showRenderingStatistics")
-  );
-  tileDebugLabelsPanelContents.appendChild(
-    createCheckbox("Memory Usage (MB)", "showMemoryUsage")
-  );
-  tileDebugLabelsPanelContents.appendChild(createCheckbox("Url", "showUrl"));
-  optimizationPanelContents.appendChild(
-    createCheckbox("Skip Tile LODs", "skipLevelOfDetail")
-  );
-  const skipScreenSpaceErrorFactorContainer = document.createElement("div");
-  skipScreenSpaceErrorFactorContainer.appendChild(
-    createRangeInput("Skip SSE Factor", "skipScreenSpaceErrorFactor", 1, 50, 1)
-  );
-  optimizationPanelContents.appendChild(skipScreenSpaceErrorFactorContainer);
-  const baseScreenSpaceError = document.createElement("div");
-  baseScreenSpaceError.appendChild(
-    createRangeInput(
-      "SSE before skipping LOD",
-      "baseScreenSpaceError",
-      0,
-      4096,
-      1
-    )
-  );
-  optimizationPanelContents.appendChild(baseScreenSpaceError);
-  const skipLevelsContainer = document.createElement("div");
-  skipLevelsContainer.appendChild(
-    createRangeInput("Min. levels to skip", "skipLevels", 0, 10, 1)
-  );
-  optimizationPanelContents.appendChild(skipLevelsContainer);
-  optimizationPanelContents.appendChild(
-    createCheckbox(
-      "Load only tiles that meet the max SSE.",
-      "immediatelyLoadDesiredLevelOfDetail"
-    )
-  );
-  optimizationPanelContents.appendChild(
-    createCheckbox("Load siblings of visible tiles", "loadSiblings")
-  );
-  knockout_default.applyBindings(viewModel, element);
-}
-Object.defineProperties(Cesium3DTilesInspector.prototype, {
-  /**
-   * Gets the parent container.
-   * @memberof Cesium3DTilesInspector.prototype
-   *
-   * @type {Element}
-   */
-  container: {
-    get: function() {
-      return this._container;
-    }
-  },
-  /**
-   * Gets the view model.
-   * @memberof Cesium3DTilesInspector.prototype
-   *
-   * @type {Cesium3DTilesInspectorViewModel}
-   */
-  viewModel: {
-    get: function() {
-      return this._viewModel;
-    }
-  }
-});
-Cesium3DTilesInspector.prototype.isDestroyed = function() {
-  return false;
-};
-Cesium3DTilesInspector.prototype.destroy = function() {
-  knockout_default.cleanNode(this._element);
-  this._container.removeChild(this._element);
-  this.viewModel.destroy();
-  return destroyObject4(this);
-};
-var Cesium3DTilesInspector_default = Cesium3DTilesInspector;
-
 // packages/widgets/Source/BaseLayerPicker/BaseLayerPicker.js
-import { DeveloperError as DeveloperError7, defined as defined9, destroyObject as destroyObject5 } from "@cesium/core";
-import { FeatureDetection, getElement as getElement3 } from "@cesium/engine";
+import { DeveloperError as DeveloperError7, defined as defined8, destroyObject as destroyObject3 } from "@cesium/core";
+import { FeatureDetection, getElement as getElement2 } from "@cesium/engine";
 
 // packages/widgets/Source/BaseLayerPicker/BaseLayerPickerViewModel.js
-import { DeveloperError as DeveloperError6, Frozen as Frozen2, defined as defined8 } from "@cesium/core";
+import { DeveloperError as DeveloperError6, Frozen as Frozen2, defined as defined7 } from "@cesium/core";
 import {
   EllipsoidTerrainProvider,
   ImageryLayer,
@@ -6577,7 +5158,7 @@ function BaseLayerPickerViewModel(options) {
   const globe = options.globe;
   const imageryProviderViewModels = options.imageryProviderViewModels ?? Frozen2.EMPTY_ARRAY;
   const terrainProviderViewModels = options.terrainProviderViewModels ?? Frozen2.EMPTY_ARRAY;
-  if (!defined8(globe)) {
+  if (!defined7(globe)) {
     throw new DeveloperError6("globe is required");
   }
   this._globe = globe;
@@ -6600,7 +5181,7 @@ function BaseLayerPickerViewModel(options) {
     for (i = 0; i < providers.length; i++) {
       const provider = providers[i];
       const category = provider.category;
-      if (defined8(categories[category])) {
+      if (defined7(categories[category])) {
         categories[category].push(provider);
       } else {
         categories[category] = [provider];
@@ -6629,7 +5210,7 @@ function BaseLayerPickerViewModel(options) {
     for (i = 0; i < providers.length; i++) {
       const provider = providers[i];
       const category = provider.category;
-      if (defined8(categories[category])) {
+      if (defined7(categories[category])) {
         categories[category].push(provider);
       } else {
         categories[category] = [provider];
@@ -6651,12 +5232,12 @@ function BaseLayerPickerViewModel(options) {
   knockout_default.defineProperty(this, "buttonTooltip", function() {
     const selectedImagery = this.selectedImagery;
     const selectedTerrain = this.selectedTerrain;
-    const imageryTip = defined8(selectedImagery) ? selectedImagery.name : void 0;
-    const terrainTip = defined8(selectedTerrain) ? selectedTerrain.name : void 0;
-    if (defined8(imageryTip) && defined8(terrainTip)) {
+    const imageryTip = defined7(selectedImagery) ? selectedImagery.name : void 0;
+    const terrainTip = defined7(selectedTerrain) ? selectedTerrain.name : void 0;
+    if (defined7(imageryTip) && defined7(terrainTip)) {
       return `${imageryTip}
 ${terrainTip}`;
-    } else if (defined8(imageryTip)) {
+    } else if (defined7(imageryTip)) {
       return imageryTip;
     }
     return terrainTip;
@@ -6664,7 +5245,7 @@ ${terrainTip}`;
   this.buttonImageUrl = void 0;
   knockout_default.defineProperty(this, "buttonImageUrl", function() {
     const selectedImagery = this.selectedImagery;
-    if (defined8(selectedImagery)) {
+    if (defined7(selectedImagery)) {
       return selectedImagery.iconUrl;
     }
   });
@@ -6696,7 +5277,7 @@ ${terrainTip}`;
           }
         }
       }
-      if (defined8(value)) {
+      if (defined7(value)) {
         const newProviders = value.creationCommand();
         if (Array.isArray(newProviders)) {
           const newProvidersLength = newProviders.length;
@@ -6714,7 +5295,7 @@ ${terrainTip}`;
             imageryLayers.add(layer, 0);
           } else {
             const baseLayer = imageryLayers.get(0);
-            if (defined8(baseLayer)) {
+            if (defined7(baseLayer)) {
               imageryLayers.remove(baseLayer);
             }
             imageryLayers.add(layer, 0);
@@ -6738,13 +5319,13 @@ ${terrainTip}`;
         return;
       }
       let newProvider;
-      if (defined8(value)) {
+      if (defined7(value)) {
         newProvider = value.creationCommand();
       }
-      if (defined8(newProvider) && !defined8(newProvider.then)) {
+      if (defined7(newProvider) && !defined7(newProvider.then)) {
         this._globe.depthTestAgainstTerrain = !(newProvider instanceof EllipsoidTerrainProvider);
         this._globe.terrainProvider = newProvider;
-      } else if (defined8(newProvider)) {
+      } else if (defined7(newProvider)) {
         let cancelUpdate = false;
         const removeCancelListener = this._globe.terrainProviderChanged.addEventListener(() => {
           cancelUpdate = true;
@@ -6801,10 +5382,10 @@ var BaseLayerPickerViewModel_default = BaseLayerPickerViewModel;
 
 // packages/widgets/Source/BaseLayerPicker/BaseLayerPicker.js
 function BaseLayerPicker(container, options) {
-  if (!defined9(container)) {
+  if (!defined8(container)) {
     throw new DeveloperError7("container is required.");
   }
-  container = getElement3(container);
+  container = getElement2(container);
   const viewModel = new BaseLayerPickerViewModel_default(options);
   const element = document.createElement("button");
   element.type = "button";
@@ -6963,7 +5544,7 @@ BaseLayerPicker.prototype.destroy = function() {
   knockout_default.cleanNode(this._dropPanel);
   this._container.removeChild(this._element);
   this._container.removeChild(this._dropPanel);
-  return destroyObject5(this);
+  return destroyObject3(this);
 };
 var BaseLayerPicker_default = BaseLayerPicker;
 
@@ -6980,22 +5561,22 @@ import {
 } from "@cesium/engine";
 
 // packages/widgets/Source/BaseLayerPicker/ProviderViewModel.js
-import { DeveloperError as DeveloperError8, defined as defined10 } from "@cesium/core";
+import { DeveloperError as DeveloperError8, defined as defined9 } from "@cesium/core";
 function ProviderViewModel(options) {
-  if (!defined10(options.name)) {
+  if (!defined9(options.name)) {
     throw new DeveloperError8("options.name is required.");
   }
-  if (!defined10(options.tooltip)) {
+  if (!defined9(options.tooltip)) {
     throw new DeveloperError8("options.tooltip is required.");
   }
-  if (!defined10(options.iconUrl)) {
+  if (!defined9(options.iconUrl)) {
     throw new DeveloperError8("options.iconUrl is required.");
   }
   if (typeof options.creationFunction !== "function") {
     throw new DeveloperError8("options.creationFunction is required.");
   }
   let creationCommand = options.creationFunction;
-  if (!defined10(creationCommand.canExecute)) {
+  if (!defined9(creationCommand.canExecute)) {
     creationCommand = createCommand_default(creationCommand);
   }
   this._creationCommand = creationCommand;
@@ -7394,6 +5975,1425 @@ function createDefaultTerrainProviderViewModels() {
   return providerViewModels;
 }
 var createDefaultTerrainProviderViewModels_default = createDefaultTerrainProviderViewModels;
+
+// packages/widgets/Source/Cesium3DTilesInspector/Cesium3DTilesInspector.js
+import { Check as Check3, destroyObject as destroyObject5 } from "@cesium/core";
+import { getElement as getElement3 } from "@cesium/engine";
+
+// packages/widgets/Source/Cesium3DTilesInspector/Cesium3DTilesInspectorViewModel.js
+import { Check as Check2, Color as Color2, defined as defined10, destroyObject as destroyObject4 } from "@cesium/core";
+import {
+  Cesium3DTileColorBlendMode,
+  Cesium3DTileFeature,
+  Cesium3DTilePass,
+  Cesium3DTileset,
+  Cesium3DTileStyle,
+  PerformanceDisplay,
+  ResourceCache,
+  ScreenSpaceEventHandler,
+  ScreenSpaceEventType
+} from "@cesium/engine";
+function getPickTileset(viewModel) {
+  return function(e) {
+    const pick = viewModel._scene.pick(e.position);
+    if (defined10(pick) && pick.primitive instanceof Cesium3DTileset) {
+      viewModel.tileset = pick.primitive;
+    }
+    viewModel.pickActive = false;
+  };
+}
+function selectTilesetOnHover(viewModel, value) {
+  if (value) {
+    viewModel._eventHandler.setInputAction(function(e) {
+      const pick = viewModel._scene.pick(e.endPosition);
+      if (defined10(pick) && pick.primitive instanceof Cesium3DTileset) {
+        viewModel.tileset = pick.primitive;
+      }
+    }, ScreenSpaceEventType.MOUSE_MOVE);
+  } else {
+    viewModel._eventHandler.removeInputAction(ScreenSpaceEventType.MOUSE_MOVE);
+    viewModel.picking = viewModel.picking;
+  }
+}
+var stringOptions = {
+  maximumFractionDigits: 3
+};
+function formatMemoryString(memorySizeInBytes) {
+  const memoryInMegabytes = memorySizeInBytes / 1048576;
+  if (memoryInMegabytes < 1) {
+    return memoryInMegabytes.toLocaleString(void 0, stringOptions);
+  }
+  return Math.round(memoryInMegabytes).toLocaleString();
+}
+function getStatistics(tileset, isPick) {
+  if (!defined10(tileset)) {
+    return "";
+  }
+  const statistics = isPick ? tileset._statisticsPerPass[Cesium3DTilePass.PICK] : tileset._statisticsPerPass[Cesium3DTilePass.RENDER];
+  let s = '<ul class="cesium-cesiumInspector-statistics">';
+  s += // --- Rendering statistics
+  `<li><strong>Visited: </strong>${statistics.visited.toLocaleString()}</li><li><strong>Selected: </strong>${statistics.selected.toLocaleString()}</li><li><strong>Commands: </strong>${statistics.numberOfCommands.toLocaleString()}</li>`;
+  s += "</ul>";
+  if (!isPick) {
+    s += '<ul class="cesium-cesiumInspector-statistics">';
+    s += // --- Cache/loading statistics
+    `<li><strong>Requests: </strong>${statistics.numberOfPendingRequests.toLocaleString()}</li><li><strong>Attempted: </strong>${statistics.numberOfAttemptedRequests.toLocaleString()}</li><li><strong>Processing: </strong>${statistics.numberOfTilesProcessing.toLocaleString()}</li><li><strong>Content Ready: </strong>${statistics.numberOfTilesWithContentReady.toLocaleString()}</li><li><strong>Total: </strong>${statistics.numberOfTilesTotal.toLocaleString()}</li>`;
+    s += "</ul>";
+    s += '<ul class="cesium-cesiumInspector-statistics">';
+    s += // --- Features statistics
+    `<li><strong>Features Selected: </strong>${statistics.numberOfFeaturesSelected.toLocaleString()}</li><li><strong>Features Loaded: </strong>${statistics.numberOfFeaturesLoaded.toLocaleString()}</li><li><strong>Points Selected: </strong>${statistics.numberOfPointsSelected.toLocaleString()}</li><li><strong>Points Loaded: </strong>${statistics.numberOfPointsLoaded.toLocaleString()}</li><li><strong>Triangles Selected: </strong>${statistics.numberOfTrianglesSelected.toLocaleString()}</li>`;
+    s += "</ul>";
+    s += '<ul class="cesium-cesiumInspector-statistics">';
+    s += // --- Styling statistics
+    `<li><strong>Tiles styled: </strong>${statistics.numberOfTilesStyled.toLocaleString()}</li><li><strong>Features styled: </strong>${statistics.numberOfFeaturesStyled.toLocaleString()}</li>`;
+    s += "</ul>";
+    s += '<ul class="cesium-cesiumInspector-statistics">';
+    s += // --- Optimization statistics
+    `<li><strong>Children Union Culled: </strong>${statistics.numberOfTilesCulledWithChildrenUnion.toLocaleString()}</li>`;
+    s += "</ul>";
+    s += '<ul class="cesium-cesiumInspector-statistics">';
+    s += // --- Memory statistics
+    `<li><strong>Geometry Memory (MB): </strong>${formatMemoryString(
+      statistics.geometryByteLength
+    )}</li><li><strong>Texture Memory (MB): </strong>${formatMemoryString(
+      statistics.texturesByteLength
+    )}</li><li><strong>Batch Table Memory (MB): </strong>${formatMemoryString(
+      statistics.batchTableByteLength
+    )}</li>`;
+    s += "</ul>";
+  }
+  return s;
+}
+function getResourceCacheStatistics() {
+  const statistics = ResourceCache.statistics;
+  return `
+  <ul class="cesium-cesiumInspector-statistics">
+    <li><strong>Geometry Memory (MB): </strong>${formatMemoryString(
+    statistics.geometryByteLength
+  )}</li>
+    <li><strong>Texture Memory (MB): </strong>${formatMemoryString(
+    statistics.texturesByteLength
+  )}</li>
+  </ul>
+  `;
+}
+var colorBlendModes = [
+  {
+    text: "Highlight",
+    value: Cesium3DTileColorBlendMode.HIGHLIGHT
+  },
+  {
+    text: "Replace",
+    value: Cesium3DTileColorBlendMode.REPLACE
+  },
+  {
+    text: "Mix",
+    value: Cesium3DTileColorBlendMode.MIX
+  }
+];
+var highlightColor = new Color2(1, 1, 0, 0.4);
+var scratchColor = new Color2();
+var oldColor = new Color2();
+function Cesium3DTilesInspectorViewModel(scene, performanceContainer) {
+  Check2.typeOf.object("scene", scene);
+  Check2.typeOf.object("performanceContainer", performanceContainer);
+  const that = this;
+  const canvas = scene.canvas;
+  this._eventHandler = new ScreenSpaceEventHandler(canvas);
+  this._scene = scene;
+  this._performanceContainer = performanceContainer;
+  this._canvas = canvas;
+  this._performanceDisplay = new PerformanceDisplay({
+    container: performanceContainer
+  });
+  this._statisticsText = "";
+  this._pickStatisticsText = "";
+  this._resourceCacheStatisticsText = "";
+  this._editorError = "";
+  this.performance = false;
+  this.showStatistics = true;
+  this.showPickStatistics = true;
+  this.showResourceCacheStatistics = false;
+  this.inspectorVisible = true;
+  this.tilesetVisible = false;
+  this.displayVisible = false;
+  this.updateVisible = false;
+  this.loggingVisible = false;
+  this.styleVisible = false;
+  this.tileDebugLabelsVisible = false;
+  this.optimizationVisible = false;
+  this.styleString = "{}";
+  this.hasEnabledWireframe = false;
+  this._tileset = void 0;
+  this._feature = void 0;
+  this._tile = void 0;
+  knockout_default.track(this, [
+    "performance",
+    "inspectorVisible",
+    "_statisticsText",
+    "_pickStatisticsText",
+    "_resourceCacheStatisticsText",
+    "_editorError",
+    "showPickStatistics",
+    "showStatistics",
+    "showResourceCacheStatistics",
+    "tilesetVisible",
+    "displayVisible",
+    "updateVisible",
+    "loggingVisible",
+    "styleVisible",
+    "optimizationVisible",
+    "tileDebugLabelsVisible",
+    "styleString",
+    "_feature",
+    "_tile",
+    "_tileset",
+    "hasEnabledWireframe"
+  ]);
+  this._properties = knockout_default.observable({});
+  this.properties = [];
+  knockout_default.defineProperty(this, "properties", function() {
+    const names = [];
+    const properties = that._properties();
+    for (const prop in properties) {
+      if (properties.hasOwnProperty(prop)) {
+        names.push(prop);
+      }
+    }
+    return names;
+  });
+  const dynamicScreenSpaceError = knockout_default.observable();
+  knockout_default.defineProperty(this, "dynamicScreenSpaceError", {
+    get: function() {
+      return dynamicScreenSpaceError();
+    },
+    set: function(value) {
+      dynamicScreenSpaceError(value);
+      if (defined10(that._tileset)) {
+        that._tileset.dynamicScreenSpaceError = value;
+      }
+    }
+  });
+  this.dynamicScreenSpaceError = false;
+  const colorBlendMode = knockout_default.observable();
+  knockout_default.defineProperty(this, "colorBlendMode", {
+    get: function() {
+      return colorBlendMode();
+    },
+    set: function(value) {
+      colorBlendMode(value);
+      if (defined10(that._tileset)) {
+        that._tileset.colorBlendMode = value;
+        that._scene.requestRender();
+      }
+    }
+  });
+  this.colorBlendMode = Cesium3DTileColorBlendMode.HIGHLIGHT;
+  const showOnlyPickedTileDebugLabel = knockout_default.observable();
+  const picking = knockout_default.observable();
+  knockout_default.defineProperty(this, "picking", {
+    get: function() {
+      return picking();
+    },
+    set: function(value) {
+      picking(value);
+      if (value) {
+        that._eventHandler.setInputAction(function(e) {
+          const picked = scene.pick(e.endPosition);
+          if (picked instanceof Cesium3DTileFeature) {
+            that.feature = picked;
+            that.tile = picked.content.tile;
+          } else if (defined10(picked) && defined10(picked.content)) {
+            that.feature = void 0;
+            that.tile = picked.content.tile;
+          } else {
+            that.feature = void 0;
+            that.tile = void 0;
+          }
+          if (!defined10(that._tileset)) {
+            return;
+          }
+          if (showOnlyPickedTileDebugLabel && defined10(picked) && defined10(picked.content)) {
+            let position;
+            if (scene.pickPositionSupported) {
+              position = scene.pickPosition(e.endPosition);
+              if (defined10(position)) {
+                that._tileset.debugPickPosition = position;
+              }
+            }
+            that._tileset.debugPickedTile = picked.content.tile;
+          } else {
+            that._tileset.debugPickedTile = void 0;
+          }
+          that._scene.requestRender();
+        }, ScreenSpaceEventType.MOUSE_MOVE);
+      } else {
+        that.feature = void 0;
+        that.tile = void 0;
+        that._eventHandler.removeInputAction(ScreenSpaceEventType.MOUSE_MOVE);
+      }
+    }
+  });
+  this.picking = true;
+  const colorize = knockout_default.observable();
+  knockout_default.defineProperty(this, "colorize", {
+    get: function() {
+      return colorize();
+    },
+    set: function(value) {
+      colorize(value);
+      if (defined10(that._tileset)) {
+        that._tileset.debugColorizeTiles = value;
+        that._scene.requestRender();
+      }
+    }
+  });
+  this.colorize = false;
+  const wireframe = knockout_default.observable();
+  knockout_default.defineProperty(this, "wireframe", {
+    get: function() {
+      return wireframe();
+    },
+    set: function(value) {
+      wireframe(value);
+      if (defined10(that._tileset)) {
+        that._tileset.debugWireframe = value;
+        that._scene.requestRender();
+      }
+    }
+  });
+  this.wireframe = false;
+  const showBoundingVolumes = knockout_default.observable();
+  knockout_default.defineProperty(this, "showBoundingVolumes", {
+    get: function() {
+      return showBoundingVolumes();
+    },
+    set: function(value) {
+      showBoundingVolumes(value);
+      if (defined10(that._tileset)) {
+        that._tileset.debugShowBoundingVolume = value;
+        that._scene.requestRender();
+      }
+    }
+  });
+  this.showBoundingVolumes = false;
+  const showContentBoundingVolumes = knockout_default.observable();
+  knockout_default.defineProperty(this, "showContentBoundingVolumes", {
+    get: function() {
+      return showContentBoundingVolumes();
+    },
+    set: function(value) {
+      showContentBoundingVolumes(value);
+      if (defined10(that._tileset)) {
+        that._tileset.debugShowContentBoundingVolume = value;
+        that._scene.requestRender();
+      }
+    }
+  });
+  this.showContentBoundingVolumes = false;
+  const showRequestVolumes = knockout_default.observable();
+  knockout_default.defineProperty(this, "showRequestVolumes", {
+    get: function() {
+      return showRequestVolumes();
+    },
+    set: function(value) {
+      showRequestVolumes(value);
+      if (defined10(that._tileset)) {
+        that._tileset.debugShowViewerRequestVolume = value;
+        that._scene.requestRender();
+      }
+    }
+  });
+  this.showRequestVolumes = false;
+  const freezeFrame = knockout_default.observable();
+  knockout_default.defineProperty(this, "freezeFrame", {
+    get: function() {
+      return freezeFrame();
+    },
+    set: function(value) {
+      freezeFrame(value);
+      if (defined10(that._tileset)) {
+        that._tileset.debugFreezeFrame = value;
+        that._scene.debugShowFrustumPlanes = value;
+        that._scene.requestRender();
+      }
+    }
+  });
+  this.freezeFrame = false;
+  knockout_default.defineProperty(this, "showOnlyPickedTileDebugLabel", {
+    get: function() {
+      return showOnlyPickedTileDebugLabel();
+    },
+    set: function(value) {
+      showOnlyPickedTileDebugLabel(value);
+      if (defined10(that._tileset)) {
+        that._tileset.debugPickedTileLabelOnly = value;
+        that._scene.requestRender();
+      }
+    }
+  });
+  this.showOnlyPickedTileDebugLabel = false;
+  const showGeometricError = knockout_default.observable();
+  knockout_default.defineProperty(this, "showGeometricError", {
+    get: function() {
+      return showGeometricError();
+    },
+    set: function(value) {
+      showGeometricError(value);
+      if (defined10(that._tileset)) {
+        that._tileset.debugShowGeometricError = value;
+        that._scene.requestRender();
+      }
+    }
+  });
+  this.showGeometricError = false;
+  const showRenderingStatistics = knockout_default.observable();
+  knockout_default.defineProperty(this, "showRenderingStatistics", {
+    get: function() {
+      return showRenderingStatistics();
+    },
+    set: function(value) {
+      showRenderingStatistics(value);
+      if (defined10(that._tileset)) {
+        that._tileset.debugShowRenderingStatistics = value;
+        that._scene.requestRender();
+      }
+    }
+  });
+  this.showRenderingStatistics = false;
+  const showMemoryUsage = knockout_default.observable();
+  knockout_default.defineProperty(this, "showMemoryUsage", {
+    get: function() {
+      return showMemoryUsage();
+    },
+    set: function(value) {
+      showMemoryUsage(value);
+      if (defined10(that._tileset)) {
+        that._tileset.debugShowMemoryUsage = value;
+        that._scene.requestRender();
+      }
+    }
+  });
+  this.showMemoryUsage = false;
+  const showUrl = knockout_default.observable();
+  knockout_default.defineProperty(this, "showUrl", {
+    get: function() {
+      return showUrl();
+    },
+    set: function(value) {
+      showUrl(value);
+      if (defined10(that._tileset)) {
+        that._tileset.debugShowUrl = value;
+        that._scene.requestRender();
+      }
+    }
+  });
+  this.showUrl = false;
+  const maximumScreenSpaceError = knockout_default.observable();
+  knockout_default.defineProperty(this, "maximumScreenSpaceError", {
+    get: function() {
+      return maximumScreenSpaceError();
+    },
+    set: function(value) {
+      value = Number(value);
+      if (!isNaN(value)) {
+        maximumScreenSpaceError(value);
+        if (defined10(that._tileset)) {
+          that._tileset.maximumScreenSpaceError = value;
+        }
+      }
+    }
+  });
+  this.maximumScreenSpaceError = 16;
+  const dynamicScreenSpaceErrorDensity = knockout_default.observable();
+  knockout_default.defineProperty(this, "dynamicScreenSpaceErrorDensity", {
+    get: function() {
+      return dynamicScreenSpaceErrorDensity();
+    },
+    set: function(value) {
+      value = Number(value);
+      if (!isNaN(value)) {
+        dynamicScreenSpaceErrorDensity(value);
+        if (defined10(that._tileset)) {
+          that._tileset.dynamicScreenSpaceErrorDensity = value;
+        }
+      }
+    }
+  });
+  this.dynamicScreenSpaceErrorDensity = 2e-4;
+  this.dynamicScreenSpaceErrorDensitySliderValue = void 0;
+  knockout_default.defineProperty(this, "dynamicScreenSpaceErrorDensitySliderValue", {
+    get: function() {
+      return Math.pow(dynamicScreenSpaceErrorDensity(), 1 / 6);
+    },
+    set: function(value) {
+      const scaledValue = Math.pow(value, 6);
+      dynamicScreenSpaceErrorDensity(scaledValue);
+      if (defined10(that._tileset)) {
+        that._tileset.dynamicScreenSpaceErrorDensity = scaledValue;
+      }
+    }
+  });
+  const dynamicScreenSpaceErrorFactor = knockout_default.observable();
+  knockout_default.defineProperty(this, "dynamicScreenSpaceErrorFactor", {
+    get: function() {
+      return dynamicScreenSpaceErrorFactor();
+    },
+    set: function(value) {
+      value = Number(value);
+      if (!isNaN(value)) {
+        dynamicScreenSpaceErrorFactor(value);
+        if (defined10(that._tileset)) {
+          that._tileset.dynamicScreenSpaceErrorFactor = value;
+        }
+      }
+    }
+  });
+  this.dynamicScreenSpaceErrorFactor = 24;
+  const pickTileset = getPickTileset(this);
+  const pickActive = knockout_default.observable();
+  knockout_default.defineProperty(this, "pickActive", {
+    get: function() {
+      return pickActive();
+    },
+    set: function(value) {
+      pickActive(value);
+      if (value) {
+        that._eventHandler.setInputAction(
+          pickTileset,
+          ScreenSpaceEventType.LEFT_CLICK
+        );
+      } else {
+        that._eventHandler.removeInputAction(ScreenSpaceEventType.LEFT_CLICK);
+      }
+    }
+  });
+  const pointCloudShading = knockout_default.observable();
+  knockout_default.defineProperty(this, "pointCloudShading", {
+    get: function() {
+      return pointCloudShading();
+    },
+    set: function(value) {
+      pointCloudShading(value);
+      if (defined10(that._tileset)) {
+        that._tileset.pointCloudShading.attenuation = value;
+      }
+    }
+  });
+  this.pointCloudShading = false;
+  const geometricErrorScale = knockout_default.observable();
+  knockout_default.defineProperty(this, "geometricErrorScale", {
+    get: function() {
+      return geometricErrorScale();
+    },
+    set: function(value) {
+      value = Number(value);
+      if (!isNaN(value)) {
+        geometricErrorScale(value);
+        if (defined10(that._tileset)) {
+          that._tileset.pointCloudShading.geometricErrorScale = value;
+        }
+      }
+    }
+  });
+  this.geometricErrorScale = 1;
+  const maximumAttenuation = knockout_default.observable();
+  knockout_default.defineProperty(this, "maximumAttenuation", {
+    get: function() {
+      return maximumAttenuation();
+    },
+    set: function(value) {
+      value = Number(value);
+      if (!isNaN(value)) {
+        maximumAttenuation(value);
+        if (defined10(that._tileset)) {
+          that._tileset.pointCloudShading.maximumAttenuation = value === 0 ? void 0 : value;
+        }
+      }
+    }
+  });
+  this.maximumAttenuation = 0;
+  const baseResolution = knockout_default.observable();
+  knockout_default.defineProperty(this, "baseResolution", {
+    get: function() {
+      return baseResolution();
+    },
+    set: function(value) {
+      value = Number(value);
+      if (!isNaN(value)) {
+        baseResolution(value);
+        if (defined10(that._tileset)) {
+          that._tileset.pointCloudShading.baseResolution = value === 0 ? void 0 : value;
+        }
+      }
+    }
+  });
+  this.baseResolution = 0;
+  const eyeDomeLighting = knockout_default.observable();
+  knockout_default.defineProperty(this, "eyeDomeLighting", {
+    get: function() {
+      return eyeDomeLighting();
+    },
+    set: function(value) {
+      eyeDomeLighting(value);
+      if (defined10(that._tileset)) {
+        that._tileset.pointCloudShading.eyeDomeLighting = value;
+      }
+    }
+  });
+  this.eyeDomeLighting = false;
+  const eyeDomeLightingStrength = knockout_default.observable();
+  knockout_default.defineProperty(this, "eyeDomeLightingStrength", {
+    get: function() {
+      return eyeDomeLightingStrength();
+    },
+    set: function(value) {
+      value = Number(value);
+      if (!isNaN(value)) {
+        eyeDomeLightingStrength(value);
+        if (defined10(that._tileset)) {
+          that._tileset.pointCloudShading.eyeDomeLightingStrength = value;
+        }
+      }
+    }
+  });
+  this.eyeDomeLightingStrength = 1;
+  const eyeDomeLightingRadius = knockout_default.observable();
+  knockout_default.defineProperty(this, "eyeDomeLightingRadius", {
+    get: function() {
+      return eyeDomeLightingRadius();
+    },
+    set: function(value) {
+      value = Number(value);
+      if (!isNaN(value)) {
+        eyeDomeLightingRadius(value);
+        if (defined10(that._tileset)) {
+          that._tileset.pointCloudShading.eyeDomeLightingRadius = value;
+        }
+      }
+    }
+  });
+  this.eyeDomeLightingRadius = 1;
+  this.pickActive = false;
+  const skipLevelOfDetail = knockout_default.observable();
+  knockout_default.defineProperty(this, "skipLevelOfDetail", {
+    get: function() {
+      return skipLevelOfDetail();
+    },
+    set: function(value) {
+      skipLevelOfDetail(value);
+      if (defined10(that._tileset)) {
+        that._tileset.skipLevelOfDetail = value;
+      }
+    }
+  });
+  this.skipLevelOfDetail = true;
+  const skipScreenSpaceErrorFactor = knockout_default.observable();
+  knockout_default.defineProperty(this, "skipScreenSpaceErrorFactor", {
+    get: function() {
+      return skipScreenSpaceErrorFactor();
+    },
+    set: function(value) {
+      value = Number(value);
+      if (!isNaN(value)) {
+        skipScreenSpaceErrorFactor(value);
+        if (defined10(that._tileset)) {
+          that._tileset.skipScreenSpaceErrorFactor = value;
+        }
+      }
+    }
+  });
+  this.skipScreenSpaceErrorFactor = 16;
+  const baseScreenSpaceError = knockout_default.observable();
+  knockout_default.defineProperty(this, "baseScreenSpaceError", {
+    get: function() {
+      return baseScreenSpaceError();
+    },
+    set: function(value) {
+      value = Number(value);
+      if (!isNaN(value)) {
+        baseScreenSpaceError(value);
+        if (defined10(that._tileset)) {
+          that._tileset.baseScreenSpaceError = value;
+        }
+      }
+    }
+  });
+  this.baseScreenSpaceError = 1024;
+  const skipLevels = knockout_default.observable();
+  knockout_default.defineProperty(this, "skipLevels", {
+    get: function() {
+      return skipLevels();
+    },
+    set: function(value) {
+      value = Number(value);
+      if (!isNaN(value)) {
+        skipLevels(value);
+        if (defined10(that._tileset)) {
+          that._tileset.skipLevels = value;
+        }
+      }
+    }
+  });
+  this.skipLevels = 1;
+  const immediatelyLoadDesiredLevelOfDetail = knockout_default.observable();
+  knockout_default.defineProperty(this, "immediatelyLoadDesiredLevelOfDetail", {
+    get: function() {
+      return immediatelyLoadDesiredLevelOfDetail();
+    },
+    set: function(value) {
+      immediatelyLoadDesiredLevelOfDetail(value);
+      if (defined10(that._tileset)) {
+        that._tileset.immediatelyLoadDesiredLevelOfDetail = value;
+      }
+    }
+  });
+  this.immediatelyLoadDesiredLevelOfDetail = false;
+  const loadSiblings = knockout_default.observable();
+  knockout_default.defineProperty(this, "loadSiblings", {
+    get: function() {
+      return loadSiblings();
+    },
+    set: function(value) {
+      loadSiblings(value);
+      if (defined10(that._tileset)) {
+        that._tileset.loadSiblings = value;
+      }
+    }
+  });
+  this.loadSiblings = false;
+  this._style = void 0;
+  this._shouldStyle = false;
+  this._definedProperties = [
+    "properties",
+    "dynamicScreenSpaceError",
+    "colorBlendMode",
+    "picking",
+    "colorize",
+    "wireframe",
+    "showBoundingVolumes",
+    "showContentBoundingVolumes",
+    "showRequestVolumes",
+    "freezeFrame",
+    "maximumScreenSpaceError",
+    "dynamicScreenSpaceErrorDensity",
+    "baseScreenSpaceError",
+    "skipScreenSpaceErrorFactor",
+    "skipLevelOfDetail",
+    "skipLevels",
+    "immediatelyLoadDesiredLevelOfDetail",
+    "loadSiblings",
+    "dynamicScreenSpaceErrorDensitySliderValue",
+    "dynamicScreenSpaceErrorFactor",
+    "pickActive",
+    "showOnlyPickedTileDebugLabel",
+    "showGeometricError",
+    "showRenderingStatistics",
+    "showMemoryUsage",
+    "showUrl",
+    "pointCloudShading",
+    "geometricErrorScale",
+    "maximumAttenuation",
+    "baseResolution",
+    "eyeDomeLighting",
+    "eyeDomeLightingStrength",
+    "eyeDomeLightingRadius"
+  ];
+  this._removePostRenderEvent = scene.postRender.addEventListener(function() {
+    that._update();
+  });
+  if (!defined10(this._tileset)) {
+    selectTilesetOnHover(this, true);
+  }
+}
+Object.defineProperties(Cesium3DTilesInspectorViewModel.prototype, {
+  /**
+   * Gets the scene
+   * @memberof Cesium3DTilesInspectorViewModel.prototype
+   * @type {Scene}
+   * @readonly
+   */
+  scene: {
+    get: function() {
+      return this._scene;
+    }
+  },
+  /**
+   * Gets the performance container
+   * @memberof Cesium3DTilesInspectorViewModel.prototype
+   * @type {HTMLElement}
+   * @readonly
+   */
+  performanceContainer: {
+    get: function() {
+      return this._performanceContainer;
+    }
+  },
+  /**
+   * Gets the statistics text.  This property is observable.
+   * @memberof Cesium3DTilesInspectorViewModel.prototype
+   * @type {string}
+   * @readonly
+   */
+  statisticsText: {
+    get: function() {
+      return this._statisticsText;
+    }
+  },
+  /**
+   * Gets the pick statistics text.  This property is observable.
+   * @memberof Cesium3DTilesInspectorViewModel.prototype
+   * @type {string}
+   * @readonly
+   */
+  pickStatisticsText: {
+    get: function() {
+      return this._pickStatisticsText;
+    }
+  },
+  /**
+   * Gets the resource cache statistics text. This property is observable.
+   * @memberof Cesium3DTilesInspectorViewModel.prototype
+   * @type {string}
+   * @readonly
+   */
+  resourceCacheStatisticsText: {
+    get: function() {
+      return this._resourceCacheStatisticsText;
+    }
+  },
+  /**
+   * Gets the available blend modes
+   * @memberof Cesium3DTilesInspectorViewModel.prototype
+   * @type {object[]}
+   * @readonly
+   */
+  colorBlendModes: {
+    get: function() {
+      return colorBlendModes;
+    }
+  },
+  /**
+   * Gets the editor error message
+   * @memberof Cesium3DTilesInspectorViewModel.prototype
+   * @type {string}
+   * @readonly
+   */
+  editorError: {
+    get: function() {
+      return this._editorError;
+    }
+  },
+  /**
+   * Gets or sets the tileset of the view model.
+   * @memberof Cesium3DTilesInspectorViewModel.prototype
+   * @type {Cesium3DTileset}
+   */
+  tileset: {
+    get: function() {
+      return this._tileset;
+    },
+    set: function(tileset) {
+      this._tileset = tileset;
+      this._style = void 0;
+      this.styleString = "{}";
+      this.feature = void 0;
+      this.tile = void 0;
+      if (defined10(tileset)) {
+        this._properties(tileset.properties);
+        const settings = [
+          "colorize",
+          "wireframe",
+          "showBoundingVolumes",
+          "showContentBoundingVolumes",
+          "showRequestVolumes",
+          "freezeFrame",
+          "showOnlyPickedTileDebugLabel",
+          "showGeometricError",
+          "showRenderingStatistics",
+          "showMemoryUsage",
+          "showUrl"
+        ];
+        const length = settings.length;
+        for (let i = 0; i < length; ++i) {
+          const setting = settings[i];
+          this[setting] = this[setting];
+        }
+        this.maximumScreenSpaceError = tileset.maximumScreenSpaceError;
+        this.dynamicScreenSpaceError = tileset.dynamicScreenSpaceError;
+        this.dynamicScreenSpaceErrorDensity = tileset.dynamicScreenSpaceErrorDensity;
+        this.dynamicScreenSpaceErrorFactor = tileset.dynamicScreenSpaceErrorFactor;
+        this.colorBlendMode = tileset.colorBlendMode;
+        this.skipLevelOfDetail = tileset.skipLevelOfDetail;
+        this.skipScreenSpaceErrorFactor = tileset.skipScreenSpaceErrorFactor;
+        this.baseScreenSpaceError = tileset.baseScreenSpaceError;
+        this.skipLevels = tileset.skipLevels;
+        this.immediatelyLoadDesiredLevelOfDetail = tileset.immediatelyLoadDesiredLevelOfDetail;
+        this.loadSiblings = tileset.loadSiblings;
+        this.hasEnabledWireframe = tileset._enableDebugWireframe;
+        const pointCloudShading = tileset.pointCloudShading;
+        this.pointCloudShading = pointCloudShading.attenuation;
+        this.geometricErrorScale = pointCloudShading.geometricErrorScale;
+        this.maximumAttenuation = pointCloudShading.maximumAttenuation ? pointCloudShading.maximumAttenuation : 0;
+        this.baseResolution = pointCloudShading.baseResolution ? pointCloudShading.baseResolution : 0;
+        this.eyeDomeLighting = pointCloudShading.eyeDomeLighting;
+        this.eyeDomeLightingStrength = pointCloudShading.eyeDomeLightingStrength;
+        this.eyeDomeLightingRadius = pointCloudShading.eyeDomeLightingRadius;
+        this._scene.requestRender();
+      } else {
+        this._properties({});
+      }
+      this._statisticsText = getStatistics(tileset, false);
+      this._pickStatisticsText = getStatistics(tileset, true);
+      this._resourceCacheStatisticsText = getResourceCacheStatistics();
+      selectTilesetOnHover(this, false);
+    }
+  },
+  /**
+   * Gets the current feature of the view model.
+   * @memberof Cesium3DTilesInspectorViewModel.prototype
+   * @type {Cesium3DTileFeature}
+   */
+  feature: {
+    get: function() {
+      return this._feature;
+    },
+    set: function(feature) {
+      if (this._feature === feature) {
+        return;
+      }
+      const currentFeature = this._feature;
+      if (defined10(currentFeature) && !currentFeature.content.isDestroyed()) {
+        if (!this.colorize && defined10(this._style)) {
+          currentFeature.color = defined10(this._style.color) ? this._style.color.evaluateColor(currentFeature, scratchColor) : Color2.WHITE;
+        } else {
+          currentFeature.color = oldColor;
+        }
+        this._scene.requestRender();
+      }
+      if (defined10(feature)) {
+        Color2.clone(feature.color, oldColor);
+        feature.color = highlightColor;
+        this._scene.requestRender();
+      }
+      this._feature = feature;
+    }
+  },
+  /**
+   * Gets the current tile of the view model
+   * @memberof Cesium3DTilesInspectorViewModel.prototype
+   * @type {Cesium3DTile}
+   */
+  tile: {
+    get: function() {
+      return this._tile;
+    },
+    set: function(tile) {
+      if (this._tile === tile) {
+        return;
+      }
+      const currentTile = this._tile;
+      if (defined10(currentTile) && !currentTile.isDestroyed() && !hasFeatures(currentTile.content)) {
+        currentTile.color = oldColor;
+        this._scene.requestRender();
+      }
+      if (defined10(tile) && !hasFeatures(tile.content)) {
+        Color2.clone(tile.color, oldColor);
+        tile.color = highlightColor;
+        this._scene.requestRender();
+      }
+      this._tile = tile;
+    }
+  }
+});
+function hasFeatures(content) {
+  if (!defined10(content)) {
+    return false;
+  }
+  if (content.featuresLength > 0) {
+    return true;
+  }
+  const innerContents = content.innerContents;
+  if (defined10(innerContents)) {
+    const length = innerContents.length;
+    for (let i = 0; i < length; ++i) {
+      if (!hasFeatures(innerContents[i])) {
+        return false;
+      }
+    }
+    return true;
+  }
+  return false;
+}
+Cesium3DTilesInspectorViewModel.prototype.togglePickTileset = function() {
+  this.pickActive = !this.pickActive;
+};
+Cesium3DTilesInspectorViewModel.prototype.toggleInspector = function() {
+  this.inspectorVisible = !this.inspectorVisible;
+};
+Cesium3DTilesInspectorViewModel.prototype.toggleTileset = function() {
+  this.tilesetVisible = !this.tilesetVisible;
+};
+Cesium3DTilesInspectorViewModel.prototype.toggleDisplay = function() {
+  this.displayVisible = !this.displayVisible;
+};
+Cesium3DTilesInspectorViewModel.prototype.toggleUpdate = function() {
+  this.updateVisible = !this.updateVisible;
+};
+Cesium3DTilesInspectorViewModel.prototype.toggleLogging = function() {
+  this.loggingVisible = !this.loggingVisible;
+};
+Cesium3DTilesInspectorViewModel.prototype.toggleStyle = function() {
+  this.styleVisible = !this.styleVisible;
+};
+Cesium3DTilesInspectorViewModel.prototype.toggleTileDebugLabels = function() {
+  this.tileDebugLabelsVisible = !this.tileDebugLabelsVisible;
+};
+Cesium3DTilesInspectorViewModel.prototype.toggleOptimization = function() {
+  this.optimizationVisible = !this.optimizationVisible;
+};
+Cesium3DTilesInspectorViewModel.prototype.trimTilesCache = function() {
+  if (defined10(this._tileset)) {
+    this._tileset.trimLoadedTiles();
+  }
+};
+Cesium3DTilesInspectorViewModel.prototype.compileStyle = function() {
+  const tileset = this._tileset;
+  if (!defined10(tileset) || this.styleString === JSON.stringify(tileset.style)) {
+    return;
+  }
+  this._editorError = "";
+  try {
+    if (this.styleString.length === 0) {
+      this.styleString = "{}";
+    }
+    this._style = new Cesium3DTileStyle(JSON.parse(this.styleString));
+    this._shouldStyle = true;
+    this._scene.requestRender();
+  } catch (err) {
+    this._editorError = err.toString();
+  }
+  this.feature = this._feature;
+  this.tile = this._tile;
+};
+Cesium3DTilesInspectorViewModel.prototype.styleEditorKeyPress = function(sender, event) {
+  if (event.keyCode === 9) {
+    event.preventDefault();
+    const textArea = event.target;
+    const start = textArea.selectionStart;
+    const end = textArea.selectionEnd;
+    let newEnd = end;
+    const selected = textArea.value.slice(start, end);
+    const lines = selected.split("\n");
+    const length = lines.length;
+    let i;
+    if (!event.shiftKey) {
+      for (i = 0; i < length; ++i) {
+        lines[i] = `  ${lines[i]}`;
+        newEnd += 2;
+      }
+    } else {
+      for (i = 0; i < length; ++i) {
+        if (lines[i][0] === " ") {
+          if (lines[i][1] === " ") {
+            lines[i] = lines[i].substr(2);
+            newEnd -= 2;
+          } else {
+            lines[i] = lines[i].substr(1);
+            newEnd -= 1;
+          }
+        }
+      }
+    }
+    const newText = lines.join("\n");
+    textArea.value = textArea.value.slice(0, start) + newText + textArea.value.slice(end);
+    textArea.selectionStart = start !== end ? start : newEnd;
+    textArea.selectionEnd = newEnd;
+  } else if (event.ctrlKey && (event.keyCode === 10 || event.keyCode === 13)) {
+    this.compileStyle();
+  }
+  return true;
+};
+Cesium3DTilesInspectorViewModel.prototype._update = function() {
+  const tileset = this._tileset;
+  if (this.performance) {
+    this._performanceDisplay.update();
+  }
+  if (defined10(tileset)) {
+    if (tileset.isDestroyed()) {
+      this.tile = void 0;
+      this.feature = void 0;
+      this.tileset = void 0;
+      return;
+    }
+    const style = tileset.style;
+    if (this._style !== tileset.style) {
+      if (this._shouldStyle) {
+        tileset.style = this._style;
+        this._shouldStyle = false;
+      } else {
+        this._style = style;
+        this.styleString = JSON.stringify(style.style, null, "  ");
+      }
+    }
+  }
+  if (this.showStatistics) {
+    this._statisticsText = getStatistics(tileset, false);
+    this._pickStatisticsText = getStatistics(tileset, true);
+    this._resourceCacheStatisticsText = getResourceCacheStatistics();
+  }
+};
+Cesium3DTilesInspectorViewModel.prototype.isDestroyed = function() {
+  return false;
+};
+Cesium3DTilesInspectorViewModel.prototype.destroy = function() {
+  this._eventHandler.destroy();
+  this._removePostRenderEvent();
+  const that = this;
+  this._definedProperties.forEach(function(property) {
+    knockout_default.getObservable(that, property).dispose();
+  });
+  return destroyObject4(this);
+};
+Cesium3DTilesInspectorViewModel.getStatistics = getStatistics;
+var Cesium3DTilesInspectorViewModel_default = Cesium3DTilesInspectorViewModel;
+
+// packages/widgets/Source/Cesium3DTilesInspector/Cesium3DTilesInspector.js
+function Cesium3DTilesInspector(container, scene) {
+  Check3.defined("container", container);
+  Check3.typeOf.object("scene", scene);
+  container = getElement3(container);
+  const element = document.createElement("div");
+  const performanceContainer = document.createElement("div");
+  performanceContainer.setAttribute("data-bind", "visible: performance");
+  const viewModel = new Cesium3DTilesInspectorViewModel_default(
+    scene,
+    performanceContainer
+  );
+  this._viewModel = viewModel;
+  this._container = container;
+  this._element = element;
+  const text = document.createElement("div");
+  text.textContent = "3D Tiles Inspector";
+  text.className = "cesium-cesiumInspector-button";
+  text.setAttribute("data-bind", "click: toggleInspector");
+  element.appendChild(text);
+  element.className = "cesium-cesiumInspector cesium-3DTilesInspector";
+  element.setAttribute(
+    "data-bind",
+    'css: { "cesium-cesiumInspector-visible" : inspectorVisible, "cesium-cesiumInspector-hidden" : !inspectorVisible}'
+  );
+  container.appendChild(element);
+  const panel = document.createElement("div");
+  panel.className = "cesium-cesiumInspector-dropDown";
+  element.appendChild(panel);
+  const createSection = InspectorShared_default.createSection;
+  const createCheckbox = InspectorShared_default.createCheckbox;
+  const createRangeInput = InspectorShared_default.createRangeInput;
+  const createButton = InspectorShared_default.createButton;
+  const tilesetPanelContents = createSection(
+    panel,
+    "Tileset",
+    "tilesetVisible",
+    "toggleTileset"
+  );
+  const displayPanelContents = createSection(
+    panel,
+    "Display",
+    "displayVisible",
+    "toggleDisplay"
+  );
+  const updatePanelContents = createSection(
+    panel,
+    "Update",
+    "updateVisible",
+    "toggleUpdate"
+  );
+  const loggingPanelContents = createSection(
+    panel,
+    "Logging",
+    "loggingVisible",
+    "toggleLogging"
+  );
+  const tileDebugLabelsPanelContents = createSection(
+    panel,
+    "Tile Debug Labels",
+    "tileDebugLabelsVisible",
+    "toggleTileDebugLabels"
+  );
+  const stylePanelContents = createSection(
+    panel,
+    "Style",
+    "styleVisible",
+    "toggleStyle"
+  );
+  const optimizationPanelContents = createSection(
+    panel,
+    "Optimization",
+    "optimizationVisible",
+    "toggleOptimization"
+  );
+  const properties = document.createElement("div");
+  properties.className = "field-group";
+  const propertiesLabel = document.createElement("label");
+  propertiesLabel.className = "field-label";
+  propertiesLabel.appendChild(document.createTextNode("Properties: "));
+  const propertiesField = document.createElement("div");
+  propertiesField.setAttribute("data-bind", "text: properties");
+  properties.appendChild(propertiesLabel);
+  properties.appendChild(propertiesField);
+  tilesetPanelContents.appendChild(properties);
+  tilesetPanelContents.appendChild(
+    createButton("Pick Tileset", "togglePickTileset", "pickActive")
+  );
+  tilesetPanelContents.appendChild(
+    createButton("Trim Tiles Cache", "trimTilesCache")
+  );
+  tilesetPanelContents.appendChild(createCheckbox("Enable Picking", "picking"));
+  displayPanelContents.appendChild(createCheckbox("Colorize", "colorize"));
+  const wireframeCheckbox = displayPanelContents.appendChild(
+    createCheckbox(
+      "Wireframe",
+      "wireframe",
+      "_tileset === undefined || hasEnabledWireframe"
+    )
+  );
+  const warningText = document.createElement("p");
+  warningText.setAttribute(
+    "data-bind",
+    "visible: _tileset !== undefined && !hasEnabledWireframe"
+  );
+  warningText.setAttribute(
+    "class",
+    "cesium-3DTilesInspector-disabledElementsInfo"
+  );
+  warningText.innerText = "Set enableDebugWireframe to true in the tileset constructor to enable this option.";
+  wireframeCheckbox.appendChild(warningText);
+  displayPanelContents.appendChild(
+    createCheckbox("Bounding Volumes", "showBoundingVolumes")
+  );
+  displayPanelContents.appendChild(
+    createCheckbox("Content Volumes", "showContentBoundingVolumes")
+  );
+  displayPanelContents.appendChild(
+    createCheckbox("Request Volumes", "showRequestVolumes")
+  );
+  displayPanelContents.appendChild(
+    createCheckbox("Point Cloud Shading", "pointCloudShading")
+  );
+  const pointCloudShadingContainer = document.createElement("div");
+  pointCloudShadingContainer.setAttribute(
+    "data-bind",
+    "visible: pointCloudShading"
+  );
+  pointCloudShadingContainer.appendChild(
+    createRangeInput(
+      "Geometric Error Scale",
+      "geometricErrorScale",
+      0,
+      2,
+      0.01
+    )
+  );
+  pointCloudShadingContainer.appendChild(
+    createRangeInput("Maximum Attenuation", "maximumAttenuation", 0, 32, 1)
+  );
+  pointCloudShadingContainer.appendChild(
+    createRangeInput("Base Resolution", "baseResolution", 0, 1, 0.01)
+  );
+  pointCloudShadingContainer.appendChild(
+    createCheckbox("Eye Dome Lighting (EDL)", "eyeDomeLighting")
+  );
+  displayPanelContents.appendChild(pointCloudShadingContainer);
+  const edlContainer = document.createElement("div");
+  edlContainer.setAttribute("data-bind", "visible: eyeDomeLighting");
+  edlContainer.appendChild(
+    createRangeInput("EDL Strength", "eyeDomeLightingStrength", 0, 2, 0.1)
+  );
+  edlContainer.appendChild(
+    createRangeInput("EDL Radius", "eyeDomeLightingRadius", 0, 4, 0.1)
+  );
+  pointCloudShadingContainer.appendChild(edlContainer);
+  updatePanelContents.appendChild(
+    createCheckbox("Freeze Frame", "freezeFrame")
+  );
+  updatePanelContents.appendChild(
+    createCheckbox("Dynamic Screen Space Error", "dynamicScreenSpaceError")
+  );
+  const sseContainer = document.createElement("div");
+  sseContainer.appendChild(
+    createRangeInput(
+      "Maximum Screen Space Error",
+      "maximumScreenSpaceError",
+      0,
+      128,
+      1
+    )
+  );
+  updatePanelContents.appendChild(sseContainer);
+  const dynamicScreenSpaceErrorContainer = document.createElement("div");
+  dynamicScreenSpaceErrorContainer.setAttribute(
+    "data-bind",
+    "visible: dynamicScreenSpaceError"
+  );
+  dynamicScreenSpaceErrorContainer.appendChild(
+    createRangeInput(
+      "Screen Space Error Density",
+      "dynamicScreenSpaceErrorDensitySliderValue",
+      0,
+      1,
+      5e-3,
+      "dynamicScreenSpaceErrorDensity"
+    )
+  );
+  dynamicScreenSpaceErrorContainer.appendChild(
+    createRangeInput(
+      "Screen Space Error Factor",
+      "dynamicScreenSpaceErrorFactor",
+      1,
+      32,
+      0.1
+    )
+  );
+  updatePanelContents.appendChild(dynamicScreenSpaceErrorContainer);
+  loggingPanelContents.appendChild(
+    createCheckbox("Performance", "performance")
+  );
+  loggingPanelContents.appendChild(performanceContainer);
+  loggingPanelContents.appendChild(
+    createCheckbox("Statistics", "showStatistics")
+  );
+  const statistics = document.createElement("div");
+  statistics.className = "cesium-3dTilesInspector-statistics";
+  statistics.setAttribute(
+    "data-bind",
+    "html: statisticsText, visible: showStatistics"
+  );
+  loggingPanelContents.appendChild(statistics);
+  loggingPanelContents.appendChild(
+    createCheckbox("Pick Statistics", "showPickStatistics")
+  );
+  const pickStatistics = document.createElement("div");
+  pickStatistics.className = "cesium-3dTilesInspector-statistics";
+  pickStatistics.setAttribute(
+    "data-bind",
+    "html: pickStatisticsText, visible: showPickStatistics"
+  );
+  loggingPanelContents.appendChild(pickStatistics);
+  loggingPanelContents.appendChild(
+    createCheckbox("Resource Cache Statistics", "showResourceCacheStatistics")
+  );
+  const resourceCacheStatistics = document.createElement("div");
+  resourceCacheStatistics.className = "cesium-3dTilesInspector-statistics";
+  resourceCacheStatistics.setAttribute(
+    "data-bind",
+    "html: resourceCacheStatisticsText, visible: showResourceCacheStatistics"
+  );
+  loggingPanelContents.appendChild(resourceCacheStatistics);
+  const stylePanelEditor = document.createElement("div");
+  stylePanelContents.appendChild(stylePanelEditor);
+  stylePanelEditor.appendChild(document.createTextNode("Color Blend Mode: "));
+  const blendDropdown = document.createElement("select");
+  blendDropdown.setAttribute(
+    "data-bind",
+    'options: colorBlendModes, optionsText: "text", optionsValue: "value", value: colorBlendMode'
+  );
+  stylePanelEditor.appendChild(blendDropdown);
+  const styleEditor = document.createElement("textarea");
+  styleEditor.setAttribute(
+    "data-bind",
+    "textInput: styleString, event: { keydown: styleEditorKeyPress }"
+  );
+  stylePanelEditor.className = "cesium-cesiumInspector-styleEditor";
+  stylePanelEditor.appendChild(styleEditor);
+  const closeStylesBtn = createButton("Compile (Ctrl+Enter)", "compileStyle");
+  stylePanelEditor.appendChild(closeStylesBtn);
+  const errorBox = document.createElement("div");
+  errorBox.className = "cesium-cesiumInspector-error";
+  errorBox.setAttribute("data-bind", "text: editorError");
+  stylePanelEditor.appendChild(errorBox);
+  tileDebugLabelsPanelContents.appendChild(
+    createCheckbox("Show Picked Only", "showOnlyPickedTileDebugLabel")
+  );
+  tileDebugLabelsPanelContents.appendChild(
+    createCheckbox("Geometric Error", "showGeometricError")
+  );
+  tileDebugLabelsPanelContents.appendChild(
+    createCheckbox("Rendering Statistics", "showRenderingStatistics")
+  );
+  tileDebugLabelsPanelContents.appendChild(
+    createCheckbox("Memory Usage (MB)", "showMemoryUsage")
+  );
+  tileDebugLabelsPanelContents.appendChild(createCheckbox("Url", "showUrl"));
+  optimizationPanelContents.appendChild(
+    createCheckbox("Skip Tile LODs", "skipLevelOfDetail")
+  );
+  const skipScreenSpaceErrorFactorContainer = document.createElement("div");
+  skipScreenSpaceErrorFactorContainer.appendChild(
+    createRangeInput("Skip SSE Factor", "skipScreenSpaceErrorFactor", 1, 50, 1)
+  );
+  optimizationPanelContents.appendChild(skipScreenSpaceErrorFactorContainer);
+  const baseScreenSpaceError = document.createElement("div");
+  baseScreenSpaceError.appendChild(
+    createRangeInput(
+      "SSE before skipping LOD",
+      "baseScreenSpaceError",
+      0,
+      4096,
+      1
+    )
+  );
+  optimizationPanelContents.appendChild(baseScreenSpaceError);
+  const skipLevelsContainer = document.createElement("div");
+  skipLevelsContainer.appendChild(
+    createRangeInput("Min. levels to skip", "skipLevels", 0, 10, 1)
+  );
+  optimizationPanelContents.appendChild(skipLevelsContainer);
+  optimizationPanelContents.appendChild(
+    createCheckbox(
+      "Load only tiles that meet the max SSE.",
+      "immediatelyLoadDesiredLevelOfDetail"
+    )
+  );
+  optimizationPanelContents.appendChild(
+    createCheckbox("Load siblings of visible tiles", "loadSiblings")
+  );
+  knockout_default.applyBindings(viewModel, element);
+}
+Object.defineProperties(Cesium3DTilesInspector.prototype, {
+  /**
+   * Gets the parent container.
+   * @memberof Cesium3DTilesInspector.prototype
+   *
+   * @type {Element}
+   */
+  container: {
+    get: function() {
+      return this._container;
+    }
+  },
+  /**
+   * Gets the view model.
+   * @memberof Cesium3DTilesInspector.prototype
+   *
+   * @type {Cesium3DTilesInspectorViewModel}
+   */
+  viewModel: {
+    get: function() {
+      return this._viewModel;
+    }
+  }
+});
+Cesium3DTilesInspector.prototype.isDestroyed = function() {
+  return false;
+};
+Cesium3DTilesInspector.prototype.destroy = function() {
+  knockout_default.cleanNode(this._element);
+  this._container.removeChild(this._element);
+  this.viewModel.destroy();
+  return destroyObject5(this);
+};
+var Cesium3DTilesInspector_default = Cesium3DTilesInspector;
 
 // packages/widgets/Source/CesiumInspector/CesiumInspector.js
 import { DeveloperError as DeveloperError10, defined as defined12, destroyObject as destroyObject7 } from "@cesium/core";
@@ -8501,354 +8501,34 @@ FullscreenButton.prototype.destroy = function() {
 };
 var FullscreenButton_default = FullscreenButton;
 
-// packages/widgets/Source/HomeButton/HomeButton.js
-import { DeveloperError as DeveloperError14, defined as defined16, destroyObject as destroyObject10 } from "@cesium/core";
-import { getElement as getElement7 } from "@cesium/engine";
-
-// packages/widgets/Source/HomeButton/HomeButtonViewModel.js
-import { DeveloperError as DeveloperError13, defined as defined15 } from "@cesium/core";
-function HomeButtonViewModel(scene, duration) {
-  if (!defined15(scene)) {
-    throw new DeveloperError13("scene is required.");
-  }
-  this._scene = scene;
-  this._duration = duration;
-  const that = this;
-  this._command = createCommand_default(function() {
-    that._scene.camera.flyHome(that._duration);
-  });
-  this.tooltip = "View Home";
-  knockout_default.track(this, ["tooltip"]);
-}
-Object.defineProperties(HomeButtonViewModel.prototype, {
-  /**
-   * Gets the scene to control.
-   * @memberof HomeButtonViewModel.prototype
-   *
-   * @type {Scene}
-   */
-  scene: {
-    get: function() {
-      return this._scene;
-    }
-  },
-  /**
-   * Gets the Command that is executed when the button is clicked.
-   * @memberof HomeButtonViewModel.prototype
-   *
-   * @type {Command}
-   */
-  command: {
-    get: function() {
-      return this._command;
-    }
-  },
-  /**
-   * Gets or sets the the duration of the camera flight in seconds.
-   * A value of zero causes the camera to instantly switch to home view.
-   * The duration will be computed based on the distance when undefined.
-   * @memberof HomeButtonViewModel.prototype
-   *
-   * @type {number|undefined}
-   */
-  duration: {
-    get: function() {
-      return this._duration;
-    },
-    set: function(value) {
-      if (defined15(value) && value < 0) {
-        throw new DeveloperError13("value must be positive.");
-      }
-      this._duration = value;
-    }
-  }
-});
-var HomeButtonViewModel_default = HomeButtonViewModel;
-
-// packages/widgets/Source/HomeButton/HomeButton.js
-function HomeButton(container, scene, duration) {
-  if (!defined16(container)) {
-    throw new DeveloperError14("container is required.");
-  }
-  container = getElement7(container);
-  const viewModel = new HomeButtonViewModel_default(scene, duration);
-  viewModel._svgPath = "M14,4l-10,8.75h20l-4.25-3.7188v-4.6562h-2.812v2.1875l-2.938-2.5625zm-7.0938,9.906v10.094h14.094v-10.094h-14.094zm2.1876,2.313h3.3122v4.25h-3.3122v-4.25zm5.8442,1.281h3.406v6.438h-3.406v-6.438z";
-  const element = document.createElement("button");
-  element.type = "button";
-  element.className = "cesium-button cesium-toolbar-button cesium-home-button";
-  element.setAttribute(
-    "data-bind",
-    "attr: { title: tooltip },click: command,cesiumSvgPath: { path: _svgPath, width: 28, height: 28 }"
-  );
-  container.appendChild(element);
-  knockout_default.applyBindings(viewModel, element);
-  this._container = container;
-  this._viewModel = viewModel;
-  this._element = element;
-}
-Object.defineProperties(HomeButton.prototype, {
-  /**
-   * Gets the parent container.
-   * @memberof HomeButton.prototype
-   *
-   * @type {Element}
-   */
-  container: {
-    get: function() {
-      return this._container;
-    }
-  },
-  /**
-   * Gets the view model.
-   * @memberof HomeButton.prototype
-   *
-   * @type {HomeButtonViewModel}
-   */
-  viewModel: {
-    get: function() {
-      return this._viewModel;
-    }
-  }
-});
-HomeButton.prototype.isDestroyed = function() {
-  return false;
-};
-HomeButton.prototype.destroy = function() {
-  knockout_default.cleanNode(this._element);
-  this._container.removeChild(this._element);
-  return destroyObject10(this);
-};
-var HomeButton_default = HomeButton;
-
-// packages/widgets/Source/I3SBuildingSceneLayerExplorer/I3SBuildingSceneLayerExplorer.js
-import { Check as Check4, defined as defined18 } from "@cesium/core";
-
-// packages/widgets/Source/I3SBuildingSceneLayerExplorer/I3SBuildingSceneLayerExplorerViewModel.js
-import { defined as defined17 } from "@cesium/core";
-function expandItemsHandler(data, event) {
-  const nestedList = event.currentTarget.parentElement.parentElement.querySelector(
-    `#${data.name}-expander`
-  );
-  nestedList.classList.toggle("active");
-  event.currentTarget.textContent = event.currentTarget.textContent === "+" ? "-" : "+";
-}
-function trackSublayer(sublayer, viewModel) {
-  knockout_default.track(sublayer);
-  for (let i = 0; i < sublayer.sublayers.length; i++) {
-    trackSublayer(sublayer.sublayers[i], viewModel);
-  }
-}
-function isFullModel(layer) {
-  return layer.modelName === "FullModel";
-}
-function isOverview(layer) {
-  return layer.modelName === "Overview";
-}
-function isTopLayer(layer) {
-  return isOverview(layer) || isFullModel(layer);
-}
-function addTopLayer(layer, viewModel) {
-  if (isTopLayer(layer)) {
-    layer.visibility = false;
-    for (let i = 0; i < layer.sublayers.length; i++) {
-      layer.sublayers[i].visibility = true;
-    }
-    const topLayer = {
-      name: layer.name,
-      modelName: layer.modelName,
-      disable: knockout_default.observable(false),
-      index: viewModel.sublayers.length
-    };
-    viewModel.topLayers.push(topLayer);
-    viewModel.sublayers.push(layer);
-    return topLayer;
-  }
-}
-function handleTopLayerSelector(layer, viewModel) {
-  if (isTopLayer(layer)) {
-    viewModel.sublayers.forEach((elem) => elem.visibility = false);
-    viewModel.sublayers[layer.index].visibility = true;
-    const bsl = document.getElementById("bsl-wrapper");
-    if (isFullModel(layer)) {
-      viewModel.currentLevel = viewModel.selectedLevel;
-      bsl.style.display = "block";
-    } else {
-      viewModel.selectedLevel = viewModel.currentLevel;
-      viewModel.currentLevel = "All";
-      bsl.style.display = "none";
-    }
-  }
-}
-async function setLevels(i3sProvider, levels) {
-  try {
-    const attributes = i3sProvider.getAttributeNames();
-    for (let index = 0; index < attributes.length; index++) {
-      if (attributes[index] === "BldgLevel") {
-        const values = i3sProvider.getAttributeValues(attributes[index]);
-        for (let i = 0; i < values.length; i++) {
-          levels.push(values[i]);
-        }
-      }
-    }
-    levels.sort((a, b) => a - b);
-    levels.unshift("All");
-  } catch (error) {
-    console.log(`There was an error getting attributes: ${error}`);
-  }
-}
-function I3SBuildingSceneLayerExplorerViewModel(i3sProvider) {
-  const that = this;
-  this.levels = [];
-  this.viewModel = {
-    sublayers: [],
-    levels: this.levels,
-    currentLevel: knockout_default.observable(),
-    selectedLevel: "All",
-    topLayers: [
-      {
-        name: "Select a layer to explore...",
-        disable: knockout_default.observable(true),
-        index: -1
-      }
-    ],
-    currentLayer: knockout_default.observable(),
-    expandClickHandler: expandItemsHandler,
-    setOptionDisable: function(option, item) {
-      knockout_default.applyBindingsToNode(option, { disable: item.disable }, item);
-    },
-    defaultLayer: void 0
-  };
-  this.viewModel.currentLayer.subscribe(function(layer) {
-    handleTopLayerSelector(layer, that.viewModel);
-  });
-  const sublayers = i3sProvider.sublayers;
-  for (let i = 0; i < sublayers.length; i++) {
-    trackSublayer(sublayers[i], this.viewModel);
-    const topLayer = addTopLayer(sublayers[i], this.viewModel);
-    if (defined17(topLayer) && (isOverview(topLayer) || !defined17(this.viewModel.defaultLayer) && isFullModel(topLayer))) {
-      this.viewModel.defaultLayer = topLayer;
-    }
-  }
-  if (this.viewModel.topLayers.length === 1 && sublayers.length > 0) {
-    i3sProvider.show = false;
-    const fullModel = {
-      name: "Full Model",
-      modelName: "FullModel",
-      visibility: i3sProvider.show,
-      sublayers: i3sProvider.sublayers
-    };
-    this.viewModel.defaultLayer = addTopLayer(fullModel, this.viewModel);
-    this.viewModel.currentLayer.subscribe(function(layer) {
-      i3sProvider.show = isFullModel(layer);
-    });
-  } else if (this.viewModel.topLayers.length === 1) {
-    this.viewModel.topLayers[0].name = "Building layers not found";
-  }
-  setLevels(i3sProvider, this.levels);
-  this.viewModel.currentLevel.subscribe(function(newValue) {
-    if (newValue !== "All") {
-      i3sProvider.filterByAttributes([
-        {
-          name: "BldgLevel",
-          values: [newValue]
-        }
-      ]);
-    } else {
-      i3sProvider.filterByAttributes();
-    }
-  });
-  return this.viewModel;
-}
-var I3SBuildingSceneLayerExplorerViewModel_default = I3SBuildingSceneLayerExplorerViewModel;
-
-// packages/widgets/Source/I3SBuildingSceneLayerExplorer/I3SBuildingSceneLayerExplorer.js
-function I3SBuildingSceneLayerExplorer(containerId, i3sProvider) {
-  const container = document.getElementById(containerId);
-  Check4.defined("container", container);
-  Check4.defined("i3sProvider", i3sProvider);
-  const htmlWrapper = document.createElement("div");
-  htmlWrapper.classList.add("cesium-viewer-i3s-explorer");
-  htmlWrapper.innerHTML = `
-        <h3>Building explorer</h3>
-        <select
-          data-bind="options: topLayers, optionsText: 'name', optionsAfterRender: setOptionDisable, value: currentLayer"
-        ></select>
-        <div id="bsl-wrapper">
-          <h3>Select Level</h3>
-          <select data-bind="options: levels, value: currentLevel"></select>
-          <h3>Disciplines & Categories</h3>
-          <ul class="layersList" data-bind="foreach: sublayers">
-            <ul class="layersList" data-bind="foreach: sublayers.sort(function (l, r) { return l.name.localeCompare(r.name) })">
-              <li>
-                <div class="li-wrapper">
-                  <span
-                    class="expandItem"
-                    data-bind="click: $root.expandClickHandler"
-                    >+</span
-                  >
-                  <input
-                    type="checkbox"
-                    data-bind="checked: visibility, valueUpdate: 'input', attr: { id: name}"
-                  />
-                  <label data-bind="attr: { for: name}">
-                    <span data-bind="text: name"></span>
-                  </label>
-                </div>
-                <ul class="nested" data-bind="attr: { id: name + '-expander'}">
-                  <li data-bind="foreach: sublayers.sort(function (l, r) { return l.name.localeCompare(r.name) })">
-                    <div class="li-wrapper">
-                      <input
-                        type="checkbox"
-                        data-bind="checked: visibility, valueUpdate: 'input', attr: { id: name}"
-                      />
-                      <label data-bind="attr: { for: name}">
-                        <span data-bind="text: name"></span>
-                      </label>
-                    </div>
-                  </li>
-                </ul>
-              </li>
-            </ul>
-          </ul>
-        </div>`;
-  container.appendChild(htmlWrapper);
-  const viewModel = new I3SBuildingSceneLayerExplorerViewModel_default(i3sProvider);
-  knockout_default.track(viewModel);
-  knockout_default.applyBindings(viewModel, container);
-  if (defined18(viewModel.defaultLayer)) {
-    viewModel.currentLayer = viewModel.defaultLayer;
-  }
-}
-var I3SBuildingSceneLayerExplorer_default = I3SBuildingSceneLayerExplorer;
-
 // packages/widgets/Source/Geocoder/Geocoder.js
-import { DeveloperError as DeveloperError16, defined as defined20, destroyObject as destroyObject12 } from "@cesium/core";
-import { FeatureDetection as FeatureDetection2, getElement as getElement9 } from "@cesium/engine";
+import { DeveloperError as DeveloperError14, defined as defined16, destroyObject as destroyObject11 } from "@cesium/core";
+import { FeatureDetection as FeatureDetection2, getElement as getElement8 } from "@cesium/engine";
 
 // packages/widgets/Source/Geocoder/GeocoderViewModel.js
 import {
-  DeveloperError as DeveloperError15,
+  DeveloperError as DeveloperError13,
   Event as Event2,
   Math as CesiumMath,
   Matrix4,
   Rectangle as Rectangle2,
-  defined as defined19,
-  destroyObject as destroyObject11
+  defined as defined15,
+  destroyObject as destroyObject10
 } from "@cesium/core";
 import {
   computeFlyToLocationForRectangle,
   GeocoderService,
   GeocodeType,
-  getElement as getElement8,
+  getElement as getElement7,
   IonGeocoderService,
   sampleTerrainMostDetailed
 } from "@cesium/engine";
 var DEFAULT_HEIGHT = 1e3;
 function GeocoderViewModel(options) {
-  if (!defined19(options) || !defined19(options.scene)) {
-    throw new DeveloperError15("options.scene is required.");
+  if (!defined15(options) || !defined15(options.scene)) {
+    throw new DeveloperError13("options.scene is required.");
   }
-  if (defined19(options.geocoderServices)) {
+  if (defined15(options.geocoderServices)) {
     this._geocoderServices = options.geocoderServices;
   } else {
     this._geocoderServices = [new IonGeocoderService({ scene: options.scene })];
@@ -8876,7 +8556,7 @@ function GeocoderViewModel(options) {
   this._searchCommand = createCommand_default(function(geocodeType) {
     geocodeType = geocodeType ?? GeocodeType.SEARCH;
     that._focusTextbox = false;
-    if (defined19(that._selectedSuggestion)) {
+    if (defined15(that._selectedSuggestion)) {
       that.activateSuggestion(that._selectedSuggestion);
       return false;
     }
@@ -8964,7 +8644,7 @@ function GeocoderViewModel(options) {
     },
     set: function(value) {
       if (typeof value !== "string") {
-        throw new DeveloperError15("value must be a valid string.");
+        throw new DeveloperError13("value must be a valid string.");
       }
       this._searchText = value;
     }
@@ -8975,8 +8655,8 @@ function GeocoderViewModel(options) {
       return this._flightDuration;
     },
     set: function(value) {
-      if (defined19(value) && value < 0) {
-        throw new DeveloperError15("value must be positive.");
+      if (defined15(value) && value < 0) {
+        throw new DeveloperError13("value must be positive.");
       }
       this._flightDuration = value;
     }
@@ -9067,8 +8747,8 @@ function handleArrowDown(viewModel) {
   GeocoderViewModel._adjustSuggestionsScroll(viewModel, next);
 }
 function computeFlyToLocationForCartographic(cartographic, terrainProvider) {
-  const availability = defined19(terrainProvider) ? terrainProvider.availability : void 0;
-  if (!defined19(availability)) {
+  const availability = defined15(terrainProvider) ? terrainProvider.availability : void 0;
+  if (!defined15(availability)) {
     cartographic.height += DEFAULT_HEIGHT;
     return Promise.resolve(cartographic);
   }
@@ -9104,7 +8784,7 @@ function flyToDestination(viewModel, destination) {
   } else {
     destination = ellipsoid.cartesianToCartographic(destination);
   }
-  if (!defined19(promise)) {
+  if (!defined15(promise)) {
     promise = computeFlyToLocationForCartographic(destination, terrainProvider);
   }
   return promise.then(function(result) {
@@ -9147,7 +8827,7 @@ async function geocode(viewModel, geocoderServices, geocodeType) {
       return;
     }
     result = await attemptGeocode(geocoderServices[i], query, geocodeType);
-    if (defined19(result) && result.state === "fulfilled" && result.value.length > 0) {
+    if (defined15(result) && result.state === "fulfilled" && result.value.length > 0) {
       break;
     }
   }
@@ -9157,14 +8837,14 @@ async function geocode(viewModel, geocoderServices, geocodeType) {
   viewModel._isSearchInProgress = false;
   clearCredits(viewModel);
   const geocoderResults = result.value;
-  if (result.state === "fulfilled" && defined19(geocoderResults) && geocoderResults.length > 0) {
+  if (result.state === "fulfilled" && defined15(geocoderResults) && geocoderResults.length > 0) {
     viewModel._searchText = geocoderResults[0].displayName;
     viewModel.destinationFound(viewModel, geocoderResults[0].destination);
     const credits = updateCredits(
       viewModel,
       GeocoderService.getCreditsFromResult(geocoderResults[0])
     );
-    if (!defined19(credits)) {
+    if (!defined15(credits)) {
       updateCredit(viewModel, geocoderServices[i].credit);
     }
     return;
@@ -9172,13 +8852,13 @@ async function geocode(viewModel, geocoderServices, geocodeType) {
   viewModel._searchText = `${query} (not found)`;
 }
 function updateCredit(viewModel, credit) {
-  if (defined19(credit) && !viewModel._scene.isDestroyed() && !viewModel._scene.frameState.creditDisplay.isDestroyed()) {
+  if (defined15(credit) && !viewModel._scene.isDestroyed() && !viewModel._scene.frameState.creditDisplay.isDestroyed()) {
     viewModel._scene.frameState.creditDisplay.addStaticCredit(credit);
     viewModel._previousCredits.push(credit);
   }
 }
 function updateCredits(viewModel, credits) {
-  if (defined19(credits)) {
+  if (defined15(credits)) {
     credits.forEach((credit) => updateCredit(viewModel, credit));
   }
   return credits;
@@ -9192,7 +8872,7 @@ function clearCredits(viewModel) {
   viewModel._previousCredits.length = 0;
 }
 function adjustSuggestionsScroll(viewModel, focusedItemIndex) {
-  const container = getElement8(viewModel._viewContainer);
+  const container = getElement7(viewModel._viewContainer);
   const searchResults = container.getElementsByClassName("search-results")[0];
   const listItems = container.getElementsByTagName("li");
   const element = listItems[focusedItemIndex];
@@ -9236,7 +8916,7 @@ async function updateSearchSuggestions(viewModel) {
       let useDefaultCredit = true;
       newResults.forEach((result) => {
         const credits = GeocoderService.getCreditsFromResult(result);
-        useDefaultCredit = useDefaultCredit && !defined19(credits);
+        useDefaultCredit = useDefaultCredit && !defined15(credits);
         updateCredits(viewModel, credits);
       });
       if (useDefaultCredit) {
@@ -9257,7 +8937,7 @@ GeocoderViewModel.prototype.isDestroyed = function() {
 GeocoderViewModel.prototype.destroy = function() {
   this._suggestionSubscription.dispose();
   clearCredits(this);
-  return destroyObject11(this);
+  return destroyObject10(this);
 };
 var GeocoderViewModel_default = GeocoderViewModel;
 
@@ -9265,13 +8945,13 @@ var GeocoderViewModel_default = GeocoderViewModel;
 var startSearchPath = "M29.772,26.433l-7.126-7.126c0.96-1.583,1.523-3.435,1.524-5.421C24.169,8.093,19.478,3.401,13.688,3.399C7.897,3.401,3.204,8.093,3.204,13.885c0,5.789,4.693,10.481,10.484,10.481c1.987,0,3.839-0.563,5.422-1.523l7.128,7.127L29.772,26.433zM7.203,13.885c0.006-3.582,2.903-6.478,6.484-6.486c3.579,0.008,6.478,2.904,6.484,6.486c-0.007,3.58-2.905,6.476-6.484,6.484C10.106,20.361,7.209,17.465,7.203,13.885z";
 var stopSearchPath = "M24.778,21.419 19.276,15.917 24.777,10.415 21.949,7.585 16.447,13.087 10.945,7.585 8.117,10.415 13.618,15.917 8.116,21.419 10.946,24.248 16.447,18.746 21.948,24.248z";
 function Geocoder(options) {
-  if (!defined20(options) || !defined20(options.container)) {
-    throw new DeveloperError16("options.container is required.");
+  if (!defined16(options) || !defined16(options.container)) {
+    throw new DeveloperError14("options.container is required.");
   }
-  if (!defined20(options.scene)) {
-    throw new DeveloperError16("options.scene is required.");
+  if (!defined16(options.scene)) {
+    throw new DeveloperError14("options.scene is required.");
   }
-  const container = getElement9(options.container);
+  const container = getElement8(options.container);
   const viewModel = new GeocoderViewModel_default(options);
   viewModel._startSearchPath = startSearchPath;
   viewModel._stopSearchPath = stopSearchPath;
@@ -9404,9 +9084,329 @@ Geocoder.prototype.destroy = function() {
   container.removeChild(this._form);
   container.removeChild(this._searchSuggestionsContainer);
   this._textBox.removeEventListener("focus", this._onTextBoxFocus, false);
-  return destroyObject12(this);
+  return destroyObject11(this);
 };
 var Geocoder_default = Geocoder;
+
+// packages/widgets/Source/HomeButton/HomeButton.js
+import { DeveloperError as DeveloperError16, defined as defined18, destroyObject as destroyObject12 } from "@cesium/core";
+import { getElement as getElement9 } from "@cesium/engine";
+
+// packages/widgets/Source/HomeButton/HomeButtonViewModel.js
+import { DeveloperError as DeveloperError15, defined as defined17 } from "@cesium/core";
+function HomeButtonViewModel(scene, duration) {
+  if (!defined17(scene)) {
+    throw new DeveloperError15("scene is required.");
+  }
+  this._scene = scene;
+  this._duration = duration;
+  const that = this;
+  this._command = createCommand_default(function() {
+    that._scene.camera.flyHome(that._duration);
+  });
+  this.tooltip = "View Home";
+  knockout_default.track(this, ["tooltip"]);
+}
+Object.defineProperties(HomeButtonViewModel.prototype, {
+  /**
+   * Gets the scene to control.
+   * @memberof HomeButtonViewModel.prototype
+   *
+   * @type {Scene}
+   */
+  scene: {
+    get: function() {
+      return this._scene;
+    }
+  },
+  /**
+   * Gets the Command that is executed when the button is clicked.
+   * @memberof HomeButtonViewModel.prototype
+   *
+   * @type {Command}
+   */
+  command: {
+    get: function() {
+      return this._command;
+    }
+  },
+  /**
+   * Gets or sets the the duration of the camera flight in seconds.
+   * A value of zero causes the camera to instantly switch to home view.
+   * The duration will be computed based on the distance when undefined.
+   * @memberof HomeButtonViewModel.prototype
+   *
+   * @type {number|undefined}
+   */
+  duration: {
+    get: function() {
+      return this._duration;
+    },
+    set: function(value) {
+      if (defined17(value) && value < 0) {
+        throw new DeveloperError15("value must be positive.");
+      }
+      this._duration = value;
+    }
+  }
+});
+var HomeButtonViewModel_default = HomeButtonViewModel;
+
+// packages/widgets/Source/HomeButton/HomeButton.js
+function HomeButton(container, scene, duration) {
+  if (!defined18(container)) {
+    throw new DeveloperError16("container is required.");
+  }
+  container = getElement9(container);
+  const viewModel = new HomeButtonViewModel_default(scene, duration);
+  viewModel._svgPath = "M14,4l-10,8.75h20l-4.25-3.7188v-4.6562h-2.812v2.1875l-2.938-2.5625zm-7.0938,9.906v10.094h14.094v-10.094h-14.094zm2.1876,2.313h3.3122v4.25h-3.3122v-4.25zm5.8442,1.281h3.406v6.438h-3.406v-6.438z";
+  const element = document.createElement("button");
+  element.type = "button";
+  element.className = "cesium-button cesium-toolbar-button cesium-home-button";
+  element.setAttribute(
+    "data-bind",
+    "attr: { title: tooltip },click: command,cesiumSvgPath: { path: _svgPath, width: 28, height: 28 }"
+  );
+  container.appendChild(element);
+  knockout_default.applyBindings(viewModel, element);
+  this._container = container;
+  this._viewModel = viewModel;
+  this._element = element;
+}
+Object.defineProperties(HomeButton.prototype, {
+  /**
+   * Gets the parent container.
+   * @memberof HomeButton.prototype
+   *
+   * @type {Element}
+   */
+  container: {
+    get: function() {
+      return this._container;
+    }
+  },
+  /**
+   * Gets the view model.
+   * @memberof HomeButton.prototype
+   *
+   * @type {HomeButtonViewModel}
+   */
+  viewModel: {
+    get: function() {
+      return this._viewModel;
+    }
+  }
+});
+HomeButton.prototype.isDestroyed = function() {
+  return false;
+};
+HomeButton.prototype.destroy = function() {
+  knockout_default.cleanNode(this._element);
+  this._container.removeChild(this._element);
+  return destroyObject12(this);
+};
+var HomeButton_default = HomeButton;
+
+// packages/widgets/Source/I3SBuildingSceneLayerExplorer/I3SBuildingSceneLayerExplorer.js
+import { Check as Check4, defined as defined20 } from "@cesium/core";
+
+// packages/widgets/Source/I3SBuildingSceneLayerExplorer/I3SBuildingSceneLayerExplorerViewModel.js
+import { defined as defined19 } from "@cesium/core";
+function expandItemsHandler(data, event) {
+  const nestedList = event.currentTarget.parentElement.parentElement.querySelector(
+    `#${data.name}-expander`
+  );
+  nestedList.classList.toggle("active");
+  event.currentTarget.textContent = event.currentTarget.textContent === "+" ? "-" : "+";
+}
+function trackSublayer(sublayer, viewModel) {
+  knockout_default.track(sublayer);
+  for (let i = 0; i < sublayer.sublayers.length; i++) {
+    trackSublayer(sublayer.sublayers[i], viewModel);
+  }
+}
+function isFullModel(layer) {
+  return layer.modelName === "FullModel";
+}
+function isOverview(layer) {
+  return layer.modelName === "Overview";
+}
+function isTopLayer(layer) {
+  return isOverview(layer) || isFullModel(layer);
+}
+function addTopLayer(layer, viewModel) {
+  if (isTopLayer(layer)) {
+    layer.visibility = false;
+    for (let i = 0; i < layer.sublayers.length; i++) {
+      layer.sublayers[i].visibility = true;
+    }
+    const topLayer = {
+      name: layer.name,
+      modelName: layer.modelName,
+      disable: knockout_default.observable(false),
+      index: viewModel.sublayers.length
+    };
+    viewModel.topLayers.push(topLayer);
+    viewModel.sublayers.push(layer);
+    return topLayer;
+  }
+}
+function handleTopLayerSelector(layer, viewModel) {
+  if (isTopLayer(layer)) {
+    viewModel.sublayers.forEach((elem) => elem.visibility = false);
+    viewModel.sublayers[layer.index].visibility = true;
+    const bsl = document.getElementById("bsl-wrapper");
+    if (isFullModel(layer)) {
+      viewModel.currentLevel = viewModel.selectedLevel;
+      bsl.style.display = "block";
+    } else {
+      viewModel.selectedLevel = viewModel.currentLevel;
+      viewModel.currentLevel = "All";
+      bsl.style.display = "none";
+    }
+  }
+}
+async function setLevels(i3sProvider, levels) {
+  try {
+    const attributes = i3sProvider.getAttributeNames();
+    for (let index = 0; index < attributes.length; index++) {
+      if (attributes[index] === "BldgLevel") {
+        const values = i3sProvider.getAttributeValues(attributes[index]);
+        for (let i = 0; i < values.length; i++) {
+          levels.push(values[i]);
+        }
+      }
+    }
+    levels.sort((a, b) => a - b);
+    levels.unshift("All");
+  } catch (error) {
+    console.log(`There was an error getting attributes: ${error}`);
+  }
+}
+function I3SBuildingSceneLayerExplorerViewModel(i3sProvider) {
+  const that = this;
+  this.levels = [];
+  this.viewModel = {
+    sublayers: [],
+    levels: this.levels,
+    currentLevel: knockout_default.observable(),
+    selectedLevel: "All",
+    topLayers: [
+      {
+        name: "Select a layer to explore...",
+        disable: knockout_default.observable(true),
+        index: -1
+      }
+    ],
+    currentLayer: knockout_default.observable(),
+    expandClickHandler: expandItemsHandler,
+    setOptionDisable: function(option, item) {
+      knockout_default.applyBindingsToNode(option, { disable: item.disable }, item);
+    },
+    defaultLayer: void 0
+  };
+  this.viewModel.currentLayer.subscribe(function(layer) {
+    handleTopLayerSelector(layer, that.viewModel);
+  });
+  const sublayers = i3sProvider.sublayers;
+  for (let i = 0; i < sublayers.length; i++) {
+    trackSublayer(sublayers[i], this.viewModel);
+    const topLayer = addTopLayer(sublayers[i], this.viewModel);
+    if (defined19(topLayer) && (isOverview(topLayer) || !defined19(this.viewModel.defaultLayer) && isFullModel(topLayer))) {
+      this.viewModel.defaultLayer = topLayer;
+    }
+  }
+  if (this.viewModel.topLayers.length === 1 && sublayers.length > 0) {
+    i3sProvider.show = false;
+    const fullModel = {
+      name: "Full Model",
+      modelName: "FullModel",
+      visibility: i3sProvider.show,
+      sublayers: i3sProvider.sublayers
+    };
+    this.viewModel.defaultLayer = addTopLayer(fullModel, this.viewModel);
+    this.viewModel.currentLayer.subscribe(function(layer) {
+      i3sProvider.show = isFullModel(layer);
+    });
+  } else if (this.viewModel.topLayers.length === 1) {
+    this.viewModel.topLayers[0].name = "Building layers not found";
+  }
+  setLevels(i3sProvider, this.levels);
+  this.viewModel.currentLevel.subscribe(function(newValue) {
+    if (newValue !== "All") {
+      i3sProvider.filterByAttributes([
+        {
+          name: "BldgLevel",
+          values: [newValue]
+        }
+      ]);
+    } else {
+      i3sProvider.filterByAttributes();
+    }
+  });
+  return this.viewModel;
+}
+var I3SBuildingSceneLayerExplorerViewModel_default = I3SBuildingSceneLayerExplorerViewModel;
+
+// packages/widgets/Source/I3SBuildingSceneLayerExplorer/I3SBuildingSceneLayerExplorer.js
+function I3SBuildingSceneLayerExplorer(containerId, i3sProvider) {
+  const container = document.getElementById(containerId);
+  Check4.defined("container", container);
+  Check4.defined("i3sProvider", i3sProvider);
+  const htmlWrapper = document.createElement("div");
+  htmlWrapper.classList.add("cesium-viewer-i3s-explorer");
+  htmlWrapper.innerHTML = `
+        <h3>Building explorer</h3>
+        <select
+          data-bind="options: topLayers, optionsText: 'name', optionsAfterRender: setOptionDisable, value: currentLayer"
+        ></select>
+        <div id="bsl-wrapper">
+          <h3>Select Level</h3>
+          <select data-bind="options: levels, value: currentLevel"></select>
+          <h3>Disciplines & Categories</h3>
+          <ul class="layersList" data-bind="foreach: sublayers">
+            <ul class="layersList" data-bind="foreach: sublayers.sort(function (l, r) { return l.name.localeCompare(r.name) })">
+              <li>
+                <div class="li-wrapper">
+                  <span
+                    class="expandItem"
+                    data-bind="click: $root.expandClickHandler"
+                    >+</span
+                  >
+                  <input
+                    type="checkbox"
+                    data-bind="checked: visibility, valueUpdate: 'input', attr: { id: name}"
+                  />
+                  <label data-bind="attr: { for: name}">
+                    <span data-bind="text: name"></span>
+                  </label>
+                </div>
+                <ul class="nested" data-bind="attr: { id: name + '-expander'}">
+                  <li data-bind="foreach: sublayers.sort(function (l, r) { return l.name.localeCompare(r.name) })">
+                    <div class="li-wrapper">
+                      <input
+                        type="checkbox"
+                        data-bind="checked: visibility, valueUpdate: 'input', attr: { id: name}"
+                      />
+                      <label data-bind="attr: { for: name}">
+                        <span data-bind="text: name"></span>
+                      </label>
+                    </div>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </ul>
+        </div>`;
+  container.appendChild(htmlWrapper);
+  const viewModel = new I3SBuildingSceneLayerExplorerViewModel_default(i3sProvider);
+  knockout_default.track(viewModel);
+  knockout_default.applyBindings(viewModel, container);
+  if (defined20(viewModel.defaultLayer)) {
+    viewModel.currentLayer = viewModel.defaultLayer;
+  }
+}
+var I3SBuildingSceneLayerExplorer_default = I3SBuildingSceneLayerExplorer;
 
 // packages/widgets/Source/InfoBox/InfoBox.js
 import { Check as Check5, Color as Color3, defined as defined22, destroyObject as destroyObject13 } from "@cesium/core";
