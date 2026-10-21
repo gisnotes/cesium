@@ -21,16 +21,23 @@
         }
       }
     </script>
-    <link
-      rel="stylesheet"
-      href="__CESIUM_BASE_URL__/Widgets/widgets.css"
-      vite-ignore
-    />
-    <link
-      rel="stylesheet"
-      href="__CESIUM_BASE_URL__/Widgets/lighter.css"
-      vite-ignore
-    />
+    <script>
+      (function () {
+        var isLocal =
+          window.location.hostname === "localhost" ||
+          window.location.hostname === "127.0.0.1";
+        var base = isLocal
+          ? "__CESIUM_BASE_URL__"
+          : "https://cdn.jsdelivr.net/gh/gisnotes/cesium@gh-pages/Build/CesiumUnminified";
+        window.CESIUM_BASE_URL = base;
+        document.write(
+          '<link rel="stylesheet" href="' + base + '/Widgets/widgets.css" vite-ignore>'
+        );
+        document.write(
+          '<link rel="stylesheet" href="' + base + '/Widgets/lighter.css" vite-ignore>'
+        );
+      })();
+    </script>
     <style>
       /*
       * Minimal styles copied from the bucket.css stylesheet to avoid FOUC and reflow
@@ -107,9 +114,6 @@
       unstable_loadStyles(document);
     </script>
     <link rel="stylesheet" href="/styles/stratakit-mimic/styles.css" />
-    <script>
-      window.CESIUM_BASE_URL = "__CESIUM_BASE_URL__";
-    </script>
   </head>
   <body class="sandcastle-loading">
     <script src="../src/util/bucket-client.js" type="module"></script>
