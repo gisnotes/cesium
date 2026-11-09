@@ -7,18 +7,23 @@
 #### Breaking Changes :mega:
 
 - CesiumJS builds now target ES2022 instead of ES2020. Class fields are no longer rewritten into helper functions, so browsers must support ES2022 syntax such as public and private class fields. [#14023](https://github.com/CesiumGS/cesium/pull/14023)
+  CesiumJS 构建现已以 ES2022 为目标，而非 ES2020。类字段（class fields）不再被重写为辅助函数，因此浏览器必须支持 ES2022 语法，例如公有和私有类字段。[#14023](https://github.com/CesiumGS/cesium/pull/14023)
 
 ### @cesium/engine
 
 #### Additions :tada:
 
 - Added experimental `Cesium3DTileset` option `vectorGeoJson`, which loads `MAXAR_content_geojson` tile content as vector primitives with filled polygons, instead of as a model. [#14007](https://github.com/CesiumGS/cesium/pull/14007)
+  新增实验性 `Cesium3DTileset` 选项 `vectorGeoJson`，可将 `MAXAR_content_geojson` 瓦片内容作为矢量图元（vector primitives）加载并渲染为填充多边形，而非作为模型加载。[#14007](https://github.com/CesiumGS/cesium/pull/14007)
 - Added support for Custom Shaders in Gaussian Splat tilesets. [#13418](https://github.com/CesiumGS/cesium/pull/13418)
+  新增对高斯泼溅（Gaussian Splat）瓦片集中自定义着色器（Custom Shaders）的支持。[#13418](https://github.com/CesiumGS/cesium/pull/13418)
 
 #### Fixes :wrench:
 
 - Fixed picking for clamped vector tilesets and `GeoJsonPrimitive` polylines and polygons. [#13917](https://github.com/CesiumGS/cesium/pull/13917)
+  修复了贴地（clamped）矢量瓦片集以及 `GeoJsonPrimitive` 折线和多边形的拾取问题。[#13917](https://github.com/CesiumGS/cesium/pull/13917)
 - Fixed the globe failing to render when clamped vector data is combined with many imagery layers. [#13922](https://github.com/CesiumGS/cesium/pull/13922)
+  修复了贴地矢量数据与大量影像图层同时使用时，地球（globe）无法渲染的问题。[#13922](https://github.com/CesiumGS/cesium/pull/13922)
 
 ## 1.147 - 2026-11-02
 
@@ -27,24 +32,32 @@
 #### Fixes :wrench:
 
 - Fixed undeclared dependencies `earcut`, `mersenne-twister`, and `urijs`. [#13955](https://github.com/CesiumGS/cesium/issues/13955)
+  修复了未声明的依赖项 `earcut`、`mersenne-twister` 和 `urijs`。[#13955](https://github.com/CesiumGS/cesium/issues/13955)
 
 ### @cesium/engine
 
 #### Additions :tada:
 
 - Added support for glTF models with the [KHR_materials_emissive_strength extension](https://github.com/KhronosGroup/glTF/tree/main/extensions/2.0/Khronos/KHR_materials_emissive_strength). [#13961](https://github.com/CesiumGS/cesium/pull/13961)
+  新增对使用 [KHR_materials_emissive_strength 扩展](https://github.com/KhronosGroup/glTF/tree/main/extensions/2.0/Khronos/KHR_materials_emissive_strength) 的 glTF 模型的支持。[#13961](https://github.com/CesiumGS/cesium/pull/13961)
 - Added experimental `IonAssetElementService` for querying, filtering, aggregating, and navigating element metadata for Cesium ion assets backed by BIM/CAD databases, along with the extensible `ElementService` base class. [#13995](https://github.com/CesiumGS/cesium/pull/13995)
+  新增实验性 `IonAssetElementService`，用于对由 BIM/CAD 数据库支持的 Cesium ion 资产进行要素元数据（element metadata）的查询、过滤、聚合与导航，并一并提供了可扩展的 `ElementService` 基类。[#13995](https://github.com/CesiumGS/cesium/pull/13995)
 
 #### Fixes :wrench:
 
 - Fixed `czm_passOverlay` and `czm_passCesium3DTileEdgesDirect` GLSL constants not matching `czm_pass` during their respective passes. Removed the unused `czm_passClassification` constant. [#13657](https://github.com/CesiumGS/cesium/issues/13657)
+  修复了 `czm_passOverlay` 与 `czm_passCesium3DTileEdgesDirect` 这两个 GLSL 常量在各自对应的渲染通道中与 `czm_pass` 不一致的问题。并移除了未使用的 `czm_passClassification` 常量。[#13657](https://github.com/CesiumGS/cesium/issues/13657)
 - Fixed dynamic environment lighting on models and tilesets near or below the ellipsoid surface. [#13988](https://github.com/CesiumGS/cesium/pull/13988)
+  修复了位于椭球体表面附近或其下方的模型与瓦片集的动态环境光照问题。[#13988](https://github.com/CesiumGS/cesium/pull/13988)
 - Fixed `pointCloudShading.backFaceCulling` not hiding back-facing points on some platforms. [#13989](https://github.com/CesiumGS/cesium/pull/13989)
+  修复了在某些平台上 `pointCloudShading.backFaceCulling` 无法隐藏背向点（back-facing points）的问题。[#13989](https://github.com/CesiumGS/cesium/pull/13989)
 - Fixed `Cesium3DTileset` repeatedly loading and unloading the same tiles when they don't fit within `cacheBytes` plus `maximumCacheOverflowBytes`. [#13999](https://github.com/CesiumGS/cesium/pull/13999)
+  修复了当瓦片无法容纳于 `cacheBytes` 与 `maximumCacheOverflowBytes` 之和以内时，`Cesium3DTileset` 反复加载与卸载同一批瓦片的问题。[#13999](https://github.com/CesiumGS/cesium/pull/13999)
 
 ### Announcements :loudspeaker:
 
 - The private glTF processing utilities previously located in `@cesium/engine/Source/Scene/GltfPipeline/` have moved to a new internal package, `@cesium/gltf`, which is now a dependency of `@cesium/engine`. These utilities were not, and are not part of the public API. Nonetheless, code that previously imported these files directly from `@cesium/engine` will need to be updated. [#13896](https://github.com/CesiumGS/cesium/pull/13896)
+  此前位于 `@cesium/engine/Source/Scene/GltfPipeline/` 的私有 glTF 处理工具已迁移至新的内部包 `@cesium/gltf`，该包现已成为 `@cesium/engine` 的依赖项。这些工具过去不是、现在也不是公共 API 的一部分。尽管如此，此前直接从 `@cesium/engine` 导入这些文件的代码仍需进行相应更新。[#13896](https://github.com/CesiumGS/cesium/pull/13896)
 
 ## 1.146 - 2026-10-01
 
